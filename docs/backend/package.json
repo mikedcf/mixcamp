@@ -2,7 +2,11 @@
   "name": "mix-camp-backend",
   "version": "1.0.0",
   "description": "Backend do Mix Camp",
-  "main": "javascript/app.js",
+  "main": "javascript/server.js",
+  "scripts": {
+    "start": "node javascript/server.js",
+    "dev": "node javascript/server.js"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
@@ -16,7 +20,7 @@
     "mysql2": "^3.15.3",
     "nodemailer": "^8.0.1"
   },
-  "scripts": {
-    "start": "node javascript/server.js"
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

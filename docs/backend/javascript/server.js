@@ -454,6 +454,8 @@ app.put(process.env.ROUTE_RANKING_TIMES, atualizarRankingTimes);
 // ==================================== [PORTA DA API] ==========================================
 
 
-app.listen(3000, () => {
-    console.log('Servidor está em localhost:3000');
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Servidor está rodando na porta ${PORT}`);
 });

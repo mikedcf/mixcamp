@@ -1,5 +1,6 @@
 // URL base da API
 // const API_URL = 'http://127.0.0.1:3000/api/v1';
+// const API_URL = 'mikedcf.github.io';
 
 // Funções de debug desabilitadas (mantidas apenas para evitar erros nas chamadas)
 function debugChaveamentoEtapa(etapa, payload = {}) {
