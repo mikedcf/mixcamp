@@ -1,7 +1,4 @@
 
 docs/backend/node_modules
 docs/backend/.env
-docs/backend/nixpacks.toml
-docs/backend/Procfile
-dados.txt
-ANALISE_PRODUCAO.md
+
