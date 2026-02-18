@@ -1,0 +1,379 @@
+/* 
+============================================================================
+========================[IMPORT FONTS]======================================
+============================================================================ 
+*/
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+/* 
+============================================================================
+========================[RESET & BASE]======================================
+============================================================================ 
+*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+    list-style: none;
+    color: #ffffff;
+    font-family: "Oswald", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: bold;
+    font-style: normal;
+}
+
+body {
+    background: linear-gradient(240deg, #050816 0%, #020617 35%, #021141 60%, #f56e08 85%, #F66600 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    background-attachment: fixed;
+    color: #ffffff;
+    line-height: 1.6;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: conic-gradient(from 160deg at 50% 50%, rgba(255, 223, 107, 0.15), rgba(255, 107, 53, 0.18), rgba(107, 108, 255, 0.2), rgba(255, 223, 107, 0.15));
+    opacity: 0.4;
+    filter: blur(80px);
+    z-index: -2;
+    animation: cardGlowOrbit 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes cardGlowOrbit {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 
+============================================================================
+========================[VIDEO BACKGROUND]===================================
+============================================================================ 
+*/
+.maintenance-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -3;
+    opacity: 0.6;
+    pointer-events: none;
+    filter: blur(8px);
+    -webkit-filter: blur(8px);
+}
+
+/* 
+============================================================================
+========================[MAINTENANCE CONTAINER]=============================
+============================================================================ 
+*/
+.maintenance-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+/* 
+============================================================================
+========================[PARTICLES]=========================================
+============================================================================ 
+*/
+.particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 107, 53, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.8);
+}
+
+.particle:nth-child(1) { left: 10%; top: 20%; }
+.particle:nth-child(2) { left: 20%; top: 60%; }
+.particle:nth-child(3) { left: 30%; top: 40%; }
+.particle:nth-child(4) { left: 40%; top: 80%; }
+.particle:nth-child(5) { left: 50%; top: 10%; }
+.particle:nth-child(6) { left: 60%; top: 70%; }
+.particle:nth-child(7) { left: 70%; top: 30%; }
+.particle:nth-child(8) { left: 80%; top: 50%; }
+.particle:nth-child(9) { left: 90%; top: 15%; }
+.particle:nth-child(10) { left: 15%; top: 90%; }
+
+/* 
+============================================================================
+========================[MAINTENANCE CONTENT]================================
+============================================================================ 
+*/
+.maintenance-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px 20px;
+    max-width: 800px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+}
+
+/* 
+============================================================================
+========================[ICON]===============================================
+============================================================================ 
+*/
+.maintenance-icon {
+    font-size: 120px;
+    color: #ff6b35;
+    margin-bottom: 30px;
+    opacity: 1;
+    filter: drop-shadow(0 0 30px rgba(255, 107, 53, 0.8));
+    visibility: visible;
+}
+
+.maintenance-icon i {
+    animation: iconRotate 3s ease-in-out infinite;
+}
+
+@keyframes iconRotate {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-10deg);
+    }
+    75% {
+        transform: rotate(10deg);
+    }
+}
+
+/* 
+============================================================================
+========================[TITLE]==============================================
+============================================================================ 
+*/
+.maintenance-title {
+    font-size: clamp(4rem, 15vw, 12rem);
+    font-weight: 700;
+    margin-bottom: 30px;
+    opacity: 1 !important;
+    line-height: 1.2;
+    visibility: visible !important;
+    display: block;
+    white-space: nowrap;
+}
+
+.title-word {
+    display: inline-block;
+    color: #ffffff;
+    text-shadow: 0 0 40px rgba(255, 107, 53, 0.8),
+                 0 0 80px rgba(255, 107, 53, 0.6),
+                 0 0 120px rgba(255, 107, 53, 0.4),
+                 2px 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.1em;
+    font-weight: 900;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow-wrap: normal;
+}
+
+.title-word span {
+    display: inline-block;
+    color: #ffffff !important;
+    text-shadow: 0 0 40px rgba(255, 107, 53, 0.8),
+                 0 0 80px rgba(255, 107, 53, 0.6),
+                 0 0 120px rgba(255, 107, 53, 0.4),
+                 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    white-space: nowrap;
+    word-break: keep-all;
+}
+
+/* 
+============================================================================
+========================[SUBTITLE]===========================================
+============================================================================ 
+*/
+.maintenance-subtitle {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 40px;
+    opacity: 1;
+    font-weight: 500;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    visibility: visible;
+}
+
+/* 
+============================================================================
+========================[MESSAGE]============================================
+============================================================================ 
+*/
+.maintenance-message {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 50px;
+    opacity: 1;
+    line-height: 1.8;
+    text-align: center;
+    visibility: visible;
+}
+
+/* 
+============================================================================
+========================[PROGRESS BAR]=======================================
+============================================================================ 
+*/
+.progress-container {
+    width: 100%;
+    max-width: 500px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin: 0 auto;
+    overflow: hidden;
+    opacity: 1;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    visibility: visible;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff6b35 0%, #00d4ff 50%, #ff6b35 100%);
+    background-size: 200% 100%;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+    animation: progressGlow 2s ease infinite;
+}
+
+@keyframes progressGlow {
+    0%, 100% {
+        background-position: 0% 50%;
+        box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+    }
+    50% {
+        background-position: 100% 50%;
+        box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+    }
+}
+
+/* 
+============================================================================
+========================[RESPONSIVE]==========================================
+============================================================================ 
+*/
+@media (max-width: 768px) {
+    .maintenance-container {
+        padding: 30px 15px;
+    }
+
+    .maintenance-content {
+        padding: 30px 20px;
+        min-height: calc(100vh - 150px);
+    }
+
+    .maintenance-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+
+    .maintenance-title {
+        margin-bottom: 20px;
+        white-space: nowrap;
+        font-size: clamp(3rem, 12vw, 10rem);
+    }
+
+    .maintenance-subtitle {
+        margin-bottom: 30px;
+    }
+
+    .maintenance-message {
+        margin-bottom: 40px;
+    }
+
+    .progress-container {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .maintenance-container {
+        padding: 20px 10px;
+    }
+
+    .maintenance-content {
+        padding: 20px 15px;
+        min-height: calc(100vh - 100px);
+    }
+
+    .maintenance-icon {
+        font-size: 60px;
+    }
+
+    .maintenance-title {
+        font-size: clamp(3rem, 12vw, 8rem);
+        white-space: nowrap;
+    }
+
+    .maintenance-subtitle {
+        margin-bottom: 25px;
+    }
+
+    .maintenance-message {
+        margin-bottom: 35px;
+        font-size: clamp(0.9rem, 2vw, 1.1rem);
+    }
+
+    .progress-container {
+        max-width: 350px;
+    }
+}
+

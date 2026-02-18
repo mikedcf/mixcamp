@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apoiadores - Mixcamp</title>
+    <link rel="stylesheet" href="../css/apoiadores.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">Seja um Apoiador</span>
+                    <br>do MIXCAMP
+                </h1>
+                <p class="hero-subtitle">Ajude-nos a construir a maior comunidade de e-sports do Brasil</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Jogadores</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">Times</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">50+</span>
+                        <span class="stat-label">Torneios</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="floating-cards">
+                    <div class="floating-card card-1">
+                        <i class="fa fa-trophy"></i>
+                        <span>Premiações</span>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i class="fa fa-users"></i>
+                        <span>Comunidade</span>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i class="fa fa-gamepad"></i>
+                        <span>E-Sports</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benefícios Section -->
+        <section class="beneficios-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Por que Apoiar o MIXCAMP?</h2>
+                    <p class="section-subtitle">Descubra os benefícios exclusivos para nossos apoiadores</p>
+                </div>
+
+                <div class="beneficios-grid">
+                    <div class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-crown"></i>
+                        </div>
+                        <h3>Status VIP</h3>
+                        <p>Destaque-se na comunidade com badges exclusivos e status especial</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Badge dourado no perfil</li>
+                            <li><i class="fa fa-check"></i> Nome destacado em chats</li>
+                            <li><i class="fa fa-check"></i> Acesso prioritário a eventos</li>
+                        </ul>
+                    </div>
+
+                    <div class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-gift"></i>
+                        </div>
+                        <h3>Recompensas Exclusivas</h3>
+                        <p>Ganhe itens especiais e recompensas únicas por apoiar nossa plataforma</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Skins exclusivas</li>
+                            <li><i class="fa fa-check"></i> Emotes personalizados</li>
+                            <li><i class="fa fa-check"></i> Descontos em produtos</li>
+                        </ul>
+                    </div>
+
+                    <div class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-star"></i>
+                        </div>
+                        <h3>Conteúdo Premium</h3>
+                        <p>Acesso antecipado a novos recursos e conteúdo exclusivo</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Beta testing de features</li>
+                            <li><i class="fa fa-check"></i> Vídeos exclusivos</li>
+                            <li><i class="fa fa-check"></i> Webinars especiais</li>
+                        </ul>
+                    </div>
+
+                    <div class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-heart"></i>
+                        </div>
+                        <h3>Suporte Direto</h3>
+                        <p>Canal direto com nossa equipe para suporte prioritário</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Suporte 24/7</li>
+                            <li><i class="fa fa-check"></i> Atendimento personalizado</li>
+                            <li><i class="fa fa-check"></i> Resolução rápida</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Planos Section -->
+        <section class="planos-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Escolha seu Plano</h2>
+                    <p class="section-subtitle">Planos flexíveis para todos os tipos de apoiadores</p>
+                </div>
+
+                <div class="planos-grid">
+                    <!-- Plano Bronze -->
+                    <div class="plano-card bronze">
+                        <div class="plano-header">
+                            <div class="plano-icon">
+                                <i class="fa fa-medal"></i>
+                            </div>
+                            <h3>Bronze</h3>
+                            <div class="plano-preco">
+                                <span class="moeda">R$</span>
+                                <span class="valor">19</span>
+                                <span class="periodo">/mês</span>
+                            </div>
+                        </div>
+                        <div class="plano-beneficios">
+                            <ul>
+                                <li><i class="fa fa-check"></i> Badge Bronze no perfil</li>
+                                <li><i class="fa fa-check"></i> 5% de desconto em produtos</li>
+                                <li><i class="fa fa-check"></i> Acesso a conteúdo básico</li>
+                                <li><i class="fa fa-check"></i> Suporte por email</li>
+                                <li><i class="fa fa-check"></i> 1 skin exclusiva por mês</li>
+                            </ul>
+                        </div>
+                        <button class="plano-btn bronze-btn">Seja Bronze</button>
+                    </div>
+
+                    <!-- Plano Prata -->
+                    <div class="plano-card prata featured">
+                        <div class="plano-badge">Mais Popular</div>
+                        <div class="plano-header">
+                            <div class="plano-icon">
+                                <i class="fa fa-medal"></i>
+                            </div>
+                            <h3>Prata</h3>
+                            <div class="plano-preco">
+                                <span class="moeda">R$</span>
+                                <span class="valor">39</span>
+                                <span class="periodo">/mês</span>
+                            </div>
+                        </div>
+                        <div class="plano-beneficios">
+                            <ul>
+                                <li><i class="fa fa-check"></i> Badge Prata no perfil</li>
+                                <li><i class="fa fa-check"></i> 10% de desconto em produtos</li>
+                                <li><i class="fa fa-check"></i> Acesso a conteúdo premium</li>
+                                <li><i class="fa fa-check"></i> Suporte prioritário</li>
+                                <li><i class="fa fa-check"></i> 3 skins exclusivas por mês</li>
+                                <li><i class="fa fa-check"></i> Emotes personalizados</li>
+                                <li><i class="fa fa-check"></i> Beta testing de features</li>
+                            </ul>
+                        </div>
+                        <button class="plano-btn prata-btn">Seja Prata</button>
+                    </div>
+
+                    <!-- Plano Ouro -->
+                    <div class="plano-card ouro">
+                        <div class="plano-header">
+                            <div class="plano-icon">
+                                <i class="fa fa-crown"></i>
+                            </div>
+                            <h3>Ouro</h3>
+                            <div class="plano-preco">
+                                <span class="moeda">R$</span>
+                                <span class="valor">79</span>
+                                <span class="periodo">/mês</span>
+                            </div>
+                        </div>
+                        <div class="plano-beneficios">
+                            <ul>
+                                <li><i class="fa fa-check"></i> Badge Ouro no perfil</li>
+                                <li><i class="fa fa-check"></i> 20% de desconto em produtos</li>
+                                <li><i class="fa fa-check"></i> Acesso total ao conteúdo</li>
+                                <li><i class="fa fa-check"></i> Suporte VIP 24/7</li>
+                                <li><i class="fa fa-check"></i> 5 skins exclusivas por mês</li>
+                                <li><i class="fa fa-check"></i> Emotes e animações exclusivas</li>
+                                <li><i class="fa fa-check"></i> Acesso antecipado a tudo</li>
+                                <li><i class="fa fa-check"></i> Webinars exclusivos</li>
+                            </ul>
+                        </div>
+                        <button class="plano-btn ouro-btn">Seja Ouro</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Depoimentos Section -->
+        <section class="depoimentos-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">O que nossos Apoiadores Dizem</h2>
+                    <p class="section-subtitle">Histórias reais de quem já faz parte da nossa comunidade</p>
+                </div>
+
+                <div class="depoimentos-grid">
+                    <div class="depoimento-card">
+                        <div class="depoimento-content">
+                            <div class="depoimento-stars">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <p>"Ser apoiador do MIXCAMP mudou minha experiência completamente. As recompensas são incríveis e a comunidade é fantástica!"</p>
+                        </div>
+                        <div class="depoimento-autor">
+                            <img src="../img/mixcamp.png" alt="João Silva" class="autor-avatar">
+                            <div class="autor-info">
+                                <h4>João Silva</h4>
+                                <span>Apoiador Prata</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="depoimento-card">
+                        <div class="depoimento-content">
+                            <div class="depoimento-stars">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <p>"Vale muito a pena! O suporte é excelente e as skins exclusivas são demais. Recomendo para todos os jogadores!"</p>
+                        </div>
+                        <div class="depoimento-autor">
+                            <img src="../img/mixcamp.png" alt="Maria Santos" class="autor-avatar">
+                            <div class="autor-info">
+                                <h4>Maria Santos</h4>
+                                <span>Apoiador Ouro</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="depoimento-card">
+                        <div class="depoimento-content">
+                            <div class="depoimento-stars">
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                            </div>
+                            <p>"A melhor decisão que tomei! O conteúdo premium é de alta qualidade e a equipe sempre está disposta a ajudar."</p>
+                        </div>
+                        <div class="depoimento-autor">
+                            <img src="../img/mixcamp.png" alt="Pedro Costa" class="autor-avatar">
+                            <div class="autor-info">
+                                <h4>Pedro Costa</h4>
+                                <span>Apoiador Bronze</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Pronto para se Juntar a Nós?</h2>
+                    <p>Faça parte da maior comunidade de e-sports do Brasil e ajude-nos a crescer ainda mais!</p>
+                    <div class="cta-buttons">
+                        <button class="cta-btn primary">Seja um Apoiador</button>
+                        <button class="cta-btn secondary">Saiba Mais</button>
+                    </div>
+                </div>
+                <div class="cta-image">
+                    <div class="cta-stats">
+                        <div class="cta-stat">
+                            <span class="cta-number">1.2K+</span>
+                            <span class="cta-label">Apoiadores Ativos</span>
+                        </div>
+                        <div class="cta-stat">
+                            <span class="cta-number">R$ 50K+</span>
+                            <span class="cta-label">Em Premiações</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Perguntas Frequentes</h2>
+                    <p class="section-subtitle">Tire suas dúvidas sobre nossos planos de apoio</p>
+                </div>
+
+                <div class="faq-grid">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Como funciona o cancelamento?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Você pode cancelar sua assinatura a qualquer momento. O acesso aos benefícios permanece até o final do período pago.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Posso trocar de plano?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças são aplicadas no próximo ciclo de cobrança.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>As recompensas são cumulativas?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Sim! Quanto mais tempo você for apoiador, mais recompensas exclusivas você receberá. Temos um sistema de fidelidade especial.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Há limite de apoiadores?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Não há limite! Queremos que o máximo de pessoas possível faça parte da nossa comunidade e ajude-nos a crescer.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="times.html">Times</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/apoiadores.js"></script>
+    
+</body>
+</html>

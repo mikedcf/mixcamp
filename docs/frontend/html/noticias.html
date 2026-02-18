@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notícias - Mixcamp</title>
+    <link rel="stylesheet" href="../css/noticias.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="noticias-container">
+            
+            <!-- Seção de Destaques -->
+            <div class="section-destaques">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fa fa-star"></i>
+                        Destaques
+                    </h1>
+                    <div class="section-line"></div>
+                </div>
+
+                <div class="destaques-grid">
+                    <div class="destaque-card featured">
+                        <div class="destaque-image">
+                            <img src="" alt="CS2 Major" id="destaque-image">
+                            <div class="destaque-overlay">
+                                <span class="destaque-badge">DESTAQUE</span>
+                            </div>
+                        </div>
+                        <div class="destaque-content">
+                            <h2 class="destaque-title" id="destaque-title"></h2>
+                            <p class="destaque-excerpt" id="destaque-subtitulo"></p>
+                            <div class="destaque-meta">
+                                <i class="fa fa-calendar"></i>
+                                <span class="destaque-date" id="destaque-date"></span>
+                                
+                                <span class="destaque-sep" aria-hidden="true"></span>
+
+                                <i class="fa fa-user"></i>
+                                <span class="destaque-read-time" id="destaque-autor"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção de Atualizações do Site -->
+            <div class="section-atualizacoes">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fa fa-sync-alt"></i>
+                        Atualizações do Site
+                    </h1>
+                    <div class="section-line"></div>
+                </div>
+
+                <div class="atualizacoes-grid carrossel-atualizacoes">
+                    <button class="carrossel-btn prev" id="prevAtualizacoes" aria-label="Anterior">
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <div class="carrossel-viewport">
+                        <div class="carrossel-track" id="atualizacoesTrack">
+                            <!-- Slides gerados via JS -->
+                        </div>
+                    </div>
+                    <button class="carrossel-btn next" id="nextAtualizacoes" aria-label="Próximo">
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seção de Notícias de Campeonato -->
+            <div class="section-campeonato">
+                <div class="section-header">
+                    <h1 class="section-title">
+                        <i class="fa fa-trophy"></i>
+                        Notícias de Campeonato
+                    </h1>
+                    <div class="section-line"></div>
+                </div>
+
+                <div class="campeonato-news-grid carrossel-campeonato">
+                    <button class="carrossel-btn prev" id="prevCampeonato" aria-label="Anterior">
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <div class="carrossel-viewport">
+                        <div class="carrossel-track" id="campeonatoTrack">
+                            <!-- Slides gerados via JS -->
+                        </div>
+                    </div>
+                    <button class="carrossel-btn next" id="nextCampeonato" aria-label="Próximo">
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="times.html">Times</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
+        <div class="modal-content-profissional">
+            <div class="modal-header-profissional">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2>Criar Novo Time</h2>
+                        <p>Preencha as informações para criar seu time</p>
+                    </div>
+                </div>
+                <button class="close-profissional" id="closeModalCriarTime">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body-profissional">
+                <form id="formCriarTime" class="form-profissional">
+                    <!-- Seção de Imagens -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-image"></i>
+                            Imagens do Time
+                        </h3>
+                        
+                        <div class="image-upload-grid">
+                            <!-- Logo do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="logoUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-camera"></i>
+                                        <span class="upload-text">Logo do Time</span>
+                                        <span class="upload-specs">Recomendado: 200x200px</span>
+                                    </div>
+                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="logoPreview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Banner do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="bannerUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-image"></i>
+                                        <span class="upload-text">Banner do Time</span>
+                                        <span class="upload-specs">Recomendado: 1200x400px</span>
+                                    </div>
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="bannerPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Informações -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Informações do Time
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nomeTime" class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    Nome do Time
+                                </label>
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
+                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <div class="input-hint">Nome completo do seu time</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tagTime" class="form-label">
+                                    <i class="fas fa-hashtag"></i>
+                                    Tag do Time
+                                </label>
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
+                                       placeholder="Ex: LGZ" class="form-input">
+                                <div class="input-hint">Tag curta para identificação</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sobreTime" class="form-label">
+                                <i class="fas fa-align-left"></i>
+                                Sobre o Time
+                            </label>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
+                                      placeholder="Descreva a história, objetivos e características do seu time..." 
+                                      class="form-textarea"></textarea>
+                            <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="form-actions-profissional">
+                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary-profissional">
+                            <i class="fas fa-plus"></i>
+                            Criar Time
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="../js/noticias.js"></script>
+    
+</body>
+</html>

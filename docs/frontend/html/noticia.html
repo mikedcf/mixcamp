@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notícia - Mixcamp</title>
+    <link rel="stylesheet" href="../css/noticia.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li><a href="campeonato.html">Campeonato</a></li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'">Login</button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'">Registrar</button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <div class="container">
+            <a href="home.html" class="breadcrumb-link">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <i class="fas fa-chevron-right breadcrumb-separator"></i>
+            <a href="noticias.html" class="breadcrumb-link">
+                <i class="fas fa-newspaper"></i>
+                <span>Notícias</span>
+            </a>
+            <i class="fas fa-chevron-right breadcrumb-separator"></i>
+            <span class="breadcrumb-current" id="breadcrumbCurrent">Carregando...</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <p>Carregando notícia...</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-state" id="errorState" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2>Notícia não encontrada</h2>
+                <p>A notícia que você está procurando não existe ou foi removida.</p>
+                <button class="btn-primary" onclick="window.location.href='noticias.html'">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar para Notícias
+                </button>
+            </div>
+
+            <!-- Notícia Destaque -->
+            <article class="noticia-destaque" id="noticiaDestaque" style="display: none;">
+                <div class="destaque-hero">
+                    <div class="destaque-image">
+                        <img id="destaqueImage" src="" alt="">
+                        <div class="destaque-overlay">
+                            <div class="destaque-badge" id="destaqueBadge">
+                                <i class="fas fa-star"></i>
+                                <span>DESTAQUE</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="destaque-content">
+                        <div class="destaque-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span id="destaqueDate"></span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-user"></i>
+                                <span id="destaqueAutor"></span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-eye"></i>
+                                <span id="destaqueViews">0 visualizações</span>
+                            </div>
+                        </div>
+                        <h1 class="destaque-title" id="destaqueTitle"></h1>
+                        <p class="destaque-subtitle" id="destaqueSubtitle"></p>
+                    </div>
+                </div>
+                <div class="noticia-body">
+                    <div class="noticia-text" id="destaqueText"></div>
+                    <div class="noticia-tags" id="destaqueTags"></div>
+                </div>
+            </article>
+
+            <!-- Notícia Site -->
+            <article class="noticia-site" id="noticiaSite" style="display: none;">
+                <div class="site-header">
+                    <div class="site-icon">
+                        <i id="siteIcon" class="fas fa-cog"></i>
+                    </div>
+                    <div class="site-content">
+                        <div class="site-meta">
+                            <span class="site-category" id="siteCategory"></span>
+                            <span class="site-date" id="siteDate"></span>
+                        </div>
+                        <h1 class="site-title" id="siteTitle"></h1>
+                        <p class="site-subtitle" id="siteSubtitle"></p>
+                    </div>
+                </div>
+                <div class="noticia-body">
+                    <div class="noticia-text" id="siteText"></div>
+                    <div class="noticia-tags" id="siteTags"></div>
+                </div>
+            </article>
+
+            <!-- Notícia Campeonato -->
+            <article class="noticia-campeonato" id="noticiaCampeonato" style="display: none;">
+                <div class="campeonato-hero">
+                    <div class="campeonato-image">
+                        <img id="campeonatoImage" src="" alt="">
+                        <div class="campeonato-badge" id="campeonatoBadge">
+                            <i class="fas fa-trophy"></i>
+                            <span>CAMPEONATO</span>
+                        </div>
+                    </div>
+                    <div class="campeonato-content">
+                        <div class="campeonato-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span id="campeonatoDate"></span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-user"></i>
+                                <span id="campeonatoAutor"></span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-trophy"></i>
+                                <span id="campeonatoDestaque"></span>
+                            </div>
+                        </div>
+                        <h1 class="campeonato-title" id="campeonatoTitle"></h1>
+                        <p class="campeonato-subtitle" id="campeonatoSubtitle"></p>
+                    </div>
+                </div>
+                <div class="noticia-body">
+                    <div class="noticia-text" id="campeonatoText"></div>
+                    <div class="noticia-tags" id="campeonatoTags"></div>
+                </div>
+            </article>
+
+            <!-- Social Share -->
+            <div class="social-share">
+                <h3>Compartilhar</h3>
+                <div class="share-buttons">
+                    <button class="share-btn facebook" onclick="shareOnFacebook()">
+                        <i class="fab fa-facebook-f"></i>
+                        <span>Facebook</span>
+                    </button>
+                    <button class="share-btn twitter" onclick="shareOnTwitter()">
+                        <i class="fab fa-twitter"></i>
+                        <span>Twitter</span>
+                    </button>
+                    <button class="share-btn whatsapp" onclick="shareOnWhatsApp()">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button class="share-btn copy" onclick="copyLink()">
+                        <i class="fas fa-link"></i>
+                        <span>Copiar Link</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Related News -->
+            <section class="related-news" id="relatedNews" style="display: none;">
+                <h2>Notícias Relacionadas</h2>
+                <div class="related-grid" id="relatedGrid">
+                    <!-- Related news will be loaded here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="times.html">Times</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="../js/noticia.js"></script>
+</body>
+</html>

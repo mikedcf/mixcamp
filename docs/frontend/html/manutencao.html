@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manutenção - Mixcamp</title>
+    <link rel="stylesheet" href="../css/manutencao.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+    <!-- Vídeo de fundo -->
+    <video class="maintenance-video" id="maintenanceVideo" autoplay muted loop>
+        <source src="../img/manutencao.mp4" type="video/mp4">
+    </video>
+    
+    <div class="maintenance-container">
+        <!-- Partículas de fundo -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="maintenance-content">
+            <!-- Ícone de Manutenção -->
+            <div class="maintenance-icon" id="maintenanceIcon">
+                <i class="fas fa-tools"></i>
+            </div>
+
+            <!-- Título Principal -->
+            <h1 class="maintenance-title" id="maintenanceTitle">
+                <span class="title-word" id="word1">MIXCAMP</span>
+            </h1>
+
+            <!-- Subtítulo -->
+            <p class="maintenance-subtitle" id="maintenanceSubtitle">
+                Estamos trabalhando para melhorar sua experiência
+            </p>
+
+            <!-- Mensagem -->
+            <p class="maintenance-message" id="maintenanceMessage">
+                Nosso site está em manutenção. Volta em breve
+            </p>
+
+            <!-- Barra de Progresso Animada -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/manutencao.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vetos de Mapas - MIXCAMP</title>
+  <link rel="stylesheet" href="../css/chaveamento.css">
+  <style>
+    body {
+      background: #0a0a0a;
+      min-height: 100vh;
+      padding: 20px;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      margin: 0;
+    }
+
+    .vetos-container {
+      max-width: 1920px;
+      margin: 0 auto;
+      background: #0a0a0a;
+      padding: 20px;
+    }
+
+    .vetos-times-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 95%;
+      max-width: 1800px;
+      height: 80px;
+      margin: 0 auto 30px;
+      gap: 10px;
+    }
+
+    .vetos-team {
+      flex: 1;
+      height: 100%;
+      background: linear-gradient(10deg, #ffd700 5%, #ffd700 50%, #808080 10%, #808080 100%);
+      border: 3px solid #000000;
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+      gap: 15px;
+      padding: 10px 20px;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    
+    .vetos-team.left {
+      justify-content: flex-start;
+    }
+    
+    .vetos-team.right {
+      justify-content: flex-end;
+      flex-direction: row;
+    }
+
+    .vetos-team.left {
+      border-radius: 0 0 0 10px;
+    }
+
+    .vetos-team.right {
+      border-radius: 0 0 10px 0;
+    }
+
+    .vetos-team-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+      flex-shrink: 0;
+      border: none;
+      outline: none;
+    }
+
+    .vetos-team-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+      white-space: nowrap;
+      flex-shrink: 1;
+      min-width: 0;
+      display: block;
+      visibility: visible;
+    }
+
+    .vetos-vs {
+      background: #2a2a2a;
+      border: 2px solid #444444;
+      padding: 15px 40px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 200px;
+      font-size: 28px;
+      font-weight: 900;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .vetos-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .vetos-header h1 {
+      color: #ffffff;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .vetos-header .formato {
+      color: #cccccc;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+
+    .turno-info {
+      background: rgba(0, 212, 255, 0.1);
+      border: 2px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .turno-info.esperando {
+      background: rgba(255, 193, 7, 0.1);
+      border-color: rgba(255, 193, 7, 0.3);
+    }
+
+    .turno-info.esperando .turno-texto {
+      color: #ffc107;
+    }
+
+    .turno-texto {
+      color: #00d4ff;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .mapas-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+      width: 100%;
+      max-width: 1920px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mapa-card {
+      background: #1a1a1a;
+      border: 2px solid #333333;
+      border-radius: 8px;
+      padding: 0;
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+      width: 100%;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      aspect-ratio: 2 / 3;
+    }
+
+    .mapa-card:hover {
+      border-color: rgba(0, 212, 255, 0.5);
+      background: rgba(0, 212, 255, 0.1);
+      transform: translateY(-5px);
+    }
+
+    .mapa-card.selecionado {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.2);
+    }
+
+    .mapa-card.banido {
+      border-color: #dc3545;
+      border-width: 3px;
+      background: #0a0a0a;
+    }
+
+    .mapa-card.banido .mapa-imagem {
+      filter: grayscale(100%) brightness(0.4);
+    }
+
+    .mapa-card.pickado {
+      border-color: #28a745;
+      border-width: 3px;
+      background: #1a1a1a;
+    }
+
+    .mapa-card.pickado .mapa-imagem {
+      filter: grayscale(60%) brightness(0.6);
+    }
+
+    .mapa-card.decider {
+      border-color: #ffc107;
+      background: #1a1a1a;
+    }
+
+    .mapa-card.decider .mapa-imagem {
+      filter: grayscale(60%) brightness(0.6);
+    }
+
+    .mapa-imagem-container {
+      position: relative;
+      width: 100%;
+      flex: 1.5;
+      overflow: hidden;
+      background: #000000;
+      min-height: 300px;
+    }
+
+    .mapa-imagem {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: none; /* Cor normal por padrão */
+    }
+
+    .mapa-overlay {
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      right: 20%;
+      bottom: 20%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      z-index: 2;
+      padding: 20px;
+    }
+
+    .mapa-logo-time {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+    }
+
+    .mapa-logo-time.pequeno {
+      width: 60px;
+      height: 60px;
+      opacity: 0.8;
+    }
+
+    .mapa-info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 3;
+    }
+
+    .mapa-nome {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .mapa-status {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 12px;
+      text-align: center;
+      border-top: 2px solid #444444;
+    }
+
+    .mapa-status-text {
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .mapa-status-text.ban {
+      color: #dc3545;
+    }
+
+    .mapa-status-text.pick {
+      color: #28a745;
+    }
+
+    .mapa-status-text.decider {
+      color: #ffc107;
+    }
+
+    .mapa-faca-container {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .mapa-faca-imagem {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
+      animation: pulsar-faca 2s ease-in-out infinite;
+    }
+
+    @keyframes pulsar-faca {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    .vs-text-decider {
+      color: #ffd700;
+      font-size: 32px;
+      font-weight: 900;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      animation: pulsar-vs 2s ease-in-out infinite;
+      letter-spacing: 3px;
+    }
+
+    @keyframes pulsar-vs {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 0.9;
+        text-shadow: 0 0 30px rgba(255, 215, 0, 1);
+      }
+    }
+
+    /* Animação de borda circulando para CT */
+    .texto-ct-animado {
+      position: relative;
+      display: inline-block;
+      padding: 4px 8px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    .texto-ct-animado::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border: 2px solid transparent;
+      border-top-color: #00a8ff;
+      border-right-color: #00a8ff;
+      border-radius: 4px;
+      animation: rotar-borda-azul 2s linear infinite;
+    }
+
+    @keyframes rotar-borda-azul {
+      0% {
+        border-top-color: #00a8ff;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      25% {
+        border-top-color: #00a8ff;
+        border-right-color: #00a8ff;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      50% {
+        border-top-color: #00a8ff;
+        border-right-color: #00a8ff;
+        border-bottom-color: #00a8ff;
+        border-left-color: transparent;
+      }
+      75% {
+        border-top-color: #00a8ff;
+        border-right-color: #00a8ff;
+        border-bottom-color: #00a8ff;
+        border-left-color: #00a8ff;
+      }
+      100% {
+        border-top-color: #00a8ff;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+    }
+
+    /* Animação de borda circulando para TR */
+    .texto-tr-animado {
+      position: relative;
+      display: inline-block;
+      padding: 4px 8px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    .texto-tr-animado::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border: 2px solid transparent;
+      border-top-color: #ffd700;
+      border-right-color: transparent;
+      border-radius: 4px;
+      animation: rotar-borda-amarela-laranja 2s linear infinite;
+    }
+
+    @keyframes rotar-borda-amarela-laranja {
+      0% {
+        border-top-color: #ffd700;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      25% {
+        border-top-color: #ffd700;
+        border-right-color: #ff6b00;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      50% {
+        border-top-color: #ffd700;
+        border-right-color: #ff6b00;
+        border-bottom-color: #ffd700;
+        border-left-color: transparent;
+      }
+      75% {
+        border-top-color: #ffd700;
+        border-right-color: #ff6b00;
+        border-bottom-color: #ffd700;
+        border-left-color: #ff6b00;
+      }
+      100% {
+        border-top-color: #ffd700;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+    }
+
+    /* Animação de borda circulando para KNIFE */
+    .texto-knife-animado {
+      position: relative;
+      display: inline-block;
+      padding: 4px 8px;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 900;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    .texto-knife-animado::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border: 2px solid transparent;
+      border-top-color: #ff6b6b;
+      border-right-color: transparent;
+      border-radius: 4px;
+      animation: rotar-borda-vermelha 2s linear infinite;
+    }
+
+    @keyframes rotar-borda-vermelha {
+      0% {
+        border-top-color: #ff6b6b;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      25% {
+        border-top-color: #ff6b6b;
+        border-right-color: #ff6b6b;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      50% {
+        border-top-color: #ff6b6b;
+        border-right-color: #ff6b6b;
+        border-bottom-color: #ff6b6b;
+        border-left-color: transparent;
+      }
+      75% {
+        border-top-color: #ff6b6b;
+        border-right-color: #ff6b6b;
+        border-bottom-color: #ff6b6b;
+        border-left-color: #ff6b6b;
+      }
+      100% {
+        border-top-color: #ff6b6b;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+    }
+
+    /* Símbolos CT/T para decider */
+    .mapa-col.decider .mapa-overlay {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ct-t-symbol {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .symbol-ct,
+    .symbol-t {
+      width: 30px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .symbol-ct {
+      background: rgba(0, 100, 200, 0.6);
+    }
+
+    .symbol-t {
+      background: rgba(200, 100, 0, 0.6);
+    }
+
+    .mapa-card.desabilitado {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+
+    .mapa-botoes {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .btn-pick,
+    .btn-ban {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 120px;
+    }
+
+    .btn-pick {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-pick:hover:not(:disabled) {
+      background: #218838;
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-ban {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-ban:hover:not(:disabled) {
+      background: #c82333;
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    }
+
+    .btn-pick:disabled,
+    .btn-ban:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-ir-partida {
+      position: relative;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      border: 3px solid #000000;
+      z-index: 1;
+    }
+
+    .btn-ir-partida::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      border: 3px solid transparent;
+      border-top-color: #ffd700;
+      border-right-color: transparent;
+      border-radius: 11px;
+      animation: rotar-borda-amarela-botao 2s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes rotar-borda-amarela-botao {
+      0% {
+        border-top-color: #ffd700;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      25% {
+        border-top-color: #ffd700;
+        border-right-color: #ffd700;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+      50% {
+        border-top-color: #ffd700;
+        border-right-color: #ffd700;
+        border-bottom-color: #ffd700;
+        border-left-color: transparent;
+      }
+      75% {
+        border-top-color: #ffd700;
+        border-right-color: #ffd700;
+        border-bottom-color: #ffd700;
+        border-left-color: #ffd700;
+      }
+      100% {
+        border-top-color: #ffd700;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+      }
+    }
+
+    .btn-ir-partida:hover {
+      background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .acoes-realizadas {
+      display: none;
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(0, 212, 255, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .acoes-realizadas h3 {
+      color: #00d4ff;
+      margin-bottom: 15px;
+    }
+
+    .acao-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+    }
+
+    .acao-item .acao-tipo {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    .acao-item .acao-tipo.pick {
+      background: #28a745;
+      color: white;
+    }
+
+    .acao-item .acao-tipo.ban {
+      background: #dc3545;
+      color: white;
+    }
+
+    .acao-item .acao-mapa {
+      color: #9ddfff;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .loading {
+      text-align: center;
+      color: #9ddfff;
+      padding: 40px;
+    }
+
+    .erro {
+      text-align: center;
+      color: #dc3545;
+      padding: 40px;
+      background: rgba(220, 53, 69, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    /* Modal da Roleta */
+    .modal-roleta-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-roleta {
+      background: linear-gradient(135deg, rgba(15, 15, 35, 0.98), rgba(10, 10, 25, 0.98));
+      border: 2px solid rgba(0, 212, 255, 0.5);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+    }
+
+    .modal-roleta-title {
+      color: #00d4ff;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+
+    .modal-roleta-subtitle {
+      color: #9ddfff;
+      font-size: 1rem;
+      margin-bottom: 30px;
+    }
+
+    .roleta-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      margin: 30px auto;
+    }
+
+    .roleta {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg,
+          rgba(245, 110, 8, 0.8) 0deg 180deg,
+          rgba(0, 212, 255, 0.8) 180deg 360deg);
+      border: 8px solid rgba(0, 212, 255, 0.5);
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
+      position: relative;
+      overflow: hidden;
+      /* Removida a transition para evitar conflito com a animation */
+    }
+
+    .roleta.girando {
+      animation: girar 30s cubic-bezier(0.17, 0.67, 0.12, 0.99) forwards;
+      /* forwards mantém o estado final após a animação */
+      /* animation-fill-mode: forwards garante que o estado final seja mantido */
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes girar {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(var(--rotacao-final, 8640deg));
+      }
+    }
+
+    /* Prevenir qualquer transição ou animação adicional */
+    .roleta.girando * {
+      animation-play-state: running !important;
+    }
+
+    .roleta-item {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #roletaTimeA {
+      left: 0;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    #roletaTimeB {
+      right: 0;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .roleta-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.9);
+      object-fit: cover;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .roleta-ponteiro {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 30px solid #ffc107;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+      z-index: 10;
+    }
+
+    .roleta-status {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+      gap: 20px;
+    }
+
+    .status-item {
+      flex: 1;
+      padding: 15px;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+
+    .status-item span {
+      color: #9ddfff;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .status-item.pronto span {
+      color: #28a745;
+    }
+
+    .btn-roleta {
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #f56e08, #F66600);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(245, 110, 8, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-roleta:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 110, 8, 0.6);
+    }
+
+    .btn-roleta:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .resultado-roleta {
+      margin: 30px 0;
+      padding: 30px;
+      background: linear-gradient(135deg, rgba(245, 110, 8, 0.2), rgba(0, 212, 255, 0.2));
+      border-radius: 15px;
+      border: 2px solid rgba(255, 193, 7, 0.6);
+      text-align: center;
+      animation: aparecerResultado 0.5s ease-out;
+    }
+
+    @keyframes aparecerResultado {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .resultado-vencedor h3 {
+      color: #ffc107;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+      animation: pulsar 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulsar {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .avatar-vencedor-container {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .avatar-vencedor {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: 5px solid #ffc107;
+      object-fit: cover;
+      box-shadow: 0 0 40px rgba(255, 193, 7, 0.8);
+      animation: brilhar 2s ease-in-out infinite;
+    }
+
+    @keyframes brilhar {
+
+      0%,
+      100% {
+        box-shadow: 0 0 40px rgba(255, 193, 7, 0.8);
+      }
+
+      50% {
+        box-shadow: 0 0 60px rgba(255, 193, 7, 1);
+      }
+    }
+
+    .texto-vencedor-info {
+      color: #9ddfff;
+      font-size: 1.1rem;
+      margin-top: 15px;
+      font-weight: 600;
+    }
+
+    /* Modal CT/TR */
+    .modal-cttr-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-cttr {
+      background: linear-gradient(135deg, rgba(15, 15, 35, 0.98), rgba(10, 10, 25, 0.98));
+      border: 2px solid rgba(0, 212, 255, 0.5);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+    }
+
+    .modal-cttr-title {
+      color: #00d4ff;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+
+    .modal-cttr-subtitle {
+      color: #9ddfff;
+      font-size: 1rem;
+      margin-bottom: 30px;
+    }
+
+    .cttr-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .btn-cttr {
+      flex: 1;
+      padding: 30px 40px;
+      border: 3px solid;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 1.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-ct {
+      border-color: #00a8ff;
+      color: #00a8ff;
+    }
+
+    .btn-ct:hover {
+      background: rgba(0, 168, 255, 0.2);
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(0, 168, 255, 0.5);
+    }
+
+    .btn-tr {
+      border-color: #ff6b00;
+      color: #ff6b00;
+    }
+
+    .btn-tr:hover {
+      background: rgba(255, 107, 0, 0.2);
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 107, 0, 0.5);
+    }
+
+    .cttr-icon {
+      font-size: 3rem;
+    }
+
+    .cttr-text {
+      font-size: 2rem;
+      letter-spacing: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Modal da Roleta -->
+  <div id="modalRoleta" class="modal-roleta-overlay" style="display: none;">
+    <div class="modal-roleta">
+      <h2 class="modal-roleta-title">🎰 Sorteio de Quem Começa</h2>
+      <p class="modal-roleta-subtitle">Ambos os times devem clicar no botão para iniciar o sorteio</p>
+
+      <div class="roleta-container">
+        <div class="roleta" id="roleta">
+          <div class="roleta-item" id="roletaTimeA">
+            <img id="roletaTimeALogo" class="roleta-avatar" src="" alt="Time A"
+              onerror="this.src='https://cdn-icons-png.flaticon.com/128/5726/5726775.png'">
+          </div>
+          <div class="roleta-item" id="roletaTimeB">
+            <img id="roletaTimeBLogo" class="roleta-avatar" src="" alt="Time B"
+              onerror="this.src='https://cdn-icons-png.flaticon.com/128/5726/5726775.png'">
+          </div>
+        </div>
+        <div class="roleta-ponteiro"></div>
+      </div>
+
+      <div class="roleta-status">
+        <div class="status-item">
+          <span id="statusTimeA">⏳ Aguardando Time A...</span>
+        </div>
+        <div class="status-item">
+          <span id="statusTimeB">⏳ Aguardando Time B...</span>
+        </div>
+      </div>
+
+      <div id="resultadoRoleta" class="resultado-roleta" style="display: none;">
+        <div class="resultado-vencedor">
+          <h3 id="textoVencedor">🏆 Vencedor do Sorteio!</h3>
+          <div id="avatarVencedor" class="avatar-vencedor-container">
+            <img id="avatarVencedorImg" class="avatar-vencedor" src="" alt="Vencedor">
+          </div>
+          <p id="textoVencedorInfo" class="texto-vencedor-info">Este time começa a vetar primeiro!</p>
+        </div>
+      </div>
+
+      <button id="btnClicarRoleta" class="btn-roleta" disabled>
+        Clique para Iniciar Sorteio
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de Escolha CT/TR -->
+  <div id="modalCTTR" class="modal-cttr-overlay" style="display: none;">
+    <div class="modal-cttr">
+      <h2 class="modal-cttr-title">Escolha o Lado Inicial</h2>
+      <p class="modal-cttr-subtitle">Escolha se seu time começa como CT ou TR no mapa <span id="modalMapaNome"></span></p>
+      <div class="cttr-buttons">
+        <button id="btnEscolherCT" class="btn-cttr btn-ct">
+          <span class="cttr-icon">🛡️</span>
+          <span class="cttr-text">CT</span>
+        </button>
+        <button id="btnEscolherTR" class="btn-cttr btn-tr">
+          <span class="cttr-icon">⚔️</span>
+          <span class="cttr-text">TR</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="vetos-container">
+    <!-- Header com Times -->
+    <div id="vetosTimesHeader" class="vetos-times-header" style="display: none;">
+      <div class="vetos-team left">
+        <img id="vetosTimeALogo" class="vetos-team-logo" src="" alt="Time A"
+          onerror="this.src='https://cdn-icons-png.flaticon.com/128/5726/5726775.png'">
+        <span id="vetosTimeANome" class="vetos-team-name">Time A</span>
+      </div>
+      <div class="vetos-vs">MAP VETO</div>
+      <div class="vetos-team right">
+        <img id="vetosTimeBLogo" class="vetos-team-logo" src="" alt="Time B"
+          onerror="this.src='https://cdn-icons-png.flaticon.com/128/5726/5726775.png'">
+        <span id="vetosTimeBNome" class="vetos-team-name">Time B</span>
+      </div>
+    </div>
+
+    <div class="vetos-header">
+      <h1>🗺️ Vetos de Mapas</h1>
+      <div class="formato" id="formatoDisplay">BO1</div>
+      <div class="turno-info" id="turnoInfo">
+        <div class="turno-texto">Carregando...</div>
+      </div>
+    </div>
+
+    <div id="loading" class="loading">
+      Carregando configuração de vetos...
+    </div>
+
+    <div id="erro" class="erro" style="display: none;">
+      Erro ao carregar sessão de vetos. Verifique se o link está correto.
+    </div>
+
+    <div id="mapasContainer" class="mapas-grid" style="display: none;">
+      <!-- Mapas serão carregados dinamicamente -->
+    </div>
+
+    <!-- Botão para ir para partida (aparece quando decider é exibido) -->
+    <div id="btnIrPartidaContainer" style="display: none; text-align: center; margin-top: 30px;">
+      <button id="btnIrPartida" class="btn-ir-partida" onclick="irParaPartida()">
+        Ir para Partida
+      </button>
+    </div>
+
+  </div>
+
+  <script src="../js/utils.js"></script>
+  <script src="../js/vetos.js"></script>
+</body>
+
+</html>

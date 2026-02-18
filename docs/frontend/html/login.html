@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIXCAMP - Login</title>
+    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Efeitos de Background -->
+    <div class="background-effects">
+        <!-- Smoke Effects -->
+        <div class="smoke-container">
+            <div class="smoke smoke-1"></div>
+            <div class="smoke smoke-2"></div>
+            <div class="smoke smoke-3"></div>
+            <div class="smoke smoke-4"></div>
+            <div class="smoke smoke-5"></div>
+            <div class="smoke smoke-6"></div>
+            <div class="smoke smoke-7"></div>
+            <div class="smoke smoke-8"></div>
+            <div class="smoke smoke-9"></div>
+            <div class="smoke smoke-10"></div>
+            <div class="smoke smoke-11"></div>
+            <div class="smoke smoke-12"></div>
+        </div>
+
+        <!-- Explosion Effects -->
+        <div class="explosion-container">
+            <div class="explosion explosion-1"></div>
+            <div class="explosion explosion-2"></div>
+            <div class="explosion explosion-3"></div>
+        </div>
+
+        <!-- Particle Effects -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <!-- GIF Background Effects -->
+        <div class="gif-container">
+            <!-- Smoke GIF covering entire background -->
+            <div class="gif-effect gif-smoke-bg">
+                <img src="../img/smoke.gif" alt="Fumaça de Fundo" class="gif-img-bg">
+            </div>
+
+            <div class="gif-effect gif-1">
+                <img src="../img/explosao.gif" alt="Explosão" class="gif-img">
+            </div>
+            <div class="gif-effect gif-2">
+                <img src="../img/medalha_1ed.gif" alt="Medalha" class="gif-img">
+            </div>
+            <div class="gif-effect gif-3">
+                <img src="../img/trof.gif" alt="Troféu" class="gif-img">
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="login-container">
+        <!-- Character Left -->
+        <div class="character character-left">
+            <div class="character-image">
+                <img src="../img/ct.png" alt="Counter-Terrorist" class="char-img">
+            </div>
+            <div class="character-glow"></div>
+        </div>
+
+        <!-- Login Form -->
+        <div class="login-form-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo-container">
+                        <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo">
+                    </div>
+                    <h1 class="login-title">BEM-VINDO AO MIXCAMP</h1>
+                    <p class="login-subtitle">Entre na arena da competição</p>
+                </div>
+
+                <form class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <div class="input-container">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="email" id="email" name="email" placeholder="Email" required>
+                            <div class="input-glow"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-container">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" name="password" placeholder="Senha" required>
+                            <div class="input-glow"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="remember-me" style="display: none;">
+                            <input type="checkbox" id="remember">
+                            <span class="checkmark"></span>
+                            Lembrar de mim
+                        </label>
+                        <a href="#" class="forgot-password" onclick="mostrarModalRecuperacao(event)">Esqueceu a senha?</a>
+                    </div>
+
+                    <button type="submit" onclick="dados_e_Login(event)" class="btn-login" id="submitbtn">
+                        <span class="btn-text">ENTRAR</span>
+                        <div class="btn-glow"></div>
+                    </button>
+
+                    <div class="divider" style="display: none;">
+                        <span>ou</span>
+                    </div>
+
+                    <div class="social-login" style="display: none;">
+                        <button class="btn-social btn-google" onclick="loginWithGoogle()"
+                            data-tooltip="Continuar com Google">
+                            <i class="fab fa-google"></i>
+                        </button>
+
+                        <button class="btn-social btn-discord" onclick="loginWithDiscord()"
+                            data-tooltip="Continuar com Discord">
+                            <i class="fab fa-discord"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="register-link">
+                    <p>Não tem uma conta? <a href="registro.html">Registre-se aqui</a></p>
+                </div>
+
+                <!-- Modal de Recuperação de Senha -->
+                <div class="recovery-form" id="recoveryForm" style="display: none;">
+                    <div class="login-header">
+                        <div class="logo-container">
+                            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo">
+                        </div>
+                        <h1 class="login-title">RECUPERAR SENHA</h1>
+                        <p class="login-subtitle">Digite seu email para recuperar a senha</p>
+                    </div>
+
+                    <form class="login-form" id="recoveryFormElement">
+                        <div class="form-group">
+                            <div class="input-container">
+                                <i class="fas fa-envelope input-icon"></i>
+                                <input type="email" id="recoveryEmail" name="recoveryEmail" placeholder="Email" required>
+                                <div class="input-glow"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" onclick="enviarRecuperacaoSenha(event)" class="btn-login" id="recoveryBtn">
+                            <span class="btn-text">ENVIAR</span>
+                            <div class="btn-glow"></div>
+                        </button>
+
+                        <div class="back-to-login">
+                            <a href="#" onclick="voltarParaLogin(event)" class="back-link">
+                                <i class="fas fa-arrow-left"></i> Voltar para o login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Right -->
+        <div class="character character-right">
+            <div class="character-image">
+                <img src="../img/tr.png" alt="Terrorist" class="char-img">
+            </div>
+            <div class="character-glow"></div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-text">Conectando...</div>
+        </div>
+    </div>
+
+    <!-- Notificação apenas mensagem -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+
+    <script src="../js/login.js"></script>
+
+</body>
+
+</html>

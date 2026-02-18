@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIXCAMP - Partidas</title>
+    <link rel="stylesheet" href="../css/resultado.css">
+    <link rel="stylesheet" href="../css/matchs.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="claro">
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="matchs-container">
+        <section class="matchs-header">
+            <div class="matchs-title-group">
+                <h1 class="matchs-title">Partidas</h1>
+                <p class="matchs-subtitle">Acompanhe todas as partidas do campeonato em tempo real.</p>
+            </div>
+
+            <!-- Carrossel de Eventos -->
+            <div class="eventos-carousel-container">
+                <div class="eventos-carousel" id="eventosCarousel">
+                    <!-- Itens do carrossel serão inseridos aqui via JS -->
+                </div>
+                <button class="carousel-btn carousel-btn-prev" id="carouselPrev" aria-label="Anterior">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-btn carousel-btn-next" id="carouselNext" aria-label="Próximo">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="matchs-filters">
+                <div class="filter-group">
+                    <span class="filter-label"><i class="fas fa-filter"></i> Status</span>
+                    <div class="filter-chips" id="statusFilters">
+                        <button class="filter-chip active" data-status="all">Todas</button>
+                        <button class="filter-chip" data-status="upcoming">Vai começar</button>
+                        <button class="filter-chip" data-status="live">Em andamento</button>
+                        <button class="filter-chip" data-status="finished">Finalizada</button>
+                        <button class="filter-chip" data-status="canceled">Cancelada</button>
+                    </div>
+                </div>
+
+                <div class="filter-group search-group">
+                    <span class="filter-label"><i class="fas fa-search"></i> Buscar</span>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="searchMatch" placeholder="Buscar por time ou mapa...">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div class="matchs-loading" id="matchsLoading">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Carregando partidas...</p>
+        </div>
+
+        <section class="matchs-list" id="matchsList" style="display: none;">
+            <!-- Exemplo de Cards de Partida -->
+            <article class="match-card" data-status="upcoming" data-search="mixcamp legends inferno" data-mapa-principal="inferno">
+                <div class="match-card-main" onclick="window.location.href='resultado.html'">
+                    <div class="match-teams">
+                        <div class="team">
+                            <img src="../img/legalize.png" alt="Time 1" class="team-avatar">
+                            <span class="team-name">Mixcamp Legends</span>
+                        </div>
+                        <div class="match-score-summary">
+                            <span class="match-status-badge upcoming"><i class="fas fa-clock"></i> Vai começar</span>
+                        </div>
+                        <div class="team">
+                            <span class="team-name">Inferno Warriors</span>
+                            <img src="../img/legalize.png" alt="Time 2" class="team-avatar">
+                        </div>
+                    </div>
+                    <div class="match-extra">
+                        <div class="match-map">
+                            <div class="match-map-multi">
+                                <div class="match-map-thumb" data-mapa="inferno"></div>
+                                <div class="match-map-thumb" data-mapa="mirage"></div>
+                                <div class="match-map-thumb" data-mapa="ancient"></div>
+                            </div>
+                            <div class="match-map-info">
+                                <span class="label">Mapas (MD3)</span>
+                                <span class="value">Inferno • Mirage • Ancient</span>
+                            </div>
+                        </div>
+                        <div class="match-format">
+                            <span class="label">Formato</span>
+                            <span class="value">MD3</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="match-details-btn" onclick="event.stopPropagation(); window.location.href='resultado.html'">
+                    <i class="fas fa-eye"></i>
+                    Detalhes matchs
+                </button>
+            </article>
+
+            <article class="match-card" data-status="live" data-search="dust2 kings nuke masters" data-mapa-principal="nuke">
+                <div class="match-card-main" onclick="window.location.href='resultado.html'">
+                    <div class="match-teams">
+                        <div class="team">
+                            <img src="../img/legalize.png" alt="Time 1" class="team-avatar">
+                            <span class="team-name">Dust2 Kings</span>
+                        </div>
+                        <div class="match-score-summary live-score">
+                            <span class="score-number">12</span>
+                            <span class="vs-text">VS</span>
+                            <span class="score-number">9</span>
+                            <span class="match-status-badge live"><i class="fas fa-broadcast-tower"></i> Ao vivo</span>
+                        </div>
+                        <div class="team">
+                            <span class="team-name">Nuke Masters</span>
+                            <img src="../img/legalize.png" alt="Time 2" class="team-avatar">
+                        </div>
+                    </div>
+                    <div class="match-extra">
+                        <div class="match-map">
+                            <div class="match-map-thumb" data-mapa="nuke"></div>
+                            <div class="match-map-info">
+                                <span class="label">Mapa atual</span>
+                                <span class="value">Nuke</span>
+                            </div>
+                        </div>
+                        <div class="match-format">
+                            <span class="label">Formato</span>
+                            <span class="value">MD1</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="match-details-btn" onclick="event.stopPropagation(); window.location.href='resultado.html'">
+                    <i class="fas fa-eye"></i>
+                    Detalhes matchs
+                </button>
+            </article>
+
+            <article class="match-card" data-status="finished" data-search="ancient titans mirage squad" data-mapa-principal="ancient">
+                <div class="match-card-main" onclick="window.location.href='resultado.html'">
+                    <div class="match-teams">
+                        <div class="team">
+                            <img src="../img/legalize.png" alt="Time 1" class="team-avatar">
+                            <span class="team-name">Ancient Titans</span>
+                        </div>
+                        <div class="match-score-summary finished-score">
+                            <span class="score-number winner">16</span>
+                            <span class="vs-text">VS</span>
+                            <span class="score-number">6</span>
+                            <span class="match-status-badge finished"><i class="fas fa-flag-checkered"></i> Finalizada</span>
+                        </div>
+                        <div class="team">
+                            <span class="team-name">Mirage Squad</span>
+                            <img src="../img/legalize.png" alt="Time 2" class="team-avatar">
+                        </div>
+                    </div>
+                    <div class="match-extra">
+                        <div class="match-map">
+                            <div class="match-map-multi">
+                                <div class="match-map-thumb" data-mapa="ancient"></div>
+                                <div class="match-map-thumb" data-mapa="mirage"></div>
+                                <div class="match-map-thumb" data-mapa="inferno"></div>
+                            </div>
+                            <div class="match-map-info">
+                                <span class="label">Mapas (MD3)</span>
+                                <span class="value">Ancient • Mirage • Inferno</span>
+                            </div>
+                        </div>
+                        <div class="match-format">
+                            <span class="label">Formato</span>
+                            <span class="value">MD3</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="match-details-btn" onclick="event.stopPropagation(); window.location.href='resultado.html'">
+                    <i class="fas fa-eye"></i>
+                    Detalhes matchs
+                </button>
+            </article>
+
+            <article class="match-card" data-status="canceled" data-search="overpass crew vertigo five">
+                <div class="match-card-main" onclick="window.location.href='resultado.html'">
+                    <div class="match-teams">
+                        <div class="team">
+                            <img src="../img/legalize.png" alt="Time 1" class="team-avatar">
+                            <span class="team-name">Overpass Crew</span>
+                        </div>
+                        <div class="match-score-summary">
+                            <span class="match-status-badge canceled"><i class="fas fa-ban"></i> Cancelada</span>
+                        </div>
+                        <div class="team">
+                            <span class="team-name">Vertigo Five</span>
+                            <img src="../img/legalize.png" alt="Time 2" class="team-avatar">
+                        </div>
+                    </div>
+                    <div class="match-extra">
+                        <div class="match-map">
+                            <span class="label">Motivo</span>
+                            <span class="value">Problemas técnicos</span>
+                        </div>
+                        <div class="match-format">
+                            <span class="label">Formato</span>
+                            <span class="value">MD1</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="match-details-btn" onclick="event.stopPropagation(); window.location.href='resultado.html'">
+                    <i class="fas fa-eye"></i>
+                    Detalhes matchs
+                </button>
+            </article>
+        </section>
+    </main>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/matchs.js"></script>
+</body>
+</html>
+
+

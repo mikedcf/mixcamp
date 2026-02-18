@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre o MIXCAMP - Campeonato CS2</title>
+    <link rel="stylesheet" href="../css/sobre.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="gradient-text">MIXCAMP</span>
+                <span class="subtitle">O Campeonato que Evoluiu</span>
+            </h1>
+            <p class="hero-description">
+                De uma simples "pelada" entre amigos no CS:GO para um campeonato profissional 
+                com premiações, transmissão ao vivo e estrutura completa até Discord.
+            </p>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number" data-target="500">0</span>
+                    <span class="stat-label">Jogadores</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" data-target="50">0</span>
+                    <span class="stat-label">Times</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" data-target="20">0</span>
+                    <span class="stat-label">Edições</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" data-target="10000">0</span>
+                    <span class="stat-label">R$ Premiação</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <!-- Cards do lado direito -->
+            <div class="floating-card card-1">
+                <i class="fas fa-trophy"></i>
+                <span>Campeões</span>
+            </div>
+            <div class="floating-card card-2">
+                <i class="fas fa-users"></i>
+                <span>Comunidade</span>
+            </div>
+            <div class="floating-card card-3">
+                <i class="fas fa-gamepad"></i>
+                <span>CS2</span>
+            </div>
+            <!-- Cards do lado esquerdo -->
+            <div class="floating-card card-4">
+                <i class="fas fa-broadcast-tower"></i>
+                <span>Transmissão</span>
+            </div>
+            <div class="floating-card card-5">
+                <i class="fas fa-chart-line"></i>
+                <span>Ranking</span>
+            </div>
+            <div class="floating-card card-6">
+                <i class="fas fa-server"></i>
+                <span>Plataforma</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- História Section -->
+    <section class="historia">
+        <div class="container">
+            <h2 class="section-title">Nossa História</h2>
+            <div class="timeline">
+                <div class="timeline-line-glow" id="timelineLineGlow"></div>
+                <div class="timeline-light" id="timelineLight"></div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>O Início</h3>
+                        <p>Tudo começou como uma simples "pelada" entre amigos no CS:GO. 
+                        Jogadores se reuniam para se divertir e competir de forma amigável.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>O Crescimento</h3>
+                        <p>A comunidade começou a crescer. Mais jogadores se juntaram, 
+                        e a competição se tornou mais organizada e profissional.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>Premiações</h3>
+                        <p>Implementamos sistema de premiações, HUD personalizado e 
+                        transmissões ao vivo para tornar o campeonato mais atrativo.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fa-brands fa-discord"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>Estrutura Discord</h3>
+                        <p>Criamos uma estrutura completa no Discord com rodadas, 
+                        chaveamento, resultados, MVP e estatísticas detalhadas.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>Migração FACEIT</h3>
+                        <p>Migramos para a plataforma FACEIT para oferecer uma 
+                        experiência ainda mais profissional e organizada.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h3>CS2</h3>
+                        <p>Agora estamos prontos para o CS2! Com toda a experiência 
+                        acumulada, vamos criar o melhor campeonato possível.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Como Funciona Section -->
+    <section class="como-funciona">
+        <div class="container">
+            <h2 class="section-title">Como Funciona</h2>
+            <div class="funcionamento-grid">
+                <div class="funcionamento-card">
+                    <div class="card-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3>1. Inscreva-se</h3>
+                    <p>Crie sua conta, forme ou entre em um time e inscreva-se no campeonato.</p>
+                </div>
+                
+                <div class="funcionamento-card">
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>2. Agende</h3>
+                    <p>Receba as datas dos jogos e prepare-se para as partidas.</p>
+                </div>
+                
+                <div class="funcionamento-card">
+                    <div class="card-icon">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <h3>3. Jogue</h3>
+                    <p>Participe das partidas na plataforma FACEIT com HUD personalizado.</p>
+                </div>
+                
+                <div class="funcionamento-card">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>4. Acompanhe</h3>
+                    <p>Veja resultados, estatísticas e rankings atualizados no Discord.</p>
+                </div>
+                
+                <div class="funcionamento-card">
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>5. Conquiste</h3>
+                    <p>Suba no ranking, seja MVP e dispute as premiações finais.</p>
+                </div>
+                
+                <div class="funcionamento-card">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>6. Cresça</h3>
+                    <p>Faça parte da comunidade, participe de eventos e evolua como jogador.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recursos Section -->
+    <section class="recursos">
+        <div class="container">
+            <h2 class="section-title">Recursos do MIXCAMP</h2>
+            <div class="recursos-grid">
+                <div class="recurso-card">
+                    <div class="recurso-icon">
+                        <i class="fas fa-broadcast-tower"></i>
+                    </div>
+                    <div class="recurso-card-content">
+                        <h3>Transmissão Ao Vivo</h3>
+                        <p>Partidas transmitidas com comentários profissionais e HUD personalizado.</p>
+                    </div>
+                </div>
+                
+                <div class="recurso-card">
+                    <div class="recurso-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="recurso-card-content">
+                        <h3>Estatísticas Detalhadas</h3>
+                        <p>Análise completa de performance com rankings e métricas avançadas.</p>
+                    </div>
+                </div>
+                
+                <div class="recurso-card">
+                    <div class="recurso-icon">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <div class="recurso-card-content">
+                        <h3>Sistema MVP</h3>
+                        <p>Reconhecimento para os melhores jogadores de cada partida e edição.</p>
+                    </div>
+                </div>
+                
+                <div class="recurso-card">
+                    <div class="recurso-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="recurso-card-content">
+                        <h3>Premiações</h3>
+                        <p>Prêmios em dinheiro e itens para os campeões e destaques.</p>
+                    </div>
+                </div>
+                
+                <div class="recurso-card">
+                    <div class="recurso-icon">
+                        <i class="fa-brands fa-discord"></i>
+                    </div>
+                    <div class="recurso-card-content">
+                        <h3>Comunidade Discord</h3>
+                        <p>Estrutura organizada com canais para rodadas, resultados e interação.</p>
+                    </div>
+                </div>
+                
+                <div class="recurso-card">
+                    <div class="recurso-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="recurso-card-content">
+                        <h3>Anti-Cheat</h3>
+                        <p>Proteção contra trapaças com sistema de monitoramento avançado da Faceit.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Pronto para Participar?</h2>
+                <p>Junte-se à comunidade MIXCAMP e faça parte da história do melhor campeonato de CS2!</p>
+                
+                <div class="cta-buttons">
+                    <a href="campeonato.html" class="btn-primary">
+                        <i class="fas fa-play"></i>
+                        Ir para Campeonato
+                    </a>
+                    
+                    <a href="#" class="btn-secondary" onclick="downloadRegras(event)">
+                        <i class="fas fa-download"></i>
+                        Baixar Regras (PDF)
+                    </a>
+                </div>
+                
+                <div class="cta-features">
+                    <!-- <div class="feature">
+                        <i class="fas fa-check"></i>
+                        <span>Premiações garantidas</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check"></i>
+                        <span>Comunidade ativa</span>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2 class="section-title">Perguntas Frequentes</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Como posso me inscrever no MIXCAMP?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Para se inscrever, você precisa ter uma conta na FACEIT, formar ou entrar em uma line e seguir o processo de inscrição no nosso Site.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Quais são os requisitos para participar?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+
+                        <li>
+                            possuir uma conta na Faceit caso não tenha acesse a <a href="https://www.faceit.com/pt/" target="_blank" class="faq-link">Faceit</a>
+                        </li>
+                        <li>
+                            possuir o Anti-Cheat da Faceit instalado,caso não tenha acesse a <a href="https://www.faceit.com/pt/anti-cheat" target="_blank" class="faq-link">Faceit Anti-Cheat</a>
+                        </li>
+
+                        <li>
+                            Estar em um time, caso não tenha, acesse a <a href="comunidade.html" target="_blank" class="faq-link">Comunidade</a> e seja integrante de um time.
+                        </li>
+
+                        <li>
+                            Concordar com as regras do campeonato.
+                            
+                        </li>
+                        
+
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Como funcionam as premiações nos campeonatos oficiais?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>As premiações são distribuídas assim que o campeonato e encerrado.</p>
+
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Como funcionam as premiações nos campeonatos terceiros?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>As premiações de campeonatos de terceiros São definidas pelo o organizador do evento (novas alterações serão feitas em breve).</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Posso participar sozinho?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Você pode acessar a <a href="comunidade.html" class="faq-link" target="_blank">Comunidade</a> e se conectar com outros jogadores para formar um time ou encontrar um time.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Como funciona o sistema de ranking?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>O ranking é baseado nos resultados das partidas, com pontos distribuídos por vitórias, derrotas e performance individual. O ranking é atualizado após cada rodada.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="times.html">Times</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/sobre.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# SITE
+dados.txt
+guia_NGROK_WEBHOOK.md
+# FRONTEND
+frontend/backup/
+
+# BACKEND
+backend/node_modules
+backend/package-lock.json
+docs/backend/.env
+.vscode/
+ANALISE_PRODUCAO.md

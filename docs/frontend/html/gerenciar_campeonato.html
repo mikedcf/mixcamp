@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Campeonatos - Mixcamp</title>
+    <link rel="stylesheet" href="../css/gerenciar_campeonato.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Seção de Título -->
+        <section class="page-header">
+            <div class="header-content">
+                <h1><i class="fas fa-trophy"></i> Gerenciar Campeonatos</h1>
+                <p>Crie e gerencie seus campeonatos de CS2</p>
+                <button class="btn-criar-campeonato" onclick="abrirModalCriar()">
+                    <i class="fas fa-plus"></i> Criar Novo Campeonato
+                </button>
+            </div>
+        </section>
+
+        <!-- Lista de Campeonatos -->
+        <section class="campeonatos-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Meus Campeonatos</h2>
+                <div class="filtros">
+                    <select id="filtroStatus" onchange="filtrarCampeonatos()">
+                        <option value="todos">Todos os Status</option>
+                        <option value="embreve">Em Breve</option>
+                        <option value="disponivel">Disponível</option>
+                        <option value="andamento">Em Andamento</option>
+                        <option value="encerrado">Encerrado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="campeonatos-grid" id="campeonatosGrid">
+                <!-- Cards serão gerados via JS -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Carregando seus campeonatos...</p>
+                </div>
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-trophy"></i>
+                <h3>Nenhum campeonato criado ainda</h3>
+                <p>Comece criando seu primeiro campeonato!</p>
+                <button class="btn-criar-campeonato" onclick="abrirModalCriar()">
+                    <i class="fas fa-plus"></i> Criar Primeiro Campeonato
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Criar/Editar Campeonato -->
+    <div class="modal" id="modalCampeonato">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitulo"><i class="fas fa-trophy"></i> Criar Campeonato</h2>
+                <button class="modal-close" onclick="fecharModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="formCampeonato" class="form-campeonato">
+                <input type="hidden" id="campeonatoId" name="id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="titulo"><i class="fas fa-heading"></i> Título do Campeonato *</label>
+                        <input type="text" id="titulo" name="titulo" required placeholder="Ex: MIXCAMP 1º Edição">
+                    </div>
+                    
+                    <div class="form-group" id="tipoGroup">
+                        <label for="tipo"><i class="fas fa-tag"></i> Tipo *</label>
+                        <select id="tipo" name="tipo" required>
+                            <option value="comum">Comum</option>
+                            <option value="oficial">Oficial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao"><i class="fas fa-align-left"></i> Descrição *</label>
+                    <textarea id="descricao" name="descricao" rows="4" required placeholder="Descreva seu campeonato..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="preco_inscricao"><i class="fas fa-dollar-sign"></i> Preço de Inscrição (R$) *</label>
+                        <input type="number" id="preco_inscricao" name="preco_inscricao" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="premiacao"><i class="fas fa-trophy"></i> Premiação (R$) *</label>
+                        <input type="number" id="premiacao" name="premiacao" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="imagem_url"><i class="fas fa-image"></i> URL da Imagem</label>
+                    <input type="url" id="imagem_url" name="imagem_url" placeholder="https://exemplo.com/imagem.jpg">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="link_convite"><i class="fas fa-link"></i> Link de Convite da Hub *</label>
+                        <input type="url" id="link_convite" name="link_convite" required placeholder="https://www.faceit.com/pt/hub/...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="url_hub"><i class="fas fa-globe"></i> URL da Hub *</label>
+                        <input type="url" id="url_hub" name="url_hub" required placeholder="https://www.faceit.com/pt/hub/...">
+                    </div>
+                </div>
+
+                <div class="form-row" id="trofeuMedalhaGroup">
+                    <div class="form-group">
+                        <label for="trofeu_id"><i class="fas fa-medal"></i> ID do Troféu *</label>
+                        <input type="number" id="trofeu_id" name="trofeu_id" placeholder="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="medalha_id"><i class="fas fa-award"></i> ID da Medalha *</label>
+                        <input type="number" id="medalha_id" name="medalha_id" placeholder="1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="chave"><i class="fas fa-sitemap"></i> Formato da Chave *</label>
+                    <select id="chave" name="chave" required>
+                        <option value="Single Elimination (B01 até final BO3)">Single Elimination (B01 até final BO3)</option>
+                        <option value="Single Elimination (todos BO3)" selected>Single Elimination (todos BO3)</option>
+                        <option value="CS2 Major (playoffs BO3)">CS2 Major (playoffs BO3)</option>
+                        <option value="Double Elimination">Double Elimination</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edicao_campeonato"><i class="fas fa-calendar-alt"></i> Edição</label>
+                        <input type="text" id="edicao_campeonato" name="edicao_campeonato" placeholder="Ex: Edição 2025">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="qnt_times"><i class="fas fa-users"></i> Quantidade de Times *</label>
+                        <select id="qnt_times" name="qnt_times" required>
+                            <option value="6">6 Times</option>
+                            <option value="8">8 Times</option>
+                            <option value="10">10 Times</option>
+                            <option value="12">12 Times</option>
+                            <option value="14">14 Times</option>
+                            <option value="16">16 Times</option>
+                            <option value="18">18 Times</option>
+                            <option value="20">20 Times</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plataforma"><i class="fas fa-gamepad"></i> Plataforma</label>
+                        <input type="text" id="plataforma" name="plataforma" value="FACEIT" placeholder="FACEIT">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="game"><i class="fas fa-gamepad"></i> Jogo</label>
+                        <input type="text" id="game" name="game" value="CS2" placeholder="CS2">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nivel"><i class="fas fa-star"></i> Nível</label>
+                        <input type="text" id="nivel" name="nivel" value="1-10" placeholder="1-10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formato"><i class="fas fa-users"></i> Formato</label>
+                        <input type="text" id="formato" name="formato" value="5v5" placeholder="5v5">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="status"><i class="fas fa-info-circle"></i> Status *</label>
+                    <select id="status" name="status" required>
+                        <option value="embreve">Em Breve</option>
+                        <option value="disponivel">Disponível</option>
+                        <option value="andamento">Em Andamento</option>
+                        <option value="encerrado">Encerrado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="previsao_data_inicio"><i class="fas fa-calendar"></i> Previsão de Início *</label>
+                    <input type="datetime-local" id="previsao_data_inicio" name="previsao_data_inicio" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="regras"><i class="fas fa-book"></i> Regras *</label>
+                    <textarea id="regras" name="regras" rows="6" required placeholder="Descreva as regras do campeonato..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-salvar">
+                        <i class="fas fa-save"></i> Salvar Campeonato
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes do Campeonato -->
+    <div class="modal" id="modalDetalhes">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="detalhesTitulo"><i class="fas fa-info-circle"></i> Detalhes do Campeonato</h2>
+                <button class="modal-close" onclick="fecharModalDetalhes()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="detalhes-content" id="detalhesContent">
+                <!-- Conteúdo será preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="comunidade.html">Comunidade</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
+        <div class="modal-content-profissional">
+            <div class="modal-header-profissional">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2>Criar Novo Time</h2>
+                        <p>Preencha as informações para criar seu time</p>
+                    </div>
+                </div>
+                <button class="close-profissional" id="closeModalCriarTime">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body-profissional">
+                <form id="formCriarTime" class="form-profissional">
+                    <!-- Seção de Imagens -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-image"></i>
+                            Imagens do Time
+                        </h3>
+                        
+                        <div class="image-upload-grid">
+                            <!-- Logo do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="logoUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-camera"></i>
+                                        <span class="upload-text">Logo do Time</span>
+                                        <span class="upload-specs">Recomendado: 200x200px</span>
+                                    </div>
+                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="logoPreview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Banner do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="bannerUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-image"></i>
+                                        <span class="upload-text">Banner do Time</span>
+                                        <span class="upload-specs">Recomendado: 1200x400px</span>
+                                    </div>
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="bannerPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Informações -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Informações do Time
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nomeTime" class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    Nome do Time
+                                </label>
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
+                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <div class="input-hint">Nome completo do seu time</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tagTime" class="form-label">
+                                    <i class="fas fa-hashtag"></i>
+                                    Tag do Time
+                                </label>
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
+                                       placeholder="Ex: LGZ" class="form-input">
+                                <div class="input-hint">Tag curta para identificação</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sobreTime" class="form-label">
+                                <i class="fas fa-align-left"></i>
+                                Sobre o Time
+                            </label>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
+                                      placeholder="Descreva a história, objetivos e características do seu time..." 
+                                      class="form-textarea"></textarea>
+                            <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="form-actions-profissional">
+                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary-profissional">
+                            <i class="fas fa-plus"></i>
+                            Criar Time
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="../js/gerenciar_campeonato.js"></script>
+</body>
+</html>
+

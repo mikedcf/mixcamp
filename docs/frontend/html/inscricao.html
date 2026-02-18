@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Campeonato - Mixcamp</title>
+    <link rel="stylesheet" href="../css/inscricao.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+    
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero / Banner do campeonato -->
+        <section class="inscricao-hero">
+            <div class="hero-image" id="heroImage">
+                <img src="../img/cs2.png" alt="Campeonato" id="inscricaoImagem">
+                <div class="hero-overlay">
+                    <div class="hero-badges">
+                        <span class="badge tipo" id="inscricaoTipo">Oficial</span>
+                        <span class="badge status" id="inscricaoStatus">Disponível</span>
+                    </div>
+                    <h1 class="hero-title" id="inscricaoTitulo">Título do Campeonato</h1>
+                    <p class="hero-subtitle" id="inscricaoDescricao">Descrição breve do campeonato.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conteúdo em duas colunas -->
+        <section class="inscricao-content">
+            <div class="container">
+                <div class="content-wrapper">
+                    <!-- Coluna esquerda: detalhes -->
+                    <div class="left-column">
+                        <div class="card detalhes-card">
+                            <h2 class="card-title"><i class="fas fa-info-circle"></i> Informações Gerais</h2>
+                            <div class="info-grid">
+                                <div class="info-item"><i class="fas fa-user-shield"></i><span><strong>Organizador:</strong> <span id="inscricaoAutor"></span></span></div>
+                                <div class="info-item"><i class="fas fa-calendar"></i><span><strong>Data de Criação:</strong> <span id="inscricaoData"></span></span></div>
+                                <div class="info-item"><i class="fas fa-clock"></i><span><strong>Previsão de Início:</strong> <span id="inscricaoPrevisao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-puzzle-piece"></i><span><strong>Formato:</strong> <span id="inscricaoFormato"></span></span></div>
+                                <div class="info-item"><i class="fas fa-gamepad"></i><span><strong>Jogo:</strong> <span id="inscricaoGame"></span></span></div>
+                                <div class="info-item"><i class="fas fa-trophy"></i><span><strong>Premiação:</strong> <span id="inscricaoPremiacao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-coins"></i><span><strong>Inscrição:</strong> <span id="inscricaoPreco"></span></span></div>
+                                <div class="info-item"><i class="fas fa-hashtag"></i><span><strong>Edição:</strong> <span id="inscricaoEdicao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-signal"></i><span><strong>Nível:</strong> <span id="inscricaoNivel"></span></span></div>
+                                <div class="info-item"><i class="fas fa-server"></i><span><strong>Plataforma:</strong> <span id="inscricaoPlataforma"></span></span></div>
+                                <div class="info-item"><i class="fas fa-broadcast-tower"></i><span><strong>Transmissão ao vivo:</strong> <span id="inscricaoTransmissao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-users"></i><span><strong>Total de Equipes:</strong> <span id="inscricaoQntTimes"></span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="card regras-card">
+                            <h2 class="card-title"><i class="fas fa-gavel"></i> Regras do Campeonato</h2>
+                            <div class="regras-content" id="inscricaoRegras"></div>
+                        </div>
+
+                        <div class="card midias-card" id="midiasCard">
+                            <h2 class="card-title"><i class="fas fa-award"></i> Troféu e Medalha</h2>
+                            <div class="midias-grid">
+                                <div class="midia-item">
+                                    <h3>Troféu</h3>
+                                    <div class="iframe-wrapper">
+                                        <iframe id="inscricaoTrofeu" src="" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                    <div class="midia-nome" id="inscricaoNomeTrofeu"></div>
+                                </div>
+                                <div class="midia-item">
+                                    <h3>Medalha</h3>
+                                    <div class="iframe-wrapper">
+                                        <iframe id="inscricaoMedalha" src="" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                    <div class="midia-nome" id="inscricaoNomeMedalha"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna direita: resumo e pagamento -->
+                    <div class="right-column">
+                        <div class="card resumo-card" id="resumoCard">
+                            <h2 class="card-title"><i class="fas fa-receipt"></i> Resumo</h2>
+                            <ul class="resumo-list">
+                                <li><span>Status</span><strong id="resumoStatus"></strong></li>
+                                <li><span>Preço inscrição</span><strong id="resumoPreco"></strong></li>
+                                <li><span>Premiação</span><strong id="resumoPremiacao"></strong></li>
+                                <li><span>Início previsto</span><strong id="resumoPrevisao"></strong></li>
+                                <li><span>Times inscritos</span><strong id="resumoTimesInscritos">0/0</strong></li>
+                            </ul>
+                            <button class="btn-primary" id="btnPagamento" onclick="btnPagamento()"><i class="fas fa-credit-card"></i> Prosseguir para pagamento</button>
+                            <small class="nota-pagamento" id="notaPagamento">O botão de pagamento e confirmação serão exibidos após o login.</small>
+                        </div>
+
+                        <button class="btn-action btn-chaveamento" id="btnChaveamento" onclick="irParaChaveamento()">
+                            <i class="fas fa-sitemap" style="font-size: 18px;"></i> Chaveamento
+                        </button>
+
+                        <div class="card organizador-card">
+                            <h2 class="card-title"><i class="fas fa-user"></i> Organizador</h2>
+                            <div class="organizador-info">
+                                <div class="organizador-logo"><img src="../img/mixcamp.png" alt="Organizador" id="organizadorLogo"></div>
+                                <div class="organizador-textos">
+                                    <div class="organizador-nome" id="organizadorNome">MIXCAMP</div>
+                                    <div class="organizador-tipo" id="organizadorTipo">Oficial</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="comunidade.html">Comunidade</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 id="confirmModalTitle">Confirmação</h3>
+                <span class="confirm-modal-close" onclick="closeConfirmModal(false)">&times;</span>
+            </div>
+            <div class="confirm-modal-body">
+                <p id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-confirm-ok" onclick="closeConfirmModal(true)">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+     <!-- Modal Criar Time Profissional -->
+     <div class="modal" id="modalCriarTime">
+        <div class="modal-content-profissional">
+            <div class="modal-header-profissional">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2>Criar Novo Time</h2>
+                        <p>Preencha as informações para criar seu time</p>
+                    </div>
+                </div>
+                <button class="close-profissional" id="closeModalCriarTime">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body-profissional">
+                <form id="formCriarTime" class="form-profissional">
+                    <!-- Seção de Imagens -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-image"></i>
+                            Imagens do Time
+                        </h3>
+                        
+                        <div class="image-upload-grid">
+                            <!-- Logo do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="logoUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-camera"></i>
+                                        <span class="upload-text">Logo do Time</span>
+                                        <span class="upload-specs">Recomendado: 200x200px</span>
+                                    </div>
+                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="logoPreview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Banner do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="bannerUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-image"></i>
+                                        <span class="upload-text">Banner do Time</span>
+                                        <span class="upload-specs">Recomendado: 1200x400px</span>
+                                    </div>
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="bannerPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Informações -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Informações do Time
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nomeTime" class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    Nome do Time
+                                </label>
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
+                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <div class="input-hint">Nome completo do seu time</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tagTime" class="form-label">
+                                    <i class="fas fa-hashtag"></i>
+                                    Tag do Time
+                                </label>
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
+                                       placeholder="Ex: LGZ" class="form-input">
+                                <div class="input-hint">Tag curta para identificação</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sobreTime" class="form-label">
+                                <i class="fas fa-align-left"></i>
+                                Sobre o Time
+                            </label>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
+                                      placeholder="Descreva a história, objetivos e características do seu time..." 
+                                      class="form-textarea"></textarea>
+                            <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="form-actions-profissional">
+                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary-profissional">
+                            <i class="fas fa-plus"></i>
+                            Criar Time
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+    <script src="../js/inscricao.js"></script>
+</body>
+</html>

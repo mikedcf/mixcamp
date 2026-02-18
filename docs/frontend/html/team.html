@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time - Mixcamp</title>
+    <link rel="stylesheet" href="../css/team.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <div class="box" id="box-content">
+
+                <div class="box-banner" id="banner-time">
+                    <!-- Área para upload de banner do time -->
+                </div>
+
+                <div class="perfil">
+                    <div class="perfil-avatar" id="avatar-time">
+                        <!-- Avatar do time -->
+                    </div>
+
+                    <div class="perfil-info">
+                        <div class="team-tag">LGZ</div>
+                        <p class="box-perfil-nome">LEGALIZE</p>
+                    </div>
+
+                    <div class="perfil-right">
+                        <div class="config">
+                            <button class="bu-config" id="configTeamBtn"
+                                onclick="irParaConfigTime()">⚙️</button>
+                            <button class="bu-copy-id" id="copyUrlBtn" onclick="Copiarl_Link_Perfil()">📄</button>
+                            <button class="bu-join" id="joinTeamBtn">
+                                <i class="fa fa-users"></i>
+                                <span class="join-plus">+</span>
+                            </button>
+                        </div>
+
+                        <div class="box-redes" id="redesSociais">
+                            <a href="#" id="discordLink"><img src="../img/discord.png" alt="discord" class="redes"></a>
+                            <a href="#" id="youtubeLink"><img src="../img/youtube.png" alt="youtube" class="redes"></a>
+                            <a href="#" id="instaLink"><img src="../img/instag.png" alt="instagram" class="redes"></a>
+                            <a href="#" id="twitterLink"><img src="../img/x.png" alt="twitter" class="redes"></a>
+                            <a href="#" id="twitchLink"><img src="../img/twitch.png" alt="twitch" class="redes"></a>
+                            <a href="#" id="faceitLink"><img src="../img/faceit.png" alt="faceit" class="redes"></a>
+                            <a href="#" id="gamesclubLink"><img src="../img/gc.png" alt="gamesclub" class="redes"></a>
+                            <a href="#" id="tiktokLink"><img src="../img/tiktok.png" alt="tiktok" class="redes"></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-wrapper">
+                    <div class="left-column">
+                        <div class="box-medalhas">
+                            <h2 class="titulo-medalhas">Conquistas</h2>
+                            <hr>
+                            <div class="medalhas-container">
+                                <div class="medalha-slot" data-slot="1">
+                                    <div class="medalha-content">
+                                        <!-- Conteúdo da medalha será inserido via JavaScript -->
+
+                                    </div>
+                                </div>
+                                <div class="medalha-slot" data-slot="2">
+                                    <div class="medalha-content">
+                                        <!-- Conteúdo da medalha será inserido via JavaScript -->
+                                    </div>
+                                </div>
+                                <div class="medalha-slot" data-slot="3">
+                                    <div class="medalha-content">
+                                        <!-- Conteúdo da medalha será inserido via JavaScript -->
+                                    </div>
+                                </div>
+                                <div class="medalha-slot" data-slot="4">
+                                    <div class="medalha-content">
+                                        <!-- Conteúdo da medalha será inserido via JavaScript -->
+                                    </div>
+                                </div>
+                                <div class="medalha-slot" data-slot="5">
+                                    <div class="medalha-content">
+                                        <!-- Conteúdo da medalha será inserido via JavaScript -->
+                                    </div>
+                                </div>
+                                <div class="medalha-slot" data-slot="6">
+                                    <div class="medalha-content">
+                                        <!-- Conteúdo da medalha será inserido via JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="box-sobre">
+                            <h1 class="titulo-sobre">SOBRE</h1>
+                            <hr>
+                            <p class="sobre-msg" id="aboutText">Somos uma equipe apaixonada por e-sports, focada em
+                                excelência e trabalho em equipe. Nossa missão é representar o Brasil nos maiores
+                                campeonatos internacionais.</p>
+                        </div>
+
+                        <div class="box-jogos">
+                            <h2 class="titulo-jogos">Jogos</h2>
+                            <hr>
+                            <div class="jogos-container">
+                                <div class="jogo-item">
+                                    <img src="../img/legalize.png" alt="CS2" id="gameimg" class="jogo-icon">
+                                    <span class="jogo-nome" id="gameName">Counter-Strike 2</span>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                        <div class="box-destaque">
+                            <h2 class="titulo-destaque">Destaque</h2>
+                            <hr>
+                            <div class="destaque-container">
+                                <div class="video-placeholder">
+                                    <i class="fa fa-play-circle"></i>
+                                    <p>Adicionar Vídeo ou iFrame</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="box-noticias">
+                            <h2 class="titulo-noticias">Notícias</h2>
+                            <hr>
+                            <div class="noticias-container">
+                                <div class="noticia-item">
+                                    <div class="noticia-content">
+                                        <h3 id="titulo-noticia">Últimas Notícias do Time</h3>
+                                        <p id="conteudo-noticia">Aqui você pode adicionar as últimas notícias e atualizações sobre o time.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-column">
+                        <div class="box-jogadores">
+                            <h2 class="titulo-jogadores">Jogadores</h2>
+                            <hr>
+                            <div class="jogadores-container">
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Jogador 1" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Player1</span>
+                                        <div class="jogador-role-container">
+                                            <span class="jogador-role">🏆 Capitão</span>
+                                            <span id="liderbadge" class="lider-badge">👑 LÍDER</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Jogador 2" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Player2</span>
+                                        <span class="jogador-role">🎯 AWP</span>
+                                    </div>
+                                </div>
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Jogador 3" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Player3</span>
+                                        <span class="jogador-role">⚡ Entry</span>
+                                    </div>
+                                </div>
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Jogador 4" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Player4</span>
+                                        <span class="jogador-role">🛡️ Support</span>
+                                    </div>
+                                </div>
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Jogador 5" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Player5</span>
+                                        <span class="jogador-role">💣 IGL</span>
+                                    </div>
+                                </div>
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Reserva" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Reserva</span>
+                                        <span class="jogador-role">🔄 Sub</span>
+                                    </div>
+                                </div>
+                                <div class="jogador-item">
+                                    <img src="../img/avatar.jpg" alt="Coach" class="jogador-avatar">
+                                    <div class="jogador-info">
+                                        <span class="jogador-nome">Coach</span>
+                                        <span class="jogador-role">📋 Coach</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>MIXCAMP</h3>
+                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="campeonato.html">Campeonato</a></li>
+                        <li><a href="times.html">Times</a></li>
+                        <li><a href="noticias.html">Notícias</a></li>
+                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="#">Regras</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Parceiros</h4>
+                    <div class="partners">
+                        <img src="../img/faceit.png" alt="FACEIT">
+                        <img src="../img/cs2.png" alt="CS2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="medalModal" class="modal">
+        <div class="modal-content" id="modalContent">
+            <!-- Header com gradiente e botão fechar -->
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <div class="modal-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="modal-title-section">
+                        <h1 class="modal-main-title">Conquista</h1>
+                        <div class="modal-subtitle">Detalhes da Medalha</div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Conteúdo principal -->
+            <div class="modal-body">
+                <!-- Nome da medalha -->
+                <div class="medal-name-section">
+                    <h2 id="modalTitle" class="medal-name"></h2>
+                    <div class="medal-category-badge" id="modalCategory"></div>
+                </div>
+
+                <!-- Iframe container com loading -->
+                <div class="iframe-container">
+                    <div class="iframe-loading" id="iframeLoading">
+                        <div class="loading-spinner"></div>
+                        <p>Carregando conteúdo...</p>
+                    </div>
+                    <iframe id="modalIframe" class="medalha-iframe" src="" frameborder="0" allowfullscreen></iframe>
+                </div>
+
+                <!-- Informações da medalha -->
+                <div class="medal-info-grid">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Descrição</div>
+                            <div class="info-value" id="modalDescription"></div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Edição</div>
+                            <div class="info-value" id="modalEdicao"></div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                            </svg>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Data</div>
+                            <div class="info-value" id="modalData"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
+        <div class="modal-content-profissional">
+            <div class="modal-header-profissional">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2>Criar Novo Time</h2>
+                        <p>Preencha as informações para criar seu time</p>
+                    </div>
+                </div>
+                <button class="close-profissional" id="closeModalCriarTime">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body-profissional">
+                <form id="formCriarTime" class="form-profissional">
+                    <!-- Seção de Imagens -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-image"></i>
+                            Imagens do Time
+                        </h3>
+
+                        <div class="image-upload-grid">
+                            <!-- Logo do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="logoUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-camera"></i>
+                                        <span class="upload-text">Logo do Time</span>
+                                        <span class="upload-specs">Recomendado: 200x200px</span>
+                                    </div>
+                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="logoPreview"></div>
+                                </div>
+                            </div>
+
+                            <!-- Banner do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="bannerUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-image"></i>
+                                        <span class="upload-text">Banner do Time</span>
+                                        <span class="upload-specs">Recomendado: 1200x400px</span>
+                                    </div>
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
+                                    <div class="image-preview" id="bannerPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Informações -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Informações do Time
+                        </h3>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nomeTime" class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    Nome do Time
+                                </label>
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
+                                <div class="input-hint">Nome completo do seu time</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tagTime" class="form-label">
+                                    <i class="fas fa-hashtag"></i>
+                                    Tag do Time
+                                </label>
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
+                                <div class="input-hint">Tag curta para identificação</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sobreTime" class="form-label">
+                                <i class="fas fa-align-left"></i>
+                                Sobre o Time
+                            </label>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
+                            <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="form-actions-profissional">
+                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary-profissional">
+                            <i class="fas fa-plus"></i>
+                            Criar Time
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificação apenas mensagem -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 id="confirmModalTitle">Confirmação</h3>
+                <span class="confirm-modal-close" onclick="closeConfirmModal(false)">&times;</span>
+            </div>
+            <div class="confirm-modal-body">
+                <p id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-confirm-ok" onclick="closeConfirmModal(true)">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/team.js"></script>
+
+</body>
+
+</html>

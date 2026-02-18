@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>App</title>
+  <link rel='stylesheet' href='../css/chaveamento.css'>
+  <!-- <link rel='stylesheet' href='../css/header.css'> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="nav-brand" onclick="window.location.href='home.html'">
+      <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+    </div>
+
+    <div class="center-content">
+      <nav class="nav" id="navContainer">
+        <ul class="nav-menu">
+
+          <li class="has-dropdown">
+            <a href="campeonato.html">Campeonato</a>
+            <ul class="dropdown-menu">
+              <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+            </ul>
+          </li>
+          <li><a href="comunidade.html">Comunidade</a></li>
+          <li><a href="noticias.html">Notícias</a></li>
+          <li><a href="apoiadores.html">Apoiadores</a></li>
+          <li><a href="sobre.html">Sobre</a></li>
+        </ul>
+      </nav>
+
+      <div class="search-bar-container" id="searchBarContainer">
+        <input type="text" class="search-input" placeholder="Pesquisar...">
+        <!-- Container de resultados da busca -->
+        <div class="search-results" id="searchResults" style="display: none;">
+          <!-- Resultados aparecem aqui -->
+        </div>
+      </div>
+    </div>
+
+    <div class="search-profile-area">
+      <div class="user-auth" id="userAuth">
+        <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+        <button class="auth-btn register-btn"
+          onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+      </div>
+
+      <div class="user-perfil" id="userPerfil">
+        <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+          <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+          <span class="perfil-nome" id="perfilnome"></span>
+          <i class="fas fa-chevron-down seta"></i>
+        </button>
+        <div class="menu-opcoes" id="menuOpcoes">
+          <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+          <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+          <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar
+              Campeonatos</span></a>
+          <div class="menu-separator"></div>
+          <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+          <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+          <div class="menu-separator"></div>
+          <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo
+              Escuro</span></a>
+          <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+      </div>
+
+      <div class="box-lupa">
+        <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+          🔍
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nome do Campeonato -->
+  <div class="championship-title-container" id="championshipTitleContainer" style="display: none;">
+    <h1 class="championship-title" id="championshipTitle">Nome do Campeonato</h1>
+  </div>
+
+  <div class='container'>
+    <!-- Seletor de Campeonatos Encerrados -->
+    <div class='championship-selector' id='championshipSelector' style='display: none;'>
+      <div>
+        <label for='selectCampeonato'>📋 Trocar para outro campeonato:</label>
+        <select id='selectCampeonato'>
+          <option value=''>Carregando campeonatos...</option>
+        </select>
+        <button id='btnIrParaCampeonato' class='btn-success' disabled>Ir</button>
+      </div>
+    </div>
+
+    <!-- Opções de ajuste do chaveamento -->
+    <div class='actions' id='bracketControls'>
+      <div style='display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center;'>
+        <label for='teamCountSelect'>Quantidade de times:</label>
+        <select id='teamCountSelect' class='btn-primary' style='padding:10px 14px;'>
+          <option value='6'>6</option>
+          <option value='8'>8</option>
+          <option value='10'>10</option>
+          <option value='12'>12</option>
+          <option value='14'>14</option>
+          <option value='16' selected>16</option>
+          <option value='18'>18</option>
+          <option value='20'>20</option>
+        </select>
+
+        <label for='formatSelect'>Formato:</label>
+        <select id='formatSelect' class='btn-primary' style='padding:10px 14px;'>
+          <option value='single_b01'>Single Elimination (B01 até final BO3)</option>
+          <option value='single_bo3_all'>Single Elimination (todos BO3)</option>
+          <option value='major_playoffs_bo3'>CS2 Major (playoffs BO3)</option>
+          <option value='double_elimination'>Double Elimination</option>
+        </select>
+
+        <button id='addExampleTeams' class='btn-primary'>Embaralhar times</button>
+        <button id='btnListarTimes' class='btn-primary'>Listar Times</button>
+        <button id='resetChaveamento' class='btn-danger'>Resetar Chaveamento</button>
+        <!-- Botões Flutuantes: Trocar Campeonato e Vetos -->
+        <button id='btnTrocarCampeonato' class='btn-primary' title='Trocar para outro campeonato'
+          style='display: flex; align-items: center; gap: 8px;'>
+          <span>🔄</span>
+          <span>Trocar Campeonato</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Carrossel de times -->
+    <div class='teams-carousel'>
+      <div class='carousel-track' id='carouselTrack'>
+        <!-- Itens inseridos via script -->
+      </div>
+    </div>
+
+    <!-- Botões de Fases do Major -->
+    <div class='stages-actions' id='stagesActions' style='display:none;'>
+      <button class='btn-primary' id='btnChallengers'>Challengers Stage (16)</button>
+      <button class='btn-primary' id='btnLegends'>Legends Stage (16)</button>
+      <button class='btn-success' id='btnPlayoffs'>Playoffs / Champions (8)</button>
+      <button class='btn-primary' id='btnOpenSwissModal'>Abrir Tabela Swiss</button>
+    </div>
+
+    <!-- Área gigante com scroll horizontal -->
+    <div class='hscroll-area'>
+      <div class='bracket-header' id='upperBracketHeader' style='display:none;'>
+        <h2 class='bracket-header-title'>Winner's Bracket</h2>
+      </div>
+      <div class='hscroll-content' id='hScrollContent'>
+        <!-- Colunas geradas dinamicamente -->
+      </div>
+    </div>
+
+    <!-- Área do Lower Bracket (Double Elimination) -->
+    <div class='hscroll-area' id='lowerBracketArea' style='display:none;'>
+      <div class='bracket-header'>
+        <h2 class='bracket-header-title'>Loser's Bracket</h2>
+      </div>
+      <div class='hscroll-content' id='lowerBracketContent'>
+        <!-- Lower Bracket gerado dinamicamente -->
+      </div>
+    </div>
+
+    <!-- Classificação Final -->
+    <div class='final-standings-container' id='finalStandingsContainer' style='display:flex;'>
+      <div class='final-standings-title'>Classificação Final</div>
+      <div class='final-standings-grid'>
+        <!-- 1º Lugar -->
+        <div class='standing-card standing-1st standing-card-furia' data-position="1">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>1st</div>
+            <div class='standing-prize'></div>
+            <div class='standing-rewards-container'>
+              <div class='standing-medal-slot'></div>
+              <div class='standing-trophy-slot'></div>
+            </div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>KSCERATO</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>yuurih</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>FalleN</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>chelo</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>arT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2º Lugar -->
+        <div class='standing-card standing-2nd' data-position="2">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>2nd</div>
+            <div class='standing-prize'></div>
+            <div class='standing-medal-slot'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>SunPayus</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Magisk</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Maden</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>snappi</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>boros</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3º-4º Lugar -->
+        <div class='standing-card standing-3rd-4th' data-position="3">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>3rd</div>
+            <div class='standing-prize'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>ZywOo</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>apEX</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Spinx</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>flameZ</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>mezii</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class='standing-card standing-3rd-4th standing-3rd-4th-pain' data-position="4">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>4th</div>
+            <div class='standing-prize'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>skullz</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>biguzera</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>lux</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>kauez</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>nqz</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5º-6º Lugar -->
+        <div class='standing-card standing-5th-6th standing-5th-6th-spirit' data-position="5">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>5th</div>
+            <div class='standing-prize'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>donk</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>chopper</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>sh1ro</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>magixx</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>zont1x</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class='standing-card standing-5th-6th standing-5th-6th-passion' data-position="6">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>6th</div>
+            <div class='standing-prize'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>kvem</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>cptkurtka</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>uQlutzavr</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>sm3t</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Froz1k</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7º-8º Lugar -->
+        <div class='standing-card standing-7th-8th standing-7th-8th-tyloo' data-position="7">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>7th</div>
+            <div class='standing-prize'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>somebody</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Attacker</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>DD</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>BnTeT</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Summer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class='standing-card standing-7th-8th standing-7th-8th-last' data-position="8">
+          <div class='standing-team-logo-bg'></div>
+          <div class='standing-content'>
+            <div class='standing-team-name'>----</div>
+            <div class='standing-rank'>8th</div>
+            <div class='standing-prize'></div>
+            <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+            <div class='standing-members'>
+              <div class='standing-members-title'>Line-up</div>
+              <div class='standing-members-grid'>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>bLitz</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>Annihilation</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>TecKk</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>910</span>
+                </div>
+                <div class='player-card'>
+                  <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                  <span>sk0R</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type='button' class='final-standings-more-btn' id='finalStandingsShowMore'>Ver mais resultados</button>
+    </div>
+
+    <!-- Swiss Board (Challengers / Legends) -->
+    <div class='swiss-area' id='swissBoard' style='display:none;'>
+      <div
+        style='display:flex;justify-content:flex-start;align-items:center;padding:10px 12px;color:#9ddfff;font-weight:700'>
+        Swiss Board</div>
+      <div class='swiss-track'>
+        <div class='swiss-col'>
+          <div class='swiss-title'>0-0</div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+        </div>
+        <div class='swiss-col'>
+          <div class='swiss-title'>1-0</div>
+          ${''}
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-title sub'>0-1</div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+        </div>
+        <div class='swiss-col'>
+          <div class='swiss-title'>2-0</div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-title sub'>1-1</div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-title sub'>0-2</div>
+          <div class='swiss-slot'></div>
+        </div>
+        <div class='swiss-col'>
+          <div class='swiss-title'>3-0 • AVANÇA</div>
+          <div class='swiss-advance'></div>
+          <div class='swiss-title sub'>2-1</div>
+          <div class='swiss-slot'></div>
+          <div class='swiss-title sub'>1-2</div>
+          <div class='swiss-slot'></div>
+        </div>
+        <div class='swiss-col'>
+          <div class='swiss-title'>3-1 • AVANÇA</div>
+          <div class='swiss-advance'></div>
+          <div class='swiss-title sub'>2-2</div>
+          <div class='swiss-slot'></div>
+        </div>
+        <div class='swiss-col'>
+          <div class='swiss-title'>3-2 • AVANÇA</div>
+          <div class='swiss-advance'></div>
+        </div>
+        <div class='swiss-col'>
+          <div class='swiss-title bad'>0-3 • ELIMINA</div>
+          <div class='swiss-elim'></div>
+          <div class='swiss-title bad sub'>1-3 • ELIMINA</div>
+          <div class='swiss-elim'></div>
+          <div class='swiss-title bad sub'>2-3 • ELIMINA</div>
+          <div class='swiss-elim'></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmação para Resetar Chaveamento -->
+    <div id="modalConfirmarReset"
+      style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+      <div
+        style="background-color: #001219; margin: 15% auto; padding: 30px; border: 2px solid #00d4ff; border-radius: 15px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);">
+        <h2 style="color: #00d4ff; margin-top: 0; text-align: center; font-size: 1.5rem;">⚠️ Confirmar Reset</h2>
+        <p style="color: #9ddfff; text-align: center; margin: 20px 0; font-size: 1.1rem; line-height: 1.6;">
+          Tem certeza que deseja resetar o chaveamento?<br>
+          <strong style="color: #ff6b6b;">Todas as partidas, resultados e progressões serão apagados
+            permanentemente.</strong><br>
+          Esta ação não pode ser desfeita!
+        </p>
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+          <button id="btnConfirmarReset" style="
+            background: #ff6b6b;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          " onmouseover="this.style.background='#ff5252'" onmouseout="this.style.background='#ff6b6b'">
+            Sim, Resetar
+          </button>
+          <button id="btnCancelarReset" style="
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Resultado (criado dinamicamente se não existir) -->
+    <div id="modalResultado"
+      style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+      <div
+        style="background-color: #001219; margin: 5% auto; padding: 30px; border: 2px solid #00d4ff; border-radius: 15px; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3); position: relative; max-height: 90vh; overflow-y: auto;">
+        <span id="closeModalResultado"
+          style="position: absolute; top: 15px; right: 20px; color: #9ddfff; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.3s;"
+          onmouseover="this.style.color='#00d4ff'" onmouseout="this.style.color='#9ddfff'">&times;</span>
+        <h2 id="modalResultadoTitle" style="color: #00d4ff; margin-top: 0; text-align: center;">Resultado da Partida
+        </h2>
+        <div id="modalResultadoContent">
+          <!-- Conteúdo será inserido dinamicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Vetos -->
+    <div id="modalVetos" class="modal-overlay" style="display:none;">
+      <div class="modal-backdrop"></div>
+      <div class="modal" id="modalVetosContentWrapper"
+        style="max-width: 800px; min-width: 400px; max-height: 90vh; overflow-y: auto; position: relative; z-index: 10000 !important; background: rgba(15, 15, 35, 0.98) !important; border: 2px solid rgba(0, 212, 255, 0.5) !important; border-radius: 12px; display: block !important; visibility: visible !important; opacity: 1 !important; padding: 0; margin: auto;">
+        <div class="modal-header">
+          <h3 style="color: #00d4ff; margin: 0;">🗺️ Configurar Vetos de Mapas</h3>
+          <button class="modal-close" id="closeModalVetos">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="modalVetosContent" style="padding: 20px;">
+            <!-- Header com times da partida -->
+            <div id="vetosMatchHeader" class="vetos-match-header" style="display: none;">
+              <div class="vetos-team vetos-team-a">
+                <img id="vetosTimeALogo" src="https://cdn-icons-png.flaticon.com/128/5726/5726775.png" alt="Time A"
+                  class="vetos-team-logo">
+                <span id="vetosTimeANome" class="vetos-team-name">Time A</span>
+              </div>
+              <div class="vetos-vs">VS</div>
+              <div class="vetos-team vetos-team-b">
+                <img id="vetosTimeBLogo" src="https://cdn-icons-png.flaticon.com/128/5726/5726775.png" alt="Time B"
+                  class="vetos-team-logo">
+                <span id="vetosTimeBNome" class="vetos-team-name">Time B</span>
+              </div>
+            </div>
+            <!-- Seleção de Formato -->
+            <div class="vetos-section vetos-format-section">
+              <label class="vetos-section-title">
+                Formato da Partida:
+              </label>
+              <div class="vetos-format-options">
+                <label class="vetos-format-option">
+                  <input type="radio" name="formatoVeto" value="bo1" checked>
+                  <span>BO1</span>
+                </label>
+                <label class="vetos-format-option">
+                  <input type="radio" name="formatoVeto" value="bo3">
+                  <span>BO3</span>
+                </label>
+                <label class="vetos-format-option">
+                  <input type="radio" name="formatoVeto" value="bo5">
+                  <span>BO5</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Seleção de Mapas -->
+            <div class="vetos-section vetos-maps-section">
+              <label class="vetos-section-title">
+                Mapas Disponíveis:
+              </label>
+              <div id="mapasContainer" class="vetos-maps-grid">
+                <!-- Mapas serão carregados dinamicamente -->
+              </div>
+            </div>
+
+            <!-- URLs Geradas -->
+            <div id="urlsGeradasContainer" class="vetos-section vetos-urls-section" style="display: none;">
+              <label class="vetos-section-title" style="margin-bottom: 10px;">
+                Links para os Times:
+              </label>
+              <div style="margin-bottom: 10px;">
+                <div class="vetos-link-team">
+                  <img id="vetosLinkTimeALogo" src="https://cdn-icons-png.flaticon.com/128/5726/5726775.png"
+                    alt="Time A" class="vetos-link-team-logo">
+                  <span id="vetosLinkTimeANome" class="vetos-link-team-name">Time A</span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 6px;">
+                  <input type="text" id="urlTimeA" readonly
+                    style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; color: #9ddfff; font-size: 0.9rem;">
+                  <button id="copiarUrlA" class="btn-primary"
+                    style="padding: 8px 15px; font-size: 0.9rem;">Copiar</button>
+                </div>
+              </div>
+              <div>
+                <div class="vetos-link-team">
+                  <img id="vetosLinkTimeBLogo" src="https://cdn-icons-png.flaticon.com/128/5726/5726775.png"
+                    alt="Time B" class="vetos-link-team-logo">
+                  <span id="vetosLinkTimeBNome" class="vetos-link-team-name">Time B</span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 6px;">
+                  <input type="text" id="urlTimeB" readonly
+                    style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; color: #9ddfff; font-size: 0.9rem;">
+                  <button id="copiarUrlB" class="btn-primary"
+                    style="padding: 8px 15px; font-size: 0.9rem;">Copiar</button>
+                </div>
+              </div>
+              <!-- Link de Espectador -->
+              <div style="margin-top: 14px; border-top: 1px solid rgba(0,212,255,0.25); padding-top: 10px;">
+                <div class="vetos-link-team">
+                  <img id="vetosLinkSpectatorLogo" src="https://cdn-icons-png.flaticon.com/128/3601/3601027.png"
+                    alt="Espectador" class="vetos-link-team-logo">
+                  <span class="vetos-link-team-name">Espectador</span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 6px;">
+                  <input type="text" id="urlSpectator" readonly
+                    style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px; color: #9ddfff; font-size: 0.9rem;">
+                  <button id="copiarUrlSpectator" class="btn-primary"
+                    style="padding: 8px 15px; font-size: 0.9rem;">Copiar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botão Aplicar -->
+            <div style="text-align: center;">
+              <button id="btnAplicarVetos" class="btn-primary" style="padding: 12px 30px; font-size: 1.1rem;">
+                Aplicar Configuração
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Lista de Times -->
+    <div id="modalListarTimes"
+      style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+      <div
+        style="background-color: #001219; margin: 5% auto; padding: 30px; border: 2px solid #00d4ff; border-radius: 15px; width: 90%; max-width: 700px; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3); position: relative; max-height: 90vh; overflow-y: auto;">
+        <span id="closeModalListarTimes"
+          style="position: absolute; top: 15px; right: 20px; color: #9ddfff; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.3s;"
+          onmouseover="this.style.color='#00d4ff'" onmouseout="this.style.color='#9ddfff'">&times;</span>
+        <h2 style="color: #00d4ff; margin-top: 0; text-align: center; font-size: 1.5rem;">📋 Lista de Times</h2>
+        <div style="text-align: center; margin: 20px 0;">
+          <span id="totalTimes" style="color: #9ddfff; font-size: 1.2rem; font-weight: 600;">0/0</span>
+        </div>
+        <div id="listaTimesContent" style="margin-top: 20px;">
+          <!-- Lista de times será inserida aqui -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Seleção de Campeonatos -->
+    <div id="modalSelecionarCampeonato"
+      style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);">
+      <div
+        style="background-color: rgba(10, 10, 10, 0.95); margin: 5% auto; padding: 30px; border: 2px solid rgba(245, 110, 8, 0.5); border-radius: 20px; width: 90%; max-width: 900px; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(245, 110, 8, 0.2); position: relative; max-height: 85vh; overflow-y: auto;">
+        <span id="closeModalSelecionarCampeonato"
+          style="position: absolute; top: 20px; right: 25px; color: #9ddfff; font-size: 2.5rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease; z-index: 1;"
+          onmouseover="this.style.color='#f56e08'; this.style.transform='rotate(90deg)'"
+          onmouseout="this.style.color='#9ddfff'; this.style.transform='rotate(0deg)'">&times;</span>
+        <h2
+          style="font-family: 'Oswald', sans-serif; color: #f56e08; margin-top: 0; text-align: center; font-size: 2rem; font-weight: 700; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px;">
+          🏆 Meus Campeonatos</h2>
+        <div id="modalCampeonatosContent" style="margin-top: 20px;">
+          <div style="text-align: center; padding: 40px; color: #9ddfff;">
+            <div style="font-size: 3rem; margin-bottom: 15px;">⏳</div>
+            <p style="font-size: 1.1rem;">Carregando seus campeonatos...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- Modal Resultado de Partida -->
+  <div class='modal-overlay' id='modalResultado' style='display:none;'>
+    <div class='modal'>
+      <div class='modal-header'>
+        <h3 id='modalResultadoTitle'>Resultado da Partida</h3>
+        <button class='modal-close' id='closeResultado'>×</button>
+      </div>
+      <div class='modal-body'>
+        <div id='modalResultadoContent'>
+          <!-- Conteúdo será preenchido dinamicamente -->
+        </div>
+      </div>
+    </div>
+    <div class='modal-backdrop'></div>
+  </div>
+
+  <!-- Modal Swiss Record -->
+  <div class='modal-overlay' id='modalSwiss' style='display:none;'>
+    <div class='modal'>
+      <div class='modal-header'>
+        <h3 id='modalTitle'>Swiss Stage</h3>
+        <button class='modal-close' id='closeSwiss'>×</button>
+      </div>
+      <div class='modal-body'>
+        <div class='modal-controls'>
+          <small>Necessário 3 vitórias para classificar; 3 derrotas elimina.</small>
+        </div>
+        <table class='table' id='swissTable'>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Time</th>
+              <th>V</th>
+              <th>D</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class='modal-backdrop'></div>
+
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
+      <div class="modal-content-profissional">
+        <div class="modal-header-profissional">
+          <div class="header-content">
+            <div class="header-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="header-text">
+              <h2>Criar Novo Time</h2>
+              <p>Preencha as informações para criar seu time</p>
+            </div>
+          </div>
+          <button class="close-profissional" id="closeModalCriarTime">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body-profissional">
+          <form id="formCriarTime" class="form-profissional">
+            <!-- Seção de Imagens -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-image"></i>
+                Imagens do Time
+              </h3>
+
+              <div class="image-upload-grid">
+                <!-- Logo do Time -->
+                <div class="image-upload-item">
+                  <div class="upload-area" id="logoUploadArea">
+                    <div class="upload-content">
+                      <i class="fas fa-camera"></i>
+                      <span class="upload-text">Logo do Time</span>
+                      <span class="upload-specs">Recomendado: 200x200px</span>
+                    </div>
+                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                    <div class="image-preview" id="logoPreview"></div>
+                  </div>
+                </div>
+
+                <!-- Banner do Time -->
+                <div class="image-upload-item">
+                  <div class="upload-area" id="bannerUploadArea">
+                    <div class="upload-content">
+                      <i class="fas fa-image"></i>
+                      <span class="upload-text">Banner do Time</span>
+                      <span class="upload-specs">Recomendado: 1200x400px</span>
+                    </div>
+                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                    <div class="image-preview" id="bannerPreview"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção de Informações -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informações do Time
+              </h3>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="nomeTime" class="form-label">
+                    <i class="fas fa-tag"></i>
+                    Nome do Time
+                  </label>
+                  <input type="text" id="nomeTime" name="nome" required maxlength="100" placeholder="Ex: LEGALIZE"
+                    class="form-input">
+                  <div class="input-hint">Nome completo do seu time</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="tagTime" class="form-label">
+                    <i class="fas fa-hashtag"></i>
+                    Tag do Time
+                  </label>
+                  <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                    class="form-input">
+                  <div class="input-hint">Tag curta para identificação</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="sobreTime" class="form-label">
+                  <i class="fas fa-align-left"></i>
+                  Sobre o Time
+                </label>
+                <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                  placeholder="Descreva a história, objetivos e características do seu time..."
+                  class="form-textarea"></textarea>
+                <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+              </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="form-actions-profissional">
+              <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                <i class="fas fa-times"></i>
+                Cancelar
+              </button>
+              <button type="submit" class="btn-primary-profissional">
+                <i class="fas fa-plus"></i>
+                Criar Time
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
+      <div class="modal-content-profissional">
+        <div class="modal-header-profissional">
+          <div class="header-content">
+            <div class="header-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="header-text">
+              <h2>Criar Novo Time</h2>
+              <p>Preencha as informações para criar seu time</p>
+            </div>
+          </div>
+          <button class="close-profissional" id="closeModalCriarTime">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body-profissional">
+          <form id="formCriarTime" class="form-profissional">
+            <!-- Seção de Imagens -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-image"></i>
+                Imagens do Time
+              </h3>
+
+              <div class="image-upload-grid">
+                <!-- Logo do Time -->
+                <div class="image-upload-item">
+                  <div class="upload-area" id="logoUploadArea">
+                    <div class="upload-content">
+                      <i class="fas fa-camera"></i>
+                      <span class="upload-text">Logo do Time</span>
+                      <span class="upload-specs">Recomendado: 200x200px</span>
+                    </div>
+                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                    <div class="image-preview" id="logoPreview"></div>
+                  </div>
+                </div>
+
+                <!-- Banner do Time -->
+                <div class="image-upload-item">
+                  <div class="upload-area" id="bannerUploadArea">
+                    <div class="upload-content">
+                      <i class="fas fa-image"></i>
+                      <span class="upload-text">Banner do Time</span>
+                      <span class="upload-specs">Recomendado: 1200x400px</span>
+                    </div>
+                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                    <div class="image-preview" id="bannerPreview"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção de Informações -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informações do Time
+              </h3>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="nomeTime" class="form-label">
+                    <i class="fas fa-tag"></i>
+                    Nome do Time
+                  </label>
+                  <input type="text" id="nomeTime" name="nome" required maxlength="100" placeholder="Ex: LEGALIZE"
+                    class="form-input">
+                  <div class="input-hint">Nome completo do seu time</div>
+                </div>
+
+                <div class="form-group">
+                  <label for="tagTime" class="form-label">
+                    <i class="fas fa-hashtag"></i>
+                    Tag do Time
+                  </label>
+                  <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                    class="form-input">
+                  <div class="input-hint">Tag curta para identificação</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="sobreTime" class="form-label">
+                  <i class="fas fa-align-left"></i>
+                  Sobre o Time
+                </label>
+                <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                  placeholder="Descreva a história, objetivos e características do seu time..."
+                  class="form-textarea"></textarea>
+                <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+              </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="form-actions-profissional">
+              <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                <i class="fas fa-times"></i>
+                Cancelar
+              </button>
+              <button type="submit" class="btn-primary-profissional">
+                <i class="fas fa-plus"></i>
+                Criar Time
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const grid = document.querySelector('.final-standings-grid');
+        const container = document.getElementById('finalStandingsContainer');
+        const showMoreBtn = document.getElementById('finalStandingsShowMore');
+        const PAGE_SIZE = 8;
+        let cards = [];
+        let visibleCount = PAGE_SIZE;
+        let userExpanded = false; // Flag para rastrear se o usuário expandiu manualmente
+
+        if (typeof window.__DEBUG_FINAL_STANDINGS__ === 'undefined') {
+          window.__DEBUG_FINAL_STANDINGS__ = true; // defina para false quando não quiser logs
+        }
+
+        const debugFinalStandings = (step, payload = {}) => {
+          // Debug desabilitado
+        };
+
+        const getTotalTeams = () => {
+          // Prioridade 1: dataset do container
+          if (container?.dataset.totalTeams) {
+            const parsed = parseInt(container.dataset.totalTeams, 10);
+            if (!Number.isNaN(parsed)) return parsed;
+          }
+
+          // Prioridade 2: window.campeonatoAtualDados
+          if (window.campeonatoAtualDados?.qnt_times) {
+            const parsed = parseInt(window.campeonatoAtualDados.qnt_times, 10);
+            if (!Number.isNaN(parsed)) return parsed;
+          }
+
+          // Prioridade 3: window.dadosCampeonatoAtual
+          if (window.dadosCampeonatoAtual?.qnt_times) {
+            const parsed = parseInt(window.dadosCampeonatoAtual.qnt_times, 10);
+            if (!Number.isNaN(parsed)) return parsed;
+          }
+
+          // Prioridade 4: window.numTeams
+          if (window.numTeams) {
+            const parsed = parseInt(window.numTeams, 10);
+            if (!Number.isNaN(parsed)) return parsed;
+          }
+
+          // Prioridade 5: select
+          const select = document.getElementById('teamCountSelect');
+          if (select?.value) {
+            const parsed = parseInt(select.value, 10);
+            if (!Number.isNaN(parsed)) return parsed;
+          }
+
+          // Fallback: quantidade de cards existentes
+          return cards.length;
+        };
+
+        // Função para inicializar event listeners em todos os botões de toggle
+        const initializeToggleButtons = () => {
+          if (!grid) return;
+
+          cards = Array.from(grid.querySelectorAll('.standing-card'));
+          cards.forEach((card) => {
+            const toggleBtn = card.querySelector('.standing-toggle-btn');
+            if (toggleBtn && !toggleBtn.hasAttribute('data-listener-added')) {
+              toggleBtn.setAttribute('data-listener-added', 'true');
+              toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const expanded = card.classList.toggle('expanded');
+                toggleBtn.textContent = expanded ? 'Esconder Integrantes' : 'Ver Integrantes';
+                debugFinalStandings('toggle-card', {
+                  expanded,
+                  cardIndex: cards.indexOf(card),
+                  hasExpandedClass: card.classList.contains('expanded')
+                });
+              });
+            }
+          });
+        };
+
+        // Event delegation como fallback (garante que funciona mesmo se os listeners individuais falharem)
+        if (grid) {
+          grid.addEventListener('click', (e) => {
+            const toggleBtn = e.target.closest('.standing-toggle-btn');
+            if (toggleBtn) {
+              e.preventDefault();
+              e.stopPropagation();
+              const card = toggleBtn.closest('.standing-card');
+              if (card) {
+                const expanded = card.classList.toggle('expanded');
+                toggleBtn.textContent = expanded ? 'Esconder Integrantes' : 'Ver Integrantes';
+                debugFinalStandings('toggle-card-delegation', {
+                  expanded,
+                  hasExpandedClass: card.classList.contains('expanded')
+                });
+              }
+            }
+          });
+        }
+
+        const applyCardVisibility = () => {
+          const totalTeams = getTotalTeams();
+          const totalCards = cards.length;
+          const effectiveTotal = totalTeams > 0 ? Math.min(totalTeams, totalCards) : totalCards;
+
+          // Garantir que temos cards suficientes (criar se necessário)
+          if (grid && totalTeams > cards.length) {
+            for (let i = cards.length + 1; i <= totalTeams; i++) {
+              const newCard = createStandingCard(i);
+              grid.appendChild(newCard);
+            }
+            // Atualizar lista de cards após criar novos
+            cards = Array.from(grid.querySelectorAll('.standing-card'));
+          }
+
+          // Sempre inicializar os listeners (para novos e existentes)
+          initializeToggleButtons();
+
+          const maxToShow = effectiveTotal || PAGE_SIZE;
+
+          // Garantir que visibleCount não ultrapasse o máximo disponível
+          visibleCount = Math.min(visibleCount, maxToShow);
+
+          debugFinalStandings('apply-visibility', {
+            totalCards,
+            effectiveTotal,
+            visibleCount,
+            maxToShow,
+            totalTeams
+          });
+
+          cards.forEach((card, index) => {
+            if (index < visibleCount && index < effectiveTotal) {
+              card.classList.remove('standing-card-hidden');
+              debugFinalStandings('card-visible', { cardIndex: index + 1 });
+            } else {
+              card.classList.add('standing-card-hidden');
+              debugFinalStandings('card-hidden', { cardIndex: index + 1 });
+            }
+            if (index >= effectiveTotal) {
+              card.classList.add('standing-card-hidden');
+            }
+          });
+
+          // Mostrar botão se houver mais cards do que os visíveis OU se o total de times for maior que os visíveis
+          if (showMoreBtn) {
+            const hasMoreCards = visibleCount < effectiveTotal;
+            const shouldShow = hasMoreCards;
+
+            showMoreBtn.style.display = shouldShow ? 'inline-flex' : 'none';
+            debugFinalStandings('show-more-visibility', {
+              totalTeams,
+              totalCards,
+              effectiveTotal,
+              visibleCount,
+              hasMoreCards,
+              shouldShow
+            });
+          }
+        };
+
+        // Função para criar cards dinamicamente
+        const createStandingCard = (position, teamName = '', prize = '') => {
+          const card = document.createElement('div');
+          card.className = 'standing-card';
+          card.setAttribute('data-position', String(position));
+
+          // Determinar classe baseada na posição
+          if (position === 1) {
+            card.classList.add('standing-1st', 'standing-card-furia');
+          } else if (position === 2) {
+            card.classList.add('standing-2nd');
+          } else if (position >= 3 && position <= 4) {
+            card.classList.add('standing-3rd-4th');
+            if (position === 4) card.classList.add('standing-3rd-4th-pain');
+          } else if (position >= 5 && position <= 6) {
+            card.classList.add('standing-5th-6th');
+            if (position === 5) card.classList.add('standing-5th-6th-spirit');
+            if (position === 6) card.classList.add('standing-5th-6th-passion');
+          } else {
+            card.classList.add('standing-7th-8th');
+            if (position === 7) card.classList.add('standing-7th-8th-tyloo');
+            if (position === 8) card.classList.add('standing-7th-8th-last');
+          }
+
+          const rankText = position === 1 ? '1st' :
+            position === 2 ? '2nd' :
+              position === 3 ? '3rd' :
+                position === 4 ? '4th' :
+                  position === 5 ? '5th' :
+                    position === 6 ? '6th' :
+                      position === 7 ? '7th' :
+                        position === 8 ? '8th' :
+                          `${position}th`;
+
+          card.innerHTML = `
+            <div class='standing-team-logo-bg'></div>
+            <div class='standing-content'>
+              <div class='standing-team-name'>${teamName || `Time ${position}`}</div>
+              <div class='standing-rank'>${rankText}</div>
+              <div class='standing-prize'>${prize || '$0'}</div>
+              <button type='button' class='standing-toggle-btn'>Ver Integrantes</button>
+              <div class='standing-members'>
+                <div class='standing-members-title'>Line-up</div>
+                <div class='standing-members-grid'>
+                  <div class='player-card'>
+                    <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                    <span>Player 1</span>
+                  </div>
+                  <div class='player-card'>
+                    <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                    <span>Player 2</span>
+                  </div>
+                  <div class='player-card'>
+                    <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                    <span>Player 3</span>
+                  </div>
+                  <div class='player-card'>
+                    <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                    <span>Player 4</span>
+                  </div>
+                  <div class='player-card'>
+                    <div class='player-logo' style="background-image:url('../img/legalize.png')"></div>
+                    <span>Player 5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          return card;
+        };
+
+        const refreshCards = (preserveVisibleCount = false) => {
+          if (!grid) return;
+          const oldCardsCount = cards.length;
+          cards = Array.from(grid.querySelectorAll('.standing-card'));
+          const totalTeams = getTotalTeams();
+
+          // Se há mais times configurados do que cards existentes, criar os cards faltantes
+          if (totalTeams > cards.length) {
+            debugFinalStandings('creating-missing-cards', {
+              cardsExistentes: cards.length,
+              totalTeams,
+              faltantes: totalTeams - cards.length
+            });
+
+            for (let i = cards.length + 1; i <= totalTeams; i++) {
+              const newCard = createStandingCard(i);
+              grid.appendChild(newCard);
+            }
+
+            // Atualizar lista de cards após criar novos
+            cards = Array.from(grid.querySelectorAll('.standing-card'));
+
+            // Adicionar event listeners aos novos botões de toggle
+            cards.slice(oldCardsCount).forEach(card => {
+              const toggleBtn = card.querySelector('.standing-toggle-btn');
+              if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                  const expanded = card.classList.toggle('expanded');
+                  toggleBtn.textContent = expanded ? 'Esconder Integrantes' : 'Ver Integrantes';
+                });
+              }
+            });
+          }
+
+          debugFinalStandings('refresh-cards', {
+            oldCardsCount,
+            newCardsCount: cards.length,
+            totalTeams,
+            visibleCount,
+            preserveVisibleCount
+          });
+
+          // Só resetar visibleCount se não estiver preservando E o usuário não tiver expandido manualmente
+          if (!preserveVisibleCount && !userExpanded) {
+            // Se há mais times do que o limite inicial, mostrar apenas os primeiros 8
+            if (totalTeams > PAGE_SIZE || cards.length > PAGE_SIZE) {
+              visibleCount = PAGE_SIZE;
+            } else {
+              visibleCount = Math.min(totalTeams, cards.length);
+            }
+          } else {
+            // Se está preservando ou o usuário expandiu, garantir que visibleCount não ultrapasse o total de cards
+            visibleCount = Math.min(visibleCount, cards.length);
+          }
+
+          applyCardVisibility();
+        };
+
+        const updateTotalTeams = (value) => {
+          const numValue = parseInt(value, 10);
+          if (Number.isNaN(numValue)) return;
+
+          if (container) {
+            container.dataset.totalTeams = String(numValue);
+          }
+          debugFinalStandings('update-total-teams', { totalTeams: numValue });
+          // Preservar o estado se o usuário já expandiu
+          refreshCards(userExpanded);
+        };
+
+        window.updateFinalStandingsTotal = updateTotalTeams;
+        window.refreshFinalStandingsView = refreshCards;
+
+        // Inicializar apenas uma vez
+        refreshCards();
+        // Garantir que os listeners estão inicializados
+        initializeToggleButtons();
+
+        // Event listener do botão
+        if (showMoreBtn) {
+          showMoreBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Atualizar lista de cards e criar cards faltantes se necessário
+            refreshCards(true);
+
+            const totalTeams = getTotalTeams();
+            const effectiveTotal = totalTeams > 0 ? Math.min(totalTeams, cards.length) : cards.length;
+            // O máximo a mostrar é o total de times configurado (limitado aos cards existentes)
+            const maxToShow = effectiveTotal || PAGE_SIZE;
+            const newVisibleCount = Math.min(visibleCount + PAGE_SIZE, maxToShow);
+
+            debugFinalStandings('show-more-click', {
+              visibleCountAntes: visibleCount,
+              newVisibleCount,
+              maxToShow,
+              totalTeams,
+              cardsLength: cards.length,
+              incremento: PAGE_SIZE,
+              effectiveTotal
+            });
+
+            if (newVisibleCount > visibleCount) {
+              visibleCount = newVisibleCount;
+              userExpanded = true; // Marcar que o usuário expandiu manualmente
+              applyCardVisibility();
+            } else {
+              debugFinalStandings('show-more-noop', {
+                visibleCount,
+                newVisibleCount,
+                maxToShow,
+                totalTeams
+              });
+            }
+          });
+        }
+
+        // Observer para detectar novos cards
+        if (grid) {
+          const observer = new MutationObserver(() => {
+            // Preservar o visibleCount quando novos cards são adicionados
+            refreshCards(true);
+            // Garantir que novos cards recebam listeners
+            initializeToggleButtons();
+          });
+
+          observer.observe(grid, { childList: true, subtree: false });
+        }
+
+        // Listener do select
+        const teamCountSelect = document.getElementById('teamCountSelect');
+        if (teamCountSelect) {
+          teamCountSelect.addEventListener('change', () => {
+            updateTotalTeams(teamCountSelect.value);
+          });
+        }
+
+        // Verificar periodicamente se o total de times mudou (para quando os dados são carregados depois)
+        // Mas só se o usuário não tiver expandido manualmente
+        setInterval(() => {
+          if (userExpanded) return; // Não interferir se o usuário já expandiu
+
+          const currentTotal = getTotalTeams();
+          const storedTotal = container?.dataset.totalTeams ? parseInt(container.dataset.totalTeams, 10) : null;
+          if (storedTotal !== currentTotal && currentTotal > 0) {
+            updateTotalTeams(currentTotal);
+          }
+        }, 2000);
+
+        document.querySelectorAll('.standing-toggle-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const card = button.closest('.standing-card');
+            const expanded = card.classList.toggle('expanded');
+            button.textContent = expanded ? 'Esconder Integrantes' : 'Ver Integrantes';
+          });
+        });
+      });
+    </script>
+
+    <script src="../js/chaveamento_sistema.js"></script>
+    <script src="../js/chaveamento.js"></script>
+
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - Mixcamp</title>
+    <link rel="stylesheet" href="../css/perfil.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="claro">
+    <!-- Header -->
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+    
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+                    
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+            
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+    
+        <div class="search-profile-area">
+            <div class="user-auth" id="userAuth">
+                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+
+            <div class="user-perfil" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+        
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Menu Mobile Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+    <nav class="mobile-nav-menu" id="mobileNavMenu">
+        <ul>
+            <li><a href="campeonato.html" onclick="toggleMobileMenu()">Campeonato</a></li>
+            <li><a href="comunidade.html" onclick="toggleMobileMenu()">Comunidade</a></li>
+            <li><a href="noticias.html" onclick="toggleMobileMenu()">Notícias</a></li>
+            <li><a href="apoiadores.html" onclick="toggleMobileMenu()">Apoiadores</a></li>
+            <li><a href="sobre.html" onclick="toggleMobileMenu()">Sobre</a></li>
+        </ul>
+    </nav>
+
+    <main class="profile-main">
+        <!-- Profile Hero Section -->
+        <div class="profile-hero">
+            <!-- Banner com Carta Dentro -->
+            <div class="hero-banner" id="heroBanner">
+                <div class="banner-gradient"></div>
+                
+                <!-- Profile Card Dentro do Banner -->
+                <div class="profile-card-inside">
+                    <div class="card-top-icons">
+                        <div class="verified-check" id="verifiedCheck" style="display: none;">
+                            <img src="../img/verify.gif" alt="Verificado" class="verified-gif">
+                        </div>
+                    </div>
+                    
+                    <!-- Botão Menu com Ações em Cascata -->
+                    <div class="card-menu-container">
+                        <div class="admin-badge" id="adminBadge" style="display: none;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="mx-basic-icon" id="mxBasicIcon">
+                            <img src="../img/mxplus.png" alt="MX Basic" id="mxBasicImg" class="mx-basic-img">
+                        </div>
+                        <div class="supporter-icon" id="supporterIcon">
+                            <i class="fas fa-hand-holding-heart"></i>
+                        </div>
+                        <button class="card-menu-btn" id="cardMenuBtn">
+                            <i class="far fa-circle"></i>
+                        </button>
+                        <div class="card-actions-cascade" id="cardActionsCascade">
+                            <button class="card-action-btn share-action" onclick="Copiarl_Link_Perfil()">
+                                <i class="fas fa-share"></i>
+                                <span class="action-tooltip">Compartilhar</span>
+                            </button>
+                            <button class="card-action-btn gift-action" onclick="presentearPerfil()">
+                                <i class="fas fa-gift"></i>
+                                <span class="action-tooltip">Presentear</span>
+                            </button>
+                            <button class="card-action-btn download-action" onclick="baixarCfg()">
+                                <i class="fa-regular fa-file"></i>
+                                <span class="action-tooltip">Download CFG</span>
+                            </button>
+                            <button class="card-action-btn download-action" onclick="baixarCfg()">
+                                <i class="fa-regular fa-cupom"></i>
+                                <span class="action-tooltip">Download CFG</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-avatar-wrapper">
+                    <div class="card-avatar-container" onclick="rotateAvatar()">
+                        <div class="card-avatar-inner" id="cardAvatarInner">
+                            <div class="card-avatar-front">
+                                <img src="../img/legalize.png" alt="Avatar" class="card-avatar-img" id="cardAvatarImg">
+                                <div class="card-avatar-bg" id="cardAvatarBg"></div>
+                            </div>
+                            <div class="card-avatar-back">
+                                <img src="../img/legalize.png" alt="Avatar Back" class="card-avatar-img">
+                                <div class="card-avatar-bg-back" id="cardAvatarBgBack"></div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-positions" id="profilePositions">
+                        <!-- Imagens de posições serão inseridas via JS -->
+                    </div>
+                    
+                    <div class="card-user-info">
+                        <h2 class="card-username" id="profileUsername">Nome do Usuário</h2>
+                        <div class="faceit-level-container" id="faceitLevelContainer" style="display: none;">
+                            <img src="" alt="Faceit Level" class="faceit-level-icon" id="faceitLevelIcon">
+                            <span class="faceit-level-text" id="faceitLevelText">Level Faceit</span>
+                        </div>
+                        <div class="team-tag-container" id="teamTagContainer">
+                            <a href="#" id="teamLink" class="team-tag-link" onclick="pageteam()">
+                                <i class="fas fa-users"></i>
+                                <span id="teamTagName"></span>
+                            </a>
+                        </div>
+                        <div class="card-status-icons">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo do Banner -->
+                <div class="banner-overlay-content">
+                    <div class="banner-actions-bottom">
+                        <button class="banner-btn orange-btn" id="followBtnBanner" onclick="toggleFollow()">
+                            <i class="fas fa-star"></i>
+                            <span>SEGUIR</span>
+                        </button>
+                        <button class="banner-btn menu-btn" id="buconfig" onclick="pageConfig()">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- Seção de Medalhas -->
+        <div class="medals-main-section">
+            <div class="medals-header">
+                <h2 class="medals-title">
+                    <i class="fas fa-trophy"></i>
+                    Medalhas
+                </h2>
+                <p class="medals-subtitle">Suas conquistas e medalhas</p>
+            </div>
+            <div class="medals-container-wrapper">
+                <button class="medal-carousel-btn medal-carousel-prev" id="medalCarouselPrev" style="display: none;">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="medals-container" id="medalsContainer">
+                    <div class="medalha-slot" data-slot="1" id="medalhaslots">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="2">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="3">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="4">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="5">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="6">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="7">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="8">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="9">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="10">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="medalha-slot" data-slot="11">
+                        <div class="medalha-content">
+                            <!-- Conteúdo da medalha será inserido via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <button class="medal-carousel-btn medal-carousel-next" id="medalCarouselNext" style="display: none;">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="content-wrapper">
+            <!-- Sidebar Esquerda -->
+            <aside class="profile-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Sobre
+                    </h3>
+                    <p class="about-description" id="aboutDescription">
+                        Descrição do perfil aparecerá aqui...
+                    </p>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-link"></i>
+                        Redes Sociais
+                    </h3>
+                    <div class="social-grid" id="socialGrid">
+                        <!-- Links sociais serão inseridos via JS -->
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- Conteúdo Central -->
+            <div class="main-content">
+                <!-- Navegação por Tabs -->
+                <div class="content-tabs">
+                    <button class="content-tab active" data-content="stats" onclick="showContent('stats')">
+                        <i class="fas fa-trophy"></i>
+                        <span>Estatísticas</span>
+                    </button>
+                    <button class="content-tab" data-content="reels" onclick="showContent('reels')">
+                        <i class="fas fa-video"></i>
+                        <span>Reels</span>
+                        <span class="tab-count" id="reelsCount">0</span>
+                    </button>
+                    <button class="content-tab" data-content="followers" onclick="showContent('followers')">
+                        <i class="fas fa-users"></i>
+                        <span>Seguidores</span>
+                        <span class="tab-count" id="followersCount">0</span>
+                    </button>
+                    <button class="content-tab" data-content="matches" onclick="showContent('matches')">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Eventos</span>
+                        <span class="tab-count" id="matchesCount">0</span>
+                    </button>
+                    <button class="content-tab" data-content="highlights" onclick="showContent('highlights')">
+                        <i class="fas fa-history"></i>
+                        <span>Team History</span>
+                    </button>
+                </div>
+
+                <!-- Conteúdo: Estatísticas -->
+                <div class="content-panel active" id="panelStats">
+                    <div class="stats-content">
+                        <!-- Tabs de Estatísticas -->
+                        <div class="stats-tabs">
+                            <button class="stats-tab active" data-stats="desempenho" onclick="showStatsTab('desempenho')">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Desempenho</span>
+                            </button>
+                            <button class="stats-tab" data-stats="armas" onclick="showStatsTab('armas')">
+                                <i class="fas fa-bullseye"></i>
+                                <span>Armas</span>
+                            </button>
+                        </div>
+
+                        <!-- Painel: Desempenho -->
+                        <div class="stats-panel-content active" id="statsDesempenho">
+                            <!-- Seção de Horas (Destaque) -->
+                            <div class="hours-section">
+                                <div class="hours-header">
+                                    <i class="fas fa-clock"></i>
+                                    <h3>Tempo de Jogo</h3>
+                                </div>
+                                <div class="hours-cards">
+                                    <div class="hour-card main-hour">
+                                        <div class="hour-icon">
+                                            <i class="fas fa-hourglass-half"></i>
+                                        </div>
+                                        <div class="hour-content">
+                                            <span class="hour-label">Total de Horas</span>
+                                            <span class="hour-value" id="totalHours">0h</span>
+                                        </div>
+                                        <div class="hour-glow"></div>
+                                    </div>
+                                    <div class="hour-card recent-hour">
+                                        <div class="hour-icon">
+                                            <i class="fas fa-calendar-week"></i>
+                                        </div>
+                                        <div class="hour-content">
+                                            <span class="hour-label">Últimas 2 Semanas</span>
+                                            <span class="hour-value" id="hoursLast2Weeks">0h</span>
+                                        </div>
+                                        <div class="hour-glow"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seção de Estatísticas -->
+                            <div class="performance-stats-section">
+                                <div class="performance-header">
+                                    <i class="fas fa-chart-line"></i>
+                                    <h3>Estatísticas de Desempenho</h3>
+                                </div>
+                                <div class="performance-grid">
+                                    <div class="performance-card">
+                                        <div class="performance-icon matches-icon">
+                                            <i class="fas fa-gamepad"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">Partidas</span>
+                                            <span class="performance-value" id="totalMatches">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="performance-card">
+                                        <div class="performance-icon wins-icon">
+                                            <i class="fas fa-trophy"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">Vitórias</span>
+                                            <span class="performance-value win" id="totalWins">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="performance-card">
+                                        <div class="performance-icon losses-icon">
+                                            <i class="fas fa-times-circle"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">Derrotas</span>
+                                            <span class="performance-value loss" id="totalLosses">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="performance-card">
+                                        <div class="performance-icon kd-icon">
+                                            <i class="fas fa-crosshairs"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">K/D Médio</span>
+                                            <span class="performance-value" id="avgKD">0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="performance-card">
+                                        <div class="performance-icon kills-icon">
+                                            <i class="fas fa-skull"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">Total de Kills</span>
+                                            <span class="performance-value" id="totalKills">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="performance-card">
+                                        <div class="performance-icon deaths-icon">
+                                            <i class="fas fa-skull-crossbones"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">Total de Deaths</span>
+                                            <span class="performance-value loss" id="totalDeaths">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="performance-card">
+                                        <div class="performance-icon mvp-icon">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <div class="performance-info">
+                                            <span class="performance-label">MVP</span>
+                                            <span class="performance-value" id="totalMVP">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dashboard com Gráficos -->
+                            <div class="dashboard-performance-section">
+                                <div class="dashboard-performance-header">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <h3>Dashboard de Desempenho</h3>
+                                </div>
+                                
+                                <div class="dashboard-charts-wrapper">
+                                    <div class="dashboard-chart-card">
+                                        <div class="chart-card-header">
+                                            <i class="fas fa-trophy"></i>
+                                            <h4>Win Rate</h4>
+                                        </div>
+                                        <div class="chart-container-performance">
+                                            <div class="chart-center-value" id="winRateCenter">
+                                                <span class="chart-center-number">0%</span>
+                                                <span class="chart-center-label">Win Rate</span>
+                                            </div>
+                                            <canvas id="winsLossesChart"></canvas>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dashboard-chart-card">
+                                        <div class="chart-card-header">
+                                            <i class="fas fa-crosshairs"></i>
+                                            <h4>K/D Ratio</h4>
+                                        </div>
+                                        <div class="chart-container-performance">
+                                            <div class="chart-center-value" id="kdRatioCenter">
+                                                <span class="chart-center-number">0.00</span>
+                                                <span class="chart-center-label">K/D</span>
+                                            </div>
+                                            <canvas id="killsDeathsChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cards de Resumo -->
+                                <div class="dashboard-summary-cards">
+                                    <div class="summary-card win-rate-card">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-percentage"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <span class="summary-label">Taxa de Vitória</span>
+                                            <span class="summary-value" id="winRate">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card kd-card">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <span class="summary-label">K/D Ratio</span>
+                                            <span class="summary-value" id="kdRatio">0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-card kills-per-match-card">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-skull"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <span class="summary-label">Kills por Partida</span>
+                                            <span class="summary-value" id="killsPerMatch">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Painel: Armas -->
+                        <div class="stats-panel-content" id="statsArmas">
+                            <div class="weapons-header">
+                                <div class="weapons-filters">
+                                    <button class="weapon-filter-btn active" data-filter="all" onclick="filterWeapons('all')">
+                                        <i class="fas fa-globe"></i>
+                                        <span>Geral</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="rifles" onclick="filterWeapons('rifles')">
+                                        <i class="fas fa-crosshairs"></i>
+                                        <span>Rifles</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="snipers" onclick="filterWeapons('snipers')">
+                                        <i class="fas fa-bullseye"></i>
+                                        <span>Snipers</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="pistolas" onclick="filterWeapons('pistolas')">
+                                        <i class="fas fa-handgun"></i>
+                                        <span>Pistolas</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="smgs" onclick="filterWeapons('smgs')">
+                                        <i class="fas fa-spray-can"></i>
+                                        <span>SMGs</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="escopetas" onclick="filterWeapons('escopetas')">
+                                        <i class="fas fa-bomb"></i>
+                                        <span>Escopetas</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="metralhadoras" onclick="filterWeapons('metralhadoras')">
+                                        <i class="fas fa-fire"></i>
+                                        <span>Metralhadoras</span>
+                                    </button>
+                                    <button class="weapon-filter-btn" data-filter="utilitarios" onclick="filterWeapons('utilitarios')">
+                                        <i class="fas fa-tools"></i>
+                                        <span>Utilitários</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="weapons-dashboard" id="weaponsDashboard" style="display: block;">
+                                <!-- Cards de Estatísticas -->
+                                <div class="dashboard-stats-cards">
+                                    <div class="stat-card">
+                                        <div class="stat-card-icon">
+                                            <i class="fas fa-crosshairs"></i>
+                                        </div>
+                                        <div class="stat-card-content">
+                                            <span class="stat-card-label">Total de Kills</span>
+                                            <span class="stat-card-value" id="dashboardTotalKills">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-icon">
+                                            <i class="fas fa-trophy"></i>
+                                        </div>
+                                        <div class="stat-card-content">
+                                            <span class="stat-card-label">Arma Mais Usada</span>
+                                            <span class="stat-card-value" id="dashboardTopWeapon">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="stat-card-content">
+                                            <span class="stat-card-label">Média de Kills</span>
+                                            <span class="stat-card-value" id="dashboardAvgKills">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-icon">
+                                            <i class="fas fa-fire"></i>
+                                        </div>
+                                        <div class="stat-card-content">
+                                            <span class="stat-card-label">Categoria Favorita</span>
+                                            <span class="stat-card-value" id="dashboardTopCategory">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Gráficos -->
+                                <div class="dashboard-charts-grid">
+                                    <div class="chart-card">
+                                        <h3 class="chart-title">
+                                            <i class="fas fa-trophy"></i>
+                                            Top 10 Armas por Kills
+                                        </h3>
+                                        <div class="top-weapons-list" id="topWeaponsList">
+                                            <!-- Top 10 armas serão inseridas via JS -->
+                                        </div>
+                                    </div>
+                                    <div class="chart-card">
+                                        <h3 class="chart-title">
+                                            <i class="fas fa-chart-pie"></i>
+                                            Distribuição por Categoria
+                                        </h3>
+                                        <div class="chart-container">
+                                            <canvas id="categoryChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="weapons-stats-container" id="weaponsStatsContainer">
+                                <!-- Estatísticas de armas serão inseridas via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo: Reels -->
+                <div class="content-panel" id="panelReels">
+                    <div class="reels-header">
+                        <button id="addVideoBtn" class="add-video-btn" onclick="adicionarVideo()">
+                            <i class="fas fa-plus"></i>
+                            <span>Adicionar Vídeo</span>
+                        </button>
+                    </div>
+                    <div class="reels-container" id="reelsContainer">
+                        <!-- Reels serão inseridos via JS -->
+                    </div>
+                </div>
+
+                <!-- Conteúdo: Seguidores -->
+                <div class="content-panel" id="panelFollowers">
+                    <div class="followers-grid" id="followersGrid">
+                        <!-- Seguidores serão inseridos via JS -->
+                    </div>
+                </div>
+
+                <!-- Conteúdo: Eventos -->
+                <div class="content-panel" id="panelMatches">
+                    <div class="events-tabs">
+                        <button class="event-tab active" data-event-type="upcoming">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Próximos Eventos</span>
+                        </button>
+                    </div>
+                    <div class="events-content">
+                        <div class="events-list active" id="upcomingEventsList">
+                            <!-- Card de exemplo - será substituído quando chamar criarCardsEventos() -->
+                            <div class="event-card" id="eventCard">
+                                <div class="event-card-banner" style="background-image: url('../img/banner.png');">
+                                    <div class="event-card-badges">
+                                        <span class="event-badge status-disponivel">Disponível</span>
+                                        <span class="event-badge tipo-oficial">Oficial</span>
+                                        <span class="event-badge nivel">Nível 5</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="event-card-content">
+                                    <h3 class="event-card-title">MIXCAMP 1º Edição</h3>
+                                    
+                                    <div class="event-card-info">
+                                        <div class="event-info-item">
+                                            <i class="fas fa-users"></i>
+                                            <span>
+                                                <span class="event-info-label">Times: </span>
+                                                <span class="event-info-value">0/6</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="event-info-item">
+                                            <i class="fas fa-signal"></i>
+                                            <span>
+                                                <span class="event-info-label">Nível: </span>
+                                                <span class="event-info-value">Nível 5</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="event-info-item">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <span>
+                                                <span class="event-info-label">Início: </span>
+                                                <span class="event-info-value">15/03/2025</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="event-info-item">
+                                            <i class="fas fa-calendar-check"></i>
+                                            <span>
+                                                <span class="event-info-label">Inscrição: </span>
+                                                <span class="event-info-value">10/03/2025</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="event-info-item">
+                                            <i class="fas fa-sitemap"></i>
+                                            <span>
+                                                <span class="event-info-label">Formato: </span>
+                                                <span class="event-info-value">Chave</span>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="event-info-item">
+                                            <i class="fas fa-gamepad"></i>
+                                            <span>
+                                                <span class="event-info-label">Jogo: </span>
+                                                <span class="event-info-value">CS2</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="event-card-divider"></div>
+                                    
+                                    <div class="event-card-footer">
+                                        <div class="event-premiacao">
+                                            <i class="fas fa-trophy"></i>
+                                            <span>R$ 10.000,00</span>
+                                        </div>
+                                        <div class="event-jogo">
+                                            <i class="fas fa-gamepad"></i>
+                                            <span>CS2</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="event-card-actions">
+                                        <a href="#" class="event-btn event-btn-ver">
+                                            <i class="fas fa-eye"></i>
+                                            <span>Ir para Evento</span>
+                                        </a>
+                                        <a href="#" class="event-btn event-btn-chaveamento">
+                                            <i class="fas fa-sitemap"></i>
+                                            <span>Chaveamento</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo: Team History -->
+                <div class="content-panel" id="panelHighlights">
+                    <div class="team-history-container" id="teamHistoryContainer">
+                        <!-- Cards de histórico de times serão inseridos via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Container de Notificações -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Modal de Medalhas -->
+    <div id="medalModal" class="medal-modal" onclick="if(event.target === this) closeMedalModal()">
+        <div class="medal-modal-content" id="medalModalContent">
+            <!-- Botão de Fechar -->
+            <button class="medal-modal-close" onclick="closeMedalModal()" aria-label="Fechar modal">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <!-- Partículas de fundo animadas -->
+            <div class="medal-modal-particles"></div>
+            
+            <!-- Constelação SVG de fundo -->
+            <svg class="medal-modal-constellation" id="medalModalConstellation" xmlns="http://www.w3.org/2000/svg">
+                <!-- Pontos e linhas serão gerados via JavaScript -->
+            </svg>
+            
+            <!-- Topo: Título e Data -->
+            <div class="medal-modal-top">
+                <div class="medal-modal-title-wrapper">
+                    <span class="medal-star">✦</span>
+                    <h1 class="medal-modal-champion-title" id="medalModalChampionTitle">Campeão!</h1>
+                    <span class="medal-star">✦</span>
+                </div>
+                <div class="medal-modal-tournament-name" id="medalModalTournamentName">Campeonato</div>
+                <div class="medal-modal-date-wrapper">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="medalModalDate">Data não disponível</span>
+                </div>
+            </div>
+
+            <!-- Iframe Container -->
+            <div class="medal-modal-medal-section">
+                <div class="medal-iframe-container">
+                    <div class="medal-iframe-loading" id="medalIframeLoading">
+                        <div class="medal-loading-spinner"></div>
+                        <p>Carregando conteúdo...</p>
+                    </div>
+                    <iframe id="medalModalIframe" class="medalha-iframe" src="" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <!-- Detalhes da Conquista -->
+            <div class="medal-modal-details">
+                <div class="medal-details-tournament" id="medalModalTournament">Edição</div>
+            </div>
+
+            <!-- Descrição -->
+            <div class="medal-modal-description" id="medalModalDescription">
+                Descrição da conquista não disponível.
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../js/perfil.js"></script>
+    <script src="../js/utils.js"></script>
+</body>
+</html>
