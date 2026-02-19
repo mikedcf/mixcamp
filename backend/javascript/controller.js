@@ -37,10 +37,6 @@ const transporter = nodemailer.createTransport({
 });
 
 
-transporter.verify()
-  .then(() => console.log("✅ SMTP OK"))
-  .catch((e) => console.error("❌ SMTP FAIL:", e.message, e.code, e.response));
-
   
 
 
