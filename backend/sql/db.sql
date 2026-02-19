@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `steamid` VARCHAR(255) DEFAULT NULL,
     `faceitid` VARCHAR(255) DEFAULT NULL,
     `data_criacao` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `avatar_url` VARCHAR(255) DEFAULT 'https://cdn-icons-png.flaticon.com/128/666/666201.png',
-    `banner_url` VARCHAR(255) DEFAULT 'https://i.ibb.co/YTkpv8PM/banner5.png',
+    `avatar_url` VARCHAR(255) DEFAULT 'https://i.ibb.co/qMT9NVK5/user-2.webp',
+    `banner_url` VARCHAR(255) DEFAULT 'https://i.ibb.co/GfpXkKWk/banner3-1.webp',
     `sobre` TEXT,
     `time_id` INT, -- Chave estrangeira para a tabela de times
     `posicoes` ENUM(
