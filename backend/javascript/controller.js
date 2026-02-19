@@ -8,6 +8,12 @@ const nodemailer = require("nodemailer");
 const { conectar, desconectar } = require('./db');
 const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
 
+
+
+
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
+
 // const transporter = nodemailer.createTransport({
 //     service: 'gmail',
 //     auth: {
@@ -27,8 +33,19 @@ const transporter = nodemailer.createTransport({
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-    family: 4,
+    // força lookup IPv4
+    lookup: (hostname, opts, cb) => dns.lookup(hostname, { family: 4 }, cb),
+  
+    // evita travar 2 minutos
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
 });
+
+transporter.verify()
+  .then(() => console.log("✅ SMTP OK"))
+  .catch((e) => console.error("❌ SMTP FAIL:", e.message, e.code, e.response));
+
   
 
 
