@@ -22,8 +22,6 @@ dns.setDefaultResultOrder("ipv4first");
 //     }
 // })
 
-
-
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -33,14 +31,11 @@ const transporter = nodemailer.createTransport({
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-    // força lookup IPv4
-    lookup: (hostname, opts, cb) => dns.lookup(hostname, { family: 4 }, cb),
-  
-    // evita travar 2 minutos
     connectionTimeout: 15000,
     greetingTimeout: 15000,
     socketTimeout: 20000,
-});
+  });
+
 
 transporter.verify()
   .then(() => console.log("✅ SMTP OK"))
