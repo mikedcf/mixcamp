@@ -1,11 +1,10 @@
 {
-  "name": "mix-camp-backend",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "Backend do Mix Camp",
-  "main": "javascript/server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node javascript/server.js",
-    "dev": "node javascript/server.js"
+    "start": "node javascript/server.js"
+    
   },
   "dependencies": {
     "axios": "^1.13.2",
@@ -20,7 +19,9 @@
     "mysql2": "^3.15.3",
     "nodemailer": "^8.0.1"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+  
 }

@@ -21,8 +21,6 @@ require('dotenv').config();
 
  
 const app = express();
-
-// Middleware para parsear JSON
 app.use(express.json());
 
 // Middleware para debug (mostrar todas as requisições)
@@ -37,6 +35,24 @@ app.use((req, res, next) => {
 app.use(cors({
     origin: process.env.CORS_DOMAIN,
     credentials: true
+}));
+
+
+//  ative para produção
+
+app.set('trust proxy', 1);
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: 'none'
+    }
 }));
 
 
@@ -57,9 +73,6 @@ const upload = multer({
 });
 
 
-// ----- gera o token para usar session
-const token = crypto.randomBytes(32).toString('hex');
-
 // app.use(session({
 //     secret: process.env.SESSION_SECRET, // troque por algo aleatório e seguro
 //     resave: false,
@@ -71,29 +84,6 @@ const token = crypto.randomBytes(32).toString('hex');
 //         sameSite: 'lax'
 //     }
 // }))
-
-//  ative para produção
-
-app.set('trust proxy', 1);
-
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", 
-        sameSite: 'none'
-    }
-}));
-
-// ===============================================================================================
-// ==================================== [CONFIGURAÇÃO MERCADOPAGO SANDBOX] ======================
-
-
-
 
 // ===============================================================================================
 // ==================================== [API PERFIL] =============================================
