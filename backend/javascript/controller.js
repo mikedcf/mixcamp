@@ -22,24 +22,34 @@ dns.setDefaultResultOrder("ipv4first");
 //     }
 // })
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, 
-    family: 4, 
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
+// const transporter = nodemailer.createTransport({
+//     host: "smtp.gmail.com",
+//     port: 465,
+//     secure: true, 
+//     family: 4, 
+//     auth: {
+//       user: process.env.EMAIL_USER,
+//       pass: process.env.EMAIL_PASSWORD,
+//     },
     
-    logger: true,
-    debug: true, 
-    connectionTimeout: 30000, 
-    greetingTimeout: 30000,
-    socketTimeout: 35000,
-    tls: {
+//     logger: true,
+//     debug: true, 
+//     connectionTimeout: 30000, 
+//     greetingTimeout: 30000,
+//     socketTimeout: 35000,
+//     tls: {
         
-        rejectUnauthorized: false 
+//         rejectUnauthorized: false 
+//     }
+// });
+
+
+const transporter = nodemailer.createTransport({
+    host: "sandbox.smtp.mailtrap.io",
+    port: 2525,
+    auth: {
+      user: "302b0723fd9cd0", // Seu usuário que aparece na imagem
+      pass: "860b65ed679b40" // Clique no olho para ver a senha completa na imagem
     }
 });
 
@@ -49,8 +59,8 @@ const transporter = nodemailer.createTransport({
 
 
 
-console.log("email: ", process.env.EMAIL_USER);
-console.log("pass: ", process.env.EMAIL_PASSWORD);
+// console.log("email: ", process.env.EMAIL_USER);
+// console.log("pass: ", process.env.EMAIL_PASSWORD);
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
