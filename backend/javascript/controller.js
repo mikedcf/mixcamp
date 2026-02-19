@@ -24,17 +24,17 @@ dns.setDefaultResultOrder("ipv4first");
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
+    port: 465,         
+    secure: true,      
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
+    // Mantendo seus timeouts que já estão bons
     connectionTimeout: 15000,
     greetingTimeout: 15000,
     socketTimeout: 20000,
-  });
+});
 
 
 transporter.verify()
@@ -1881,6 +1881,8 @@ async function enviarCodigoEmail(req, res){
                 <p>Este código expira em 10 minutos.</p>
                 `
             }
+            .then(() => console.log("✅ SMTP OK"))
+            .catch((e) => console.error("❌ SMTP FAIL:", e.message, e.code, e.response));
             await transporter.sendMail(mailOptions);
             res.status(200).json({ message: 'Código enviado com sucesso' });
         }
