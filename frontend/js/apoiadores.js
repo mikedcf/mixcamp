@@ -1,5 +1,5 @@
 // URL base da sua API
-const API_URL = 'https://https://mixcamp-production.up.railway.app/api/v1/api/v1';
+const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 // const API_URL = 'http://127.0.0.1:3000/api/v1';
 let avatar = '';
 
@@ -79,7 +79,7 @@ async function autenticacao() {
 
         if (!response.ok) {
             if (response.status === 401) {
-                window.location.href = 'login.html';
+                // window.location.href = 'login.html';
             }
             throw new Error(`Erro HTTP: ${response.status}`);
         }
