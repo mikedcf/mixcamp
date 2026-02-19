@@ -1,6 +1,6 @@
 // URL base da sua API
 // const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app';
+const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 let avatar = '';
 // =================================
 // ========= NOTIFICATIONS =========
@@ -64,7 +64,7 @@ function showUserNotification(type, message, userPhoto, duration = 4000) {
 // ------ AUTENTICAÇÃO DO USUARIO
 async function autenticacao() {
     try {
-        const response = await fetch(`${API_URL}/api/v1/dashboard`, {
+        const response = await fetch(`${API_URL}/dashboard`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
@@ -124,7 +124,7 @@ async function verificar_auth() {
 async function logout() {
 
     try {
-        const response = await fetch(`${API_URL}/api/v1/logout`, {
+        const response = await fetch(`${API_URL}/logout`, {
 
             method: 'GET',
             headers: {
@@ -168,14 +168,14 @@ async function buscarDadosPerfil() {
         if(auth_dados.logado) {
             const userId = auth_dados.usuario.id;
 
-            const perfilResponse = await fetch(`${API_URL}/api/v1/perfil/${userId}`, {
+            const perfilResponse = await fetch(`${API_URL}/perfil/${userId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
             });
 
             
-            const medalhasResponse = await fetch(`${API_URL}/api/v1/medalhas/usuario/${userId}`, {
+            const medalhasResponse = await fetch(`${API_URL}/medalhas/usuario/${userId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
