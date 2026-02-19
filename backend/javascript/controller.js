@@ -8,13 +8,30 @@ const nodemailer = require("nodemailer");
 const { conectar, desconectar } = require('./db');
 const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
 
+// const transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//         user: process.env.EMAIL_USER,
+//         pass: process.env.EMAIL_PASSWORD
+//     }
+// })
+
+
+
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-    }
-})
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+});
+
+await transporter.verify();
+
+console.log("email: ", process.env.EMAIL_USER);
+console.log("pass: ", process.env.EMAIL_PASS);
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
@@ -1858,6 +1875,9 @@ async function enviarCodigoEmail(req, res){
     catch(error){
         console.error('Erro ao enviar código de e-mail:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 
 }
