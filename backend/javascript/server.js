@@ -15,7 +15,7 @@ const {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato,     getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout
 } = require('./controller');
 require('dotenv').config();
 
@@ -32,11 +32,6 @@ app.use((req, res, next) => {
     }
     next();
 });
-// app.use(cors({
-//     origin: process.env.CORS_DOMAIN,
-//     credentials: true
-// }));
-
 
 // PRODUÇÃO - descomente esta parte
 app.use(cors({
@@ -209,26 +204,10 @@ app.get(process.env.ROUTE_PERFIL_ID, getPerfil);
 app.get(process.env.ROUTE_USERS_PERFILS, getplayers);
 
 
-app.get(process.env.ROUTE_DASHBOARD, (req, res) => {
-    if (req.session.user) {
-        res.json({
-            logado: true,
-            usuario: req.session.user
-        });
-    } else {
-        res.json({
-            logado: false
-        });
-    }
-});
+app.get(process.env.ROUTE_DASHBOARD, autenticacao);
 
 
-app.get(process.env.ROUTE_LOGOUT, (req, res) => {
-    req.session.destroy(err => {
-        if (err) return res.status(500).json({ message: 'Erro ao sair' });
-        res.json({ message: 'Logout realizado com sucesso!' });
-    });
-});
+app.get(process.env.ROUTE_LOGOUT, logout);
 
 
 // ----------- PERFIL POST

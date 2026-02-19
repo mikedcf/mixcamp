@@ -1894,6 +1894,29 @@ async function verificarCodigoEmail(req,res){
     }
 }
 
+// ===================== [ AUTENTICAÇÃO ] =====================
+
+// ------- API GET
+async function autenticacao(req, res, next) {
+    if (req.session.user) {
+        res.json({
+            logado: true,
+            usuario: req.session.user
+        });
+    } else {
+        res.json({
+            logado: false
+        });
+    }
+}
+
+async function logout(req, res) {
+    req.session.destroy(error => {
+        if (error) return res.status(500).json({ message: 'Erro ao deslogar!' });
+        res.json({ message: 'Deslogado com sucesso!' });
+    });
+}
+
 // ===============================================================================================
 // ==================================== [API BUSCA] ================================================
 
@@ -9530,5 +9553,5 @@ module.exports = {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus,getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico,steamIdFromUrl,statuscs,buscarTimeGame,buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico,steamIdFromUrl,statuscs,buscarTimeGame,buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout
 };
