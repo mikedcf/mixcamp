@@ -38,7 +38,9 @@ app.use(cors({
 }));
 
 
-//  ative para produção
+
+
+app.options('*', cors());
 
 app.set('trust proxy', 1);
 
@@ -46,14 +48,31 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    proxy: true,
     cookie: {
         maxAge: 1000 * 60 * 60 * 24,
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", 
+        secure: true,
         sameSite: 'none'
     }
 }));
+
+
+//  ative para produção
+
+// app.set('trust proxy', 1);
+
+// app.use(session({
+//     secret: process.env.SESSION_SECRET,
+//     resave: false,
+//     saveUninitialized: false,
+//     proxy: true,
+//     cookie: {
+//         maxAge: 1000 * 60 * 60 * 24,
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production", 
+//         sameSite: 'none'
+//     }
+// }));
 
 
 
