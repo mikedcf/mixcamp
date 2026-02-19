@@ -24,13 +24,13 @@ const transporter = nodemailer.createTransport({
     secure: true,
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      pass: process.env.EMAIL_PASSWORD,
     },
 });
 
 
 console.log("email: ", process.env.EMAIL_USER);
-console.log("pass: ", process.env.EMAIL_PASS);
+console.log("pass: ", process.env.EMAIL_PASSWORD);
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
