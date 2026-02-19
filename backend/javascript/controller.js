@@ -28,7 +28,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-await transporter.verify();
 
 console.log("email: ", process.env.EMAIL_USER);
 console.log("pass: ", process.env.EMAIL_PASS);
