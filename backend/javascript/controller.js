@@ -1876,10 +1876,10 @@ async function enviarCodigoEmail(req, res){
                 <h1>${code}</h1>
                 <p>Este código expira em 10 minutos.</p>
                 `
-            }
-            .then(() => console.log("✅ SMTP OK"))
-            .catch((e) => console.error("❌ SMTP FAIL:", e.message, e.code, e.response));
-            await transporter.sendMail(mailOptions);
+            };
+            await transporter.sendMail(mailOptions)
+                .then(() => console.log("✅ SMTP OK"))
+                .catch((e) => console.error("❌ SMTP FAIL:", e.message, e.code, e.response));
             res.status(200).json({ message: 'Código enviado com sucesso' });
         }
         else{
