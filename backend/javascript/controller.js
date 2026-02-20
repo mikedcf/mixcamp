@@ -2274,7 +2274,7 @@ async function updateConfig(req, res) {
             valoresUpdate.push(cores_perfil);
         }
         if (posicao !== null && posicao !== undefined) {
-            camposUpdate.push('posicao');
+            camposUpdate.push('posicoes');
             valoresUpdate.push(posicao);
         }
         
@@ -2333,7 +2333,18 @@ async function updateConfig(req, res) {
         res.status(200).json({ message: 'Configurações atualizadas com sucesso' });
     } catch (error) {
         console.error('Erro ao salvar configurações:', error);
-        res.status(500).json({ error: 'Erro ao salvar configurações' });
+        console.error('Detalhes do erro:', {
+            message: error.message,
+            code: error.code,
+            sqlState: error.sqlState,
+            sqlMessage: error.sqlMessage,
+            stack: error.stack
+        });
+        res.status(500).json({ 
+            error: 'Erro ao salvar configurações',
+            message: error.message,
+            details: process.env.NODE_ENV === 'production' ? 'Erro interno do servidor' : error.message
+        });
     } finally {
         if (conexao) await desconectar(conexao);
     }
