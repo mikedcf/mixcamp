@@ -800,6 +800,23 @@ async function setupDatabase() {
     console.log("✅ BANCO TOTALMENTE CONFIGURADO COM SUCESSO!")
 }
 
+
+async function enviar() {
+    try {
+      const response = await resend.emails.send({
+        from: process.env.FROM_TEXT_EMAIL,
+        to: [process.env.EMAIL_USER],
+        subject: 'Código de verificação',
+        html: '<p>Teste do <strong>MIXCAMP</strong>!</p>'
+      });
+  
+      console.log("EMAIL ENVIADO:", response);
+    } catch (erro) {
+      console.error("ERRO AO ENVIAR:", erro);
+    }
+}
+  
+enviar();
 // ===============================================================================================
 // ==================================== [API MERCADOPAGO] ================================================
 // --- POST
