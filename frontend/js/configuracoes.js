@@ -2,8 +2,8 @@
 // ====================== [ Variáveis e Credenciais ] ======================
 
 // URL base da sua API
-const API_URL = 'http://127.0.0.1:3000/api/v1';
-// const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+// const API_URL = 'http://127.0.0.1:3000/api/v1';
+const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 
 // =================================
 // ========= POSITION IMAGES =======
