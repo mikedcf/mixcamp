@@ -1814,7 +1814,7 @@ async function updateImgMap(req, res){
 
 async function enviarCodigoEmail(req, res){
     const {email} = req.body;
-
+    
     let conexao;
 
     try{
@@ -1828,6 +1828,8 @@ async function enviarCodigoEmail(req, res){
             query = 'INSERT INTO email_verificacao (email, codigo, expira_em) VALUES (?, ?, ?)';
             await conexao.execute(query, [email, code, new Date(Date.now() + 10 * 60 * 1000)]);
             try {
+                console.log(process.env.FROM_TEXT_EMAIL);
+                console.log('verificando email do user:',email);
                 const response = await resend.emails.send({
                   from: process.env.FROM_TEXT_EMAIL,
                   to: [email],
