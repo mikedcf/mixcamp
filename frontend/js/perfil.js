@@ -534,9 +534,12 @@ async function atualizarDadosPerfil() {
     const verify = document.getElementById('verifiedCheck')
 
 
+    console.log(perfilData.usuario.posicoes)
 
 
-    if (!perfilData.usuario.posicao) {
+
+
+    if (!perfilData.usuario.posicoes) {
         document.getElementById('profilePositions').style.display = 'none'
     }
 
@@ -690,6 +693,7 @@ async function inserirHistoricoTimes(data) {
     teamhistory.innerHTML = '';
 
     data.forEach(datas => {
+        
 
         const card = document.createElement('div');
         card.className = 'team-history-card';
@@ -734,27 +738,38 @@ async function inserirHistoricoTimes(data) {
 
 
 async function posicoesPerfil() {
+    params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
     try {
-        params = new URLSearchParams(window.location.search);
-        const userId= params.get('id');
         const { perfilData } = await buscarDadosPerfil(userId);
-        if (!perfilData || !perfilData.usuario || !perfilData.usuario.posicao) {
+        if (!perfilData || !perfilData.usuario || !perfilData.usuario.posicoes) {
             return;
         }
-
-        const posicoes = perfilData.usuario.posicao.split(',').map(p => p.trim()).filter(p => p);
         const posicoesContainer = document.getElementById('profilePositions');
-
+        
         if (!posicoesContainer) {
             return;
         }
 
         posicoesContainer.innerHTML = '';
 
-        for (let index = 0; index < posicoes.length; index++) {
-            const posicao = posicoes[index];
-            const imgPosition = await buscarImgPosition(posicao);
+        // Garantir que posicoes seja um array
+        let posicoes = [];
+        if (Array.isArray(perfilData.usuario.posicoes)) {
+            posicoes = perfilData.usuario.posicoes;
+        } else if (typeof perfilData.usuario.posicoes === 'string') {
+            // Se for string, dividir por vírgula (compatibilidade com formato antigo)
+            posicoes = perfilData.usuario.posicoes.split(',').map(p => p.trim()).filter(p => p !== '');
+        }
 
+        if (posicoes.length === 0) {
+            return;
+        }
+
+        // Usar for...of com entries para ter acesso ao índice
+        for (const [index, posicao] of posicoes.entries()) {
+            const imgPosition = await buscarImgPosition(posicao);
+            
             if (!imgPosition) {
                 continue; // Pula se não encontrar a imagem
             }
@@ -762,7 +777,7 @@ async function posicoesPerfil() {
             const posicaoImg = document.createElement('img');
             posicaoImg.src = imgPosition;
             posicaoImg.alt = posicao;
-            posicaoImg.title = posicao;
+            posicaoImg.title = posicao.toUpperCase();
             posicaoImg.className = 'profile-position-img';
 
             // Adicionar classes baseado no índice para o efeito 3D
@@ -790,8 +805,9 @@ async function posicoesPerfil() {
                 });
             }, index * 100);
         }
+        
     } catch (error) {
-        // Erro silencioso
+        console.error('Erro ao carregar posições do perfil:', error);
     }
 }
 

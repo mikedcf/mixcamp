@@ -2,8 +2,8 @@
 // ====================== [ Variáveis e Credenciais ] ======================
 
 // URL base da sua API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+const API_URL = 'http://127.0.0.1:3000/api/v1';
+// const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 
 // =================================
 // ========= POSITION IMAGES =======
@@ -572,12 +572,14 @@ async function carregarConfiguracoes() {
         
         // Preenche os campos do formulário
         if (usuario) {
+            console.log(usuario.posicoes)
             document.getElementById('username').value = usuario.username || '';
             document.getElementById('sobre').value = usuario.sobre || '';
             avatar_antigo = usuario.avatar_url;
             banner_antigo = usuario.banner_url;
             corSombra_antigo = usuario.cores_perfil;
-            posicaoAntiga = usuario.posicoes || '';
+            // posicoes pode vir como array (novo formato) ou string (formato antigo)
+            posicaoAntiga = usuario.posicoes || [];
             
         }
 
@@ -836,34 +838,47 @@ function mapPosicaoEmoji(posicao) {
 function carregarPosicoesJogo() {
     try {
         // Se posicaoAntiga tem dados, usar ela
-        if (posicaoAntiga && posicaoAntiga.trim() !== '') {
-            // Se for uma string separada por vírgulas, converter para array
+        if (posicaoAntiga) {
+            console.log('posicaoAntiga', posicaoAntiga);
+            
             let posicoes = [];
-            if (typeof posicaoAntiga === 'string') {
+            
+            // Verificar se é array (formato retornado pelo backend)
+            if (Array.isArray(posicaoAntiga)) {
+                posicoes = posicaoAntiga.filter(p => p && String(p).trim() !== '');
+            } 
+            // Se for string, pode ser separada por vírgulas ou string única
+            else if (typeof posicaoAntiga === 'string' && posicaoAntiga.trim() !== '') {
                 posicoes = posicaoAntiga.split(',').map(p => p.trim()).filter(p => p !== '');
-            } else if (Array.isArray(posicaoAntiga)) {
-                posicoes = posicaoAntiga;
             }
             
             // Marcar os checkboxes correspondentes
-            posicoes.forEach(posicao => {
-                const checkbox = document.getElementById(`posicao-${posicao}`);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
-            });
-        } else {
-            // Fallback: buscar posições salvas no localStorage
-            const posicoesSalvas = localStorage.getItem('posicoesJogo');
-            
-            if (posicoesSalvas) {
-                const posicoes = JSON.parse(posicoesSalvas);
+            if (posicoes.length > 0) {
                 posicoes.forEach(posicao => {
                     const checkbox = document.getElementById(`posicao-${posicao}`);
                     if (checkbox) {
                         checkbox.checked = true;
                     }
                 });
+            }
+        } else {
+            // Fallback: buscar posições salvas no localStorage
+            const posicoesSalvas = localStorage.getItem('posicoesJogo');
+            
+            if (posicoesSalvas) {
+                try {
+                    const posicoes = JSON.parse(posicoesSalvas);
+                    if (Array.isArray(posicoes)) {
+                        posicoes.forEach(posicao => {
+                            const checkbox = document.getElementById(`posicao-${posicao}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                } catch (parseError) {
+                    console.error('Erro ao fazer parse das posições do localStorage:', parseError);
+                }
             }
         }
     } catch (error) {
