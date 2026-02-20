@@ -67,14 +67,14 @@ async function setupDatabase() {
             // Coluna não existe, adicionar
             await conexao.execute(`
                 ALTER TABLE usuarios 
-                ADD COLUMN posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT 'capitao';
+                ADD COLUMN posicoes VARCHAR(255) DEFAULT NULL;
             `);
             console.log('✅ Coluna posicoes adicionada à tabela usuarios');
         } else {
-            // Coluna existe, garantir que está com o tipo correto
+            // Coluna existe, garantir que está com o tipo correto (VARCHAR para múltiplas posições)
             await conexao.execute(`
                 ALTER TABLE usuarios 
-                MODIFY COLUMN posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT 'capitao';
+                MODIFY COLUMN posicoes VARCHAR(255) DEFAULT NULL;
             `).catch(() => {});
         }
     } catch (error) {
@@ -2111,6 +2111,13 @@ async function getPerfil(req, res) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
+        // Converter posicoes de string separada por vírgulas para array (se existir)
+        if (usuario.posicoes && typeof usuario.posicoes === 'string') {
+            usuario.posicoes = usuario.posicoes.split(',').map(p => p.trim()).filter(p => p !== '');
+        } else if (!usuario.posicoes) {
+            usuario.posicoes = [];
+        }
+
         // Busca as redes sociais.
         const [redesSociais] = await conexao.execute('SELECT * FROM redes_sociais WHERE usuario_id=?', [id]);
 
@@ -2249,39 +2256,40 @@ async function updateConfig(req, res) {
     const userID = req.params.id;
     const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid} = req.body;
     
-    // Valores válidos para o ENUM posicoes (sem string vazia)
-    const valoresValidosPosicoes = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach'];
+    // Valores válidos para posicoes (incluindo rifle e lurker)
+    const valoresValidosPosicoes = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach', 'rifle', 'lurker'];
     
-    // Processar posicoes: se for array, pegar o primeiro valor válido; se for string, validar
-    let posicao = 'capitao'; // Valor padrão (primeiro do ENUM)
+    // Processar posicoes: aceita array ou string separada por vírgulas
+    // Armazena como string separada por vírgulas no banco: "awp,entry,coach"
+    let posicoesString = null;
     if (posicoes !== undefined && posicoes !== null) {
+        let posicoesArray = [];
+        
         if (Array.isArray(posicoes)) {
-            // Se for array, pegar o primeiro valor válido
-            if (posicoes.length > 0) {
-                const primeiroValor = posicoes.find(p => valoresValidosPosicoes.includes(String(p).trim()));
-                posicao = primeiroValor !== undefined ? String(primeiroValor).trim() : 'capitao';
-            } else {
-                posicao = 'capitao';
-            }
+            // Se for array, filtrar apenas valores válidos
+            posicoesArray = posicoes
+                .map(p => String(p).trim())
+                .filter(p => p !== '' && valoresValidosPosicoes.includes(p));
         } else if (typeof posicoes === 'string') {
-            // Se for string, pode ter vírgulas (ex: "awp,entry") - pegar o primeiro valor válido
-            const valores = posicoes.split(',').map(p => p.trim()).filter(p => p !== '');
-            if (valores.length > 0) {
-                const primeiroValorValido = valores.find(p => valoresValidosPosicoes.includes(p));
-                posicao = primeiroValorValido !== undefined ? primeiroValorValido : 'capitao';
-            } else {
-                // Se não tiver valores após split, verificar se a string inteira é válida
-                posicao = valoresValidosPosicoes.includes(posicoes.trim()) ? posicoes.trim() : 'capitao';
-            }
+            // Se for string, dividir por vírgula e filtrar valores válidos
+            posicoesArray = posicoes
+                .split(',')
+                .map(p => p.trim())
+                .filter(p => p !== '' && valoresValidosPosicoes.includes(p));
+        }
+        
+        // Remover duplicatas e converter para string separada por vírgulas
+        if (posicoesArray.length > 0) {
+            posicoesString = [...new Set(posicoesArray)].join(',');
         }
     }
     
-    // Log para debug (remover em produção se necessário)
+    // Log para debug
     console.log('DEBUG posicoes:', {
         recebido: posicoes,
         tipo: typeof posicoes,
-        processado: posicao,
-        valido: valoresValidosPosicoes.includes(posicao)
+        processado: posicoesString,
+        array: posicoesString ? posicoesString.split(',') : []
     });
 
     let conexao;
@@ -2352,39 +2360,15 @@ async function updateConfig(req, res) {
         
         // Atualiza posicoes apenas se foi fornecido no body E a coluna existe
         if (posicoes !== undefined && colunaPosicoesExiste) {
-            // Validação final rigorosa: garantir que posicao seja sempre um valor válido do ENUM
-            let valorFinal = 'capitao'; // Valor padrão
-            
-            // Converter para string e remover espaços
-            const posicaoStr = String(posicao || 'capitao').trim();
-            
-            // Verificar se é um valor válido do ENUM
-            if (valoresValidosPosicoes.includes(posicaoStr)) {
-                valorFinal = posicaoStr;
-            } else {
-                // Se não for válido, usar 'capitao' (valor padrão válido)
-                valorFinal = 'capitao';
-            }
-            
-            // Validação adicional: garantir que não seja null ou undefined
-            if (valorFinal === null || valorFinal === undefined) {
-                valorFinal = 'capitao';
-            }
-            
-            // Garantir que valorFinal seja sempre uma string válida (não null, não undefined)
-            const valorFinalString = String(valorFinal || 'capitao').trim();
-            const valorFinalValidado = valoresValidosPosicoes.includes(valorFinalString) ? valorFinalString : 'capitao';
-            
+            // posicoesString já foi processado acima (string separada por vírgulas ou null)
             camposUpdate.push('posicoes');
-            valoresUpdate.push(valorFinalValidado);
+            valoresUpdate.push(posicoesString); // Pode ser null se não houver posições válidas
             
-            // Log adicional para garantir que o valor está correto
+            // Log adicional
             console.log('DEBUG VALIDACAO FINAL posicoes:', {
                 valorOriginal: posicoes,
-                valorProcessado: posicao,
-                valorFinal: valorFinal,
-                tipoValorFinal: typeof valorFinal,
-                ehValido: valoresValidosPosicoes.includes(valorFinal)
+                valorProcessado: posicoesString,
+                tipoValorFinal: typeof posicoesString
             });
         }
         
@@ -2411,20 +2395,30 @@ async function updateConfig(req, res) {
                 const posicaoIndex = camposUpdate.indexOf('posicoes');
                 const valorPosicoesNoArray = valoresUpdate[posicaoIndex];
                 
-                // Garantir que o valor no array seja válido antes de executar
-                const valorValidado = String(valorPosicoesNoArray || 'capitao').trim();
-                if (!valoresValidosPosicoes.includes(valorValidado)) {
-                    console.error('ERRO: Valor inválido detectado antes da query:', {
-                        valor: valorPosicoesNoArray,
-                        valorValidado: valorValidado,
-                        tipo: typeof valorPosicoesNoArray,
-                        valoresValidos: valoresValidosPosicoes
-                    });
-                    // Forçar valor válido ('capitao' como padrão)
-                    valoresUpdate[posicaoIndex] = 'capitao';
+                // Garantir que o valor seja uma string válida (pode ser null ou string com vírgulas)
+                const valorValidado = valorPosicoesNoArray === null || valorPosicoesNoArray === undefined 
+                    ? null 
+                    : String(valorPosicoesNoArray).trim();
+                
+                // Validar se a string contém apenas valores válidos separados por vírgulas
+                if (valorValidado !== null && valorValidado !== '') {
+                    const valores = valorValidado.split(',').map(p => p.trim());
+                    const valoresInvalidos = valores.filter(p => !valoresValidosPosicoes.includes(p));
+                    
+                    if (valoresInvalidos.length > 0) {
+                        console.error('ERRO: Valores inválidos detectados antes da query:', {
+                            valor: valorPosicoesNoArray,
+                            valoresInvalidos: valoresInvalidos,
+                            valoresValidos: valoresValidosPosicoes
+                        });
+                        // Filtrar apenas valores válidos
+                        const valoresValidos = valores.filter(p => valoresValidosPosicoes.includes(p));
+                        valoresUpdate[posicaoIndex] = valoresValidos.length > 0 ? valoresValidos.join(',') : null;
+                    } else {
+                        valoresUpdate[posicaoIndex] = valorValidado;
+                    }
                 } else {
-                    // Garantir que seja uma string válida (não objeto, não null)
-                    valoresUpdate[posicaoIndex] = valorValidado;
+                    valoresUpdate[posicaoIndex] = null;
                 }
                 
                 console.log('DEBUG SQL posicoes ANTES DE EXECUTAR:', {
@@ -2432,7 +2426,7 @@ async function updateConfig(req, res) {
                     valorPosicoes: valoresUpdate[posicaoIndex],
                     indicePosicoes: posicaoIndex,
                     tipoValor: typeof valoresUpdate[posicaoIndex],
-                    ehValido: valoresValidosPosicoes.includes(String(valoresUpdate[posicaoIndex] || '').trim())
+                    arrayPosicoes: valoresUpdate[posicaoIndex] ? valoresUpdate[posicaoIndex].split(',') : []
                 });
             }
             

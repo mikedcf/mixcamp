@@ -19,15 +19,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `banner_url` VARCHAR(255) DEFAULT 'https://i.ibb.co/GfpXkKWk/banner3-1.webp',
     `sobre` TEXT,
     `time_id` INT, -- Chave estrangeira para a tabela de times
-    `posicoes` ENUM(
-        'capitao',
-        'awp',
-        'entry',
-        'support',
-        'igl',
-        'sub',
-        'coach'
-    ) NOT NULL DEFAULT '',
+    `posicoes` VARCHAR(255) DEFAULT NULL, -- Armazena múltiplas posições separadas por vírgula: "awp,entry,coach"
     `gerencia` ENUM(
         'admin',
         'moderador',
