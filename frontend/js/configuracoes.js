@@ -837,39 +837,42 @@ function mapPosicaoEmoji(posicao) {
 // Função para carregar posições de jogo salvas
 function carregarPosicoesJogo() {
     try {
-        // Se posicaoAntiga tem dados, usar ela
-        if (posicaoAntiga) {
-            console.log('posicaoAntiga', posicaoAntiga);
-            
-            let posicoes = [];
+        let posicoes = [];
+        
+        // Verificar se posicaoAntiga existe e tem conteúdo
+        if (posicaoAntiga !== null && posicaoAntiga !== undefined && posicaoAntiga !== '') {
+            console.log('posicaoAntiga', posicaoAntiga, 'tipo:', typeof posicaoAntiga);
             
             // Verificar se é array (formato retornado pelo backend)
             if (Array.isArray(posicaoAntiga)) {
-                posicoes = posicaoAntiga.filter(p => p && String(p).trim() !== '');
+                posicoes = posicaoAntiga.filter(p => p !== null && p !== undefined && String(p).trim() !== '');
             } 
             // Se for string, pode ser separada por vírgulas ou string única
-            else if (typeof posicaoAntiga === 'string' && posicaoAntiga.trim() !== '') {
-                posicoes = posicaoAntiga.split(',').map(p => p.trim()).filter(p => p !== '');
+            else if (typeof posicaoAntiga === 'string') {
+                const trimmed = posicaoAntiga.trim();
+                if (trimmed !== '') {
+                    posicoes = trimmed.split(',').map(p => p.trim()).filter(p => p !== '');
+                }
             }
-            
-            // Marcar os checkboxes correspondentes
-            if (posicoes.length > 0) {
-                posicoes.forEach(posicao => {
-                    const checkbox = document.getElementById(`posicao-${posicao}`);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                    }
-                });
-            }
+        }
+        
+        // Marcar os checkboxes correspondentes
+        if (posicoes.length > 0) {
+            posicoes.forEach(posicao => {
+                const checkbox = document.getElementById(`posicao-${posicao}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
         } else {
             // Fallback: buscar posições salvas no localStorage
             const posicoesSalvas = localStorage.getItem('posicoesJogo');
             
             if (posicoesSalvas) {
                 try {
-                    const posicoes = JSON.parse(posicoesSalvas);
-                    if (Array.isArray(posicoes)) {
-                        posicoes.forEach(posicao => {
+                    const posicoesLocal = JSON.parse(posicoesSalvas);
+                    if (Array.isArray(posicoesLocal) && posicoesLocal.length > 0) {
+                        posicoesLocal.forEach(posicao => {
                             const checkbox = document.getElementById(`posicao-${posicao}`);
                             if (checkbox) {
                                 checkbox.checked = true;
