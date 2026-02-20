@@ -103,7 +103,9 @@ async function verificarDadosRegistro(dados){
             if(verifyusername){
                 showNotification("success", `Codigo de verificação enviado verifique seu e-mail`);
                 listdados.push({username, email, password, confirmPassword});
-                RegistrarUsuario();
+                enviarCodigoEmail(email);
+                
+                // RegistrarUsuario();
                 return;
             }
             else{
@@ -139,76 +141,76 @@ async function Registro(event) {
 }
 
 
-// async function enviarCodigoEmail(email){
+async function enviarCodigoEmail(email){
 
-//     try{
-//         const response = await fetch(`${API_URL}/email/register`, {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify({ email }),
-//         });
+    try{
+        const response = await fetch(`${API_URL}/email/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
 
-//         const data = await response.json();
+        const data = await response.json();
 
-//         if (response.ok) {
-//             showNotification("success", `${data.message}`);
-//             abrirModalCodigoEmail();
-//         }
-//         else{
-//             showNotification("error", `${data.message}`);
-//         }
-//     }
-//     catch(error){
-//         console.error('Erro de rede:', error);
-//         showNotification("error", `${error}`);
-//     }
-// }
+        if (response.ok) {
+            showNotification("success", `${data.message}`);
+            abrirModalCodigoEmail();
+        }
+        else{
+            showNotification("error", `${data.message}`);
+        }
+    }
+    catch(error){
+        console.error('Erro de rede:', error);
+        showNotification("error", `${error}`);
+    }
+}
 
-// async function verificarCodeEmail(){
-//     const code = await abrirModalCodigoEmail();
+async function verificarCodeEmail(){
+    const code = await abrirModalCodigoEmail();
 
-//     console.log(code);
-//     let email = '';
+    console.log(code);
+    let email = '';
 
-//     if(code == ''){
-//         showNotification("error", `Insira o código de verificação`);
-//         return;
-//     }
+    if(code == ''){
+        showNotification("error", `Insira o código de verificação`);
+        return;
+    }
 
-//     for(const dados of listdados){
-//         email = dados.email;
+    for(const dados of listdados){
+        email = dados.email;
         
-//     }
+    }
 
-//     try{
-//         const response = await fetch(`${API_URL}/email/verify-code`, {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify({ email, codigo: code }),
-//         });
+    try{
+        const response = await fetch(`${API_URL}/email/verify-code`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, codigo: code }),
+        });
 
-//         const data = await response.json();
+        const data = await response.json();
 
-//         if (response.ok) {
-//             showNotification("success", `${data.message}`);
-//             RegistrarUsuario();
-//         }
-//         else{
-//             showNotification("error", `${data.message}`);
-//         }
-//     }
-//     catch(error){
-//         console.error('Erro de rede:', error);
-//         showNotification("error", `${error}`);
-//     }
+        if (response.ok) {
+            showNotification("success", `${data.message}`);
+            RegistrarUsuario();
+        }
+        else{
+            showNotification("error", `${data.message}`);
+        }
+    }
+    catch(error){
+        console.error('Erro de rede:', error);
+        showNotification("error", `${error}`);
+    }
     
     
 
-// }
+}
 
 async function RegistrarUsuario(){
     const dados = listdados[0];
