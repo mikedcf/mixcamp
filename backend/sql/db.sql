@@ -6,10 +6,6 @@ CREATE DATABASE IF NOT EXISTS mixcamp;
 USE mixcamp;
 
 -- ============================ BANCO DO USUARIO  =============================
-ALTER TABLE `usuarios` ADD COLUMN `steamid` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `usuarios` ADD COLUMN `faceitid` VARCHAR(255) DEFAULT NULL;
-
-ALTER TABLE `usuarios` DROP COLUMN `faceit_id`;
 -- Tabela para armazenar os dados dos usuários
 CREATE TABLE IF NOT EXISTS `usuarios` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -24,7 +20,6 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `sobre` TEXT,
     `time_id` INT, -- Chave estrangeira para a tabela de times
     `posicoes` ENUM(
-        '',
         'capitao',
         'awp',
         'entry',
@@ -32,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
         'igl',
         'sub',
         'coach'
-    ) NOT NULL,
+    ) NOT NULL DEFAULT '',
     `gerencia` ENUM(
         'admin',
         'moderador',
@@ -46,7 +41,6 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `cores_perfil` VARCHAR(50) DEFAULT '#ffffff80',
     FOREIGN KEY (`time_id`) REFERENCES `times` (`id`)
 );
-
 
 
 -- Tabela para armazenar os links de redes sociais dos usuários

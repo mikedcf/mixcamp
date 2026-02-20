@@ -45,12 +45,42 @@ async function setupDatabase() {
         banner_url VARCHAR(255) DEFAULT 'https://i.ibb.co/GfpXkKWk/banner3-1.webp',
         sobre TEXT,
         time_id INT NULL,
-        posicoes ENUM('','capitao','awp','entry','support','igl','sub','coach') NOT NULL,
+        posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT '',
         gerencia ENUM('admin','moderador','gerente','user') DEFAULT 'user',
         organizador ENUM('premium','simples') DEFAULT NULL,
         cores_perfil VARCHAR(50) DEFAULT '#ffffff80'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
+    
+    // Garantir que a coluna posicoes existe (para tabelas criadas antes desta atualização)
+    try {
+        // Verificar se a coluna existe
+        const [columns] = await conexao.execute(`
+            SELECT COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'usuarios' 
+            AND COLUMN_NAME = 'posicoes'
+        `);
+        
+        if (columns.length === 0) {
+            // Coluna não existe, adicionar
+            await conexao.execute(`
+                ALTER TABLE usuarios 
+                ADD COLUMN posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT 'capitao';
+            `);
+            console.log('✅ Coluna posicoes adicionada à tabela usuarios');
+        } else {
+            // Coluna existe, garantir que está com o tipo correto
+            await conexao.execute(`
+                ALTER TABLE usuarios 
+                MODIFY COLUMN posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT 'capitao';
+            `).catch(() => {});
+        }
+    } catch (error) {
+        // Ignora erros (coluna pode já existir com estrutura diferente)
+        console.log('⚠️ Aviso ao verificar coluna posicoes:', error.message);
+    }
 
     await conexao.execute(`
     CREATE TABLE IF NOT EXISTS times (
@@ -2219,29 +2249,29 @@ async function updateConfig(req, res) {
     const userID = req.params.id;
     const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid} = req.body;
     
-    // Valores válidos para o ENUM posicoes
-    const valoresValidosPosicoes = ['', 'capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach'];
+    // Valores válidos para o ENUM posicoes (sem string vazia)
+    const valoresValidosPosicoes = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach'];
     
     // Processar posicoes: se for array, pegar o primeiro valor válido; se for string, validar
-    let posicao = '';
+    let posicao = 'capitao'; // Valor padrão (primeiro do ENUM)
     if (posicoes !== undefined && posicoes !== null) {
         if (Array.isArray(posicoes)) {
             // Se for array, pegar o primeiro valor válido
             if (posicoes.length > 0) {
                 const primeiroValor = posicoes.find(p => valoresValidosPosicoes.includes(String(p).trim()));
-                posicao = primeiroValor !== undefined ? String(primeiroValor).trim() : '';
+                posicao = primeiroValor !== undefined ? String(primeiroValor).trim() : 'capitao';
             } else {
-                posicao = '';
+                posicao = 'capitao';
             }
         } else if (typeof posicoes === 'string') {
             // Se for string, pode ter vírgulas (ex: "awp,entry") - pegar o primeiro valor válido
             const valores = posicoes.split(',').map(p => p.trim()).filter(p => p !== '');
             if (valores.length > 0) {
                 const primeiroValorValido = valores.find(p => valoresValidosPosicoes.includes(p));
-                posicao = primeiroValorValido !== undefined ? primeiroValorValido : '';
+                posicao = primeiroValorValido !== undefined ? primeiroValorValido : 'capitao';
             } else {
                 // Se não tiver valores após split, verificar se a string inteira é válida
-                posicao = valoresValidosPosicoes.includes(posicoes.trim()) ? posicoes.trim() : '';
+                posicao = valoresValidosPosicoes.includes(posicoes.trim()) ? posicoes.trim() : 'capitao';
             }
         }
     }
@@ -2305,12 +2335,57 @@ async function updateConfig(req, res) {
             camposUpdate.push('cores_perfil');
             valoresUpdate.push(cores_perfil);
         }
-        // Atualiza posicoes apenas se foi fornecido no body (mesmo que seja string vazia)
-        if (posicoes !== undefined) {
-            // Garantir que posicao seja sempre um valor válido do ENUM
-            const valorFinal = valoresValidosPosicoes.includes(posicao) ? posicao : '';
+        // Verificar se a coluna posicoes existe antes de tentar atualizar
+        let colunaPosicoesExiste = false;
+        try {
+            const [columns] = await conexao.execute(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'usuarios' 
+                AND COLUMN_NAME = 'posicoes'
+            `);
+            colunaPosicoesExiste = columns.length > 0;
+        } catch (error) {
+            console.log('Erro ao verificar coluna posicoes:', error.message);
+        }
+        
+        // Atualiza posicoes apenas se foi fornecido no body E a coluna existe
+        if (posicoes !== undefined && colunaPosicoesExiste) {
+            // Validação final rigorosa: garantir que posicao seja sempre um valor válido do ENUM
+            let valorFinal = 'capitao'; // Valor padrão
+            
+            // Converter para string e remover espaços
+            const posicaoStr = String(posicao || 'capitao').trim();
+            
+            // Verificar se é um valor válido do ENUM
+            if (valoresValidosPosicoes.includes(posicaoStr)) {
+                valorFinal = posicaoStr;
+            } else {
+                // Se não for válido, usar 'capitao' (valor padrão válido)
+                valorFinal = 'capitao';
+            }
+            
+            // Validação adicional: garantir que não seja null ou undefined
+            if (valorFinal === null || valorFinal === undefined) {
+                valorFinal = 'capitao';
+            }
+            
+            // Garantir que valorFinal seja sempre uma string válida (não null, não undefined)
+            const valorFinalString = String(valorFinal || 'capitao').trim();
+            const valorFinalValidado = valoresValidosPosicoes.includes(valorFinalString) ? valorFinalString : 'capitao';
+            
             camposUpdate.push('posicoes');
-            valoresUpdate.push(valorFinal);
+            valoresUpdate.push(valorFinalValidado);
+            
+            // Log adicional para garantir que o valor está correto
+            console.log('DEBUG VALIDACAO FINAL posicoes:', {
+                valorOriginal: posicoes,
+                valorProcessado: posicao,
+                valorFinal: valorFinal,
+                tipoValorFinal: typeof valorFinal,
+                ehValido: valoresValidosPosicoes.includes(valorFinal)
+            });
         }
         
         if (steamidValido) {
@@ -2331,14 +2406,33 @@ async function updateConfig(req, res) {
             // Monta a query SQL dinamicamente
             const queryUpdate = `UPDATE usuarios SET ${camposUpdate.map(campo => `${campo}=?`).join(', ')} WHERE id=?`;
             
-            // Log para debug (especialmente para posicoes)
+            // Validação final antes de executar a query (especialmente para posicoes)
             if (camposUpdate.includes('posicoes')) {
                 const posicaoIndex = camposUpdate.indexOf('posicoes');
-                console.log('DEBUG SQL posicoes:', {
+                const valorPosicoesNoArray = valoresUpdate[posicaoIndex];
+                
+                // Garantir que o valor no array seja válido antes de executar
+                const valorValidado = String(valorPosicoesNoArray || 'capitao').trim();
+                if (!valoresValidosPosicoes.includes(valorValidado)) {
+                    console.error('ERRO: Valor inválido detectado antes da query:', {
+                        valor: valorPosicoesNoArray,
+                        valorValidado: valorValidado,
+                        tipo: typeof valorPosicoesNoArray,
+                        valoresValidos: valoresValidosPosicoes
+                    });
+                    // Forçar valor válido ('capitao' como padrão)
+                    valoresUpdate[posicaoIndex] = 'capitao';
+                } else {
+                    // Garantir que seja uma string válida (não objeto, não null)
+                    valoresUpdate[posicaoIndex] = valorValidado;
+                }
+                
+                console.log('DEBUG SQL posicoes ANTES DE EXECUTAR:', {
                     query: queryUpdate,
-                    valores: valoresUpdate,
                     valorPosicoes: valoresUpdate[posicaoIndex],
-                    indicePosicoes: posicaoIndex
+                    indicePosicoes: posicaoIndex,
+                    tipoValor: typeof valoresUpdate[posicaoIndex],
+                    ehValido: valoresValidosPosicoes.includes(String(valoresUpdate[posicaoIndex] || '').trim())
                 });
             }
             
