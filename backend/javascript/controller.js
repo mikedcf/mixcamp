@@ -2223,17 +2223,36 @@ async function updateConfig(req, res) {
     const valoresValidosPosicoes = ['', 'capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach'];
     
     // Processar posicoes: se for array, pegar o primeiro valor válido; se for string, validar
-    let posicao = null;
+    let posicao = '';
     if (posicoes !== undefined && posicoes !== null) {
         if (Array.isArray(posicoes)) {
             // Se for array, pegar o primeiro valor válido
-            const primeiroValor = posicoes.find(p => valoresValidosPosicoes.includes(p));
-            posicao = primeiroValor !== undefined ? primeiroValor : '';
+            if (posicoes.length > 0) {
+                const primeiroValor = posicoes.find(p => valoresValidosPosicoes.includes(String(p).trim()));
+                posicao = primeiroValor !== undefined ? String(primeiroValor).trim() : '';
+            } else {
+                posicao = '';
+            }
         } else if (typeof posicoes === 'string') {
-            // Se for string, validar se é um valor válido
-            posicao = valoresValidosPosicoes.includes(posicoes) ? posicoes : '';
+            // Se for string, pode ter vírgulas (ex: "awp,entry") - pegar o primeiro valor válido
+            const valores = posicoes.split(',').map(p => p.trim()).filter(p => p !== '');
+            if (valores.length > 0) {
+                const primeiroValorValido = valores.find(p => valoresValidosPosicoes.includes(p));
+                posicao = primeiroValorValido !== undefined ? primeiroValorValido : '';
+            } else {
+                // Se não tiver valores após split, verificar se a string inteira é válida
+                posicao = valoresValidosPosicoes.includes(posicoes.trim()) ? posicoes.trim() : '';
+            }
         }
     }
+    
+    // Log para debug (remover em produção se necessário)
+    console.log('DEBUG posicoes:', {
+        recebido: posicoes,
+        tipo: typeof posicoes,
+        processado: posicao,
+        valido: valoresValidosPosicoes.includes(posicao)
+    });
 
     let conexao;
 
@@ -2288,8 +2307,10 @@ async function updateConfig(req, res) {
         }
         // Atualiza posicoes apenas se foi fornecido no body (mesmo que seja string vazia)
         if (posicoes !== undefined) {
+            // Garantir que posicao seja sempre um valor válido do ENUM
+            const valorFinal = valoresValidosPosicoes.includes(posicao) ? posicao : '';
             camposUpdate.push('posicoes');
-            valoresUpdate.push(posicao !== null ? posicao : '');
+            valoresUpdate.push(valorFinal);
         }
         
         if (steamidValido) {
@@ -2309,6 +2330,17 @@ async function updateConfig(req, res) {
             
             // Monta a query SQL dinamicamente
             const queryUpdate = `UPDATE usuarios SET ${camposUpdate.map(campo => `${campo}=?`).join(', ')} WHERE id=?`;
+            
+            // Log para debug (especialmente para posicoes)
+            if (camposUpdate.includes('posicoes')) {
+                const posicaoIndex = camposUpdate.indexOf('posicoes');
+                console.log('DEBUG SQL posicoes:', {
+                    query: queryUpdate,
+                    valores: valoresUpdate,
+                    valorPosicoes: valoresUpdate[posicaoIndex],
+                    indicePosicoes: posicaoIndex
+                });
+            }
             
             await conexao.execute(queryUpdate, valoresUpdate);
         }

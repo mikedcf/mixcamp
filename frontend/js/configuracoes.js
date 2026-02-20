@@ -577,7 +577,7 @@ async function carregarConfiguracoes() {
             avatar_antigo = usuario.avatar_url;
             banner_antigo = usuario.banner_url;
             corSombra_antigo = usuario.cores_perfil;
-            posicaoAntiga = usuario.posicao;
+            posicaoAntiga = usuario.posicoes || '';
             
         }
 
@@ -702,6 +702,19 @@ async function salvarConfiguracoes() {
 
     
     // Monta payload incluindo avatar e banner
+    // Para posicoes: usar array se tiver elementos, senão usar posicaoAntiga (que pode ser string ou array)
+    let posicoesParaEnviar = null;
+    if (posicoesJogo && Array.isArray(posicoesJogo) && posicoesJogo.length > 0) {
+        posicoesParaEnviar = posicoesJogo;
+    } else if (posicaoAntiga) {
+        // Se posicaoAntiga for string com vírgulas, converter para array
+        if (typeof posicaoAntiga === 'string' && posicaoAntiga.trim() !== '') {
+            posicoesParaEnviar = posicaoAntiga.split(',').map(p => p.trim()).filter(p => p !== '');
+        } else if (Array.isArray(posicaoAntiga) && posicaoAntiga.length > 0) {
+            posicoesParaEnviar = posicaoAntiga;
+        }
+    }
+    
     const dados = {
         username,
         sobre,
@@ -711,7 +724,7 @@ async function salvarConfiguracoes() {
         avatar: avatarUrl || avatar_antigo, // mantém avatar atual se não trocar
         banner: bannerUrl || banner_antigo,
         cores_perfil: corSombra || corSombra_antigo,
-        posicoes: posicoesJogo || posicaoAntiga
+        posicoes: posicoesParaEnviar || []
     };
 
     // Só inclui steamid no payload se tiver valor válido
