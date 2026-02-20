@@ -2219,8 +2219,21 @@ async function updateConfig(req, res) {
     const userID = req.params.id;
     const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid} = req.body;
     
-    // Verificar se posicoes existe e é um array antes de fazer join
-    const posicao = (posicoes && Array.isArray(posicoes)) ? posicoes.join(',') : null;
+    // Valores válidos para o ENUM posicoes
+    const valoresValidosPosicoes = ['', 'capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach'];
+    
+    // Processar posicoes: se for array, pegar o primeiro valor válido; se for string, validar
+    let posicao = null;
+    if (posicoes !== undefined && posicoes !== null) {
+        if (Array.isArray(posicoes)) {
+            // Se for array, pegar o primeiro valor válido
+            const primeiroValor = posicoes.find(p => valoresValidosPosicoes.includes(p));
+            posicao = primeiroValor !== undefined ? primeiroValor : '';
+        } else if (typeof posicoes === 'string') {
+            // Se for string, validar se é um valor válido
+            posicao = valoresValidosPosicoes.includes(posicoes) ? posicoes : '';
+        }
+    }
 
     let conexao;
 
@@ -2273,9 +2286,10 @@ async function updateConfig(req, res) {
             camposUpdate.push('cores_perfil');
             valoresUpdate.push(cores_perfil);
         }
-        if (posicao !== null && posicao !== undefined) {
+        // Atualiza posicoes apenas se foi fornecido no body (mesmo que seja string vazia)
+        if (posicoes !== undefined) {
             camposUpdate.push('posicoes');
-            valoresUpdate.push(posicao);
+            valoresUpdate.push(posicao !== null ? posicao : '');
         }
         
         if (steamidValido) {
