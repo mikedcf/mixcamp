@@ -837,53 +837,43 @@ function mapPosicaoEmoji(posicao) {
 // Função para carregar posições de jogo salvas
 function carregarPosicoesJogo() {
     try {
-        let posicoes = [];
-        
-        // Verificar se posicaoAntiga existe e tem conteúdo
-        if (posicaoAntiga !== null && posicaoAntiga !== undefined && posicaoAntiga !== '') {
-            console.log('posicaoAntiga', posicaoAntiga, 'tipo:', typeof posicaoAntiga);
-            
-            // Verificar se é array (formato retornado pelo backend)
+        let posicoesParaMarcar = [];
+
+        // Se posicaoAntiga tem dados, usar ela
+        if (posicaoAntiga && (Array.isArray(posicaoAntiga) && posicaoAntiga.length > 0 || (typeof posicaoAntiga === 'string' && posicaoAntiga.trim() !== ''))) {
             if (Array.isArray(posicaoAntiga)) {
-                posicoes = posicaoAntiga.filter(p => p !== null && p !== undefined && String(p).trim() !== '');
-            } 
-            // Se for string, pode ser separada por vírgulas ou string única
-            else if (typeof posicaoAntiga === 'string') {
-                const trimmed = posicaoAntiga.trim();
-                if (trimmed !== '') {
-                    posicoes = trimmed.split(',').map(p => p.trim()).filter(p => p !== '');
-                }
+                posicoesParaMarcar = posicaoAntiga;
+            } else if (typeof posicaoAntiga === 'string') {
+                posicoesParaMarcar = posicaoAntiga.split(',').map(p => p.trim()).filter(p => p !== '');
             }
-        }
-        
-        // Marcar os checkboxes correspondentes
-        if (posicoes.length > 0) {
-            posicoes.forEach(posicao => {
-                const checkbox = document.getElementById(`posicao-${posicao}`);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
-            });
         } else {
             // Fallback: buscar posições salvas no localStorage
             const posicoesSalvas = localStorage.getItem('posicoesJogo');
-            
             if (posicoesSalvas) {
                 try {
-                    const posicoesLocal = JSON.parse(posicoesSalvas);
-                    if (Array.isArray(posicoesLocal) && posicoesLocal.length > 0) {
-                        posicoesLocal.forEach(posicao => {
-                            const checkbox = document.getElementById(`posicao-${posicao}`);
-                            if (checkbox) {
-                                checkbox.checked = true;
-                            }
-                        });
+                    posicoesParaMarcar = JSON.parse(posicoesSalvas);
+                    if (!Array.isArray(posicoesParaMarcar)) {
+                        posicoesParaMarcar = [];
                     }
                 } catch (parseError) {
                     console.error('Erro ao fazer parse das posições do localStorage:', parseError);
+                    posicoesParaMarcar = [];
                 }
             }
         }
+        
+        // Desmarcar todos os checkboxes antes de marcar os corretos
+        document.querySelectorAll('.posicao-item input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        // Marcar os checkboxes correspondentes
+        posicoesParaMarcar.forEach(posicao => {
+            const checkbox = document.getElementById(`posicao-${posicao}`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
     } catch (error) {
         console.error('Erro ao carregar posições de jogo:', error);
     }
