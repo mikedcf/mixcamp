@@ -2797,7 +2797,7 @@ async function adicionarVideoUser(link_video){
         // Adicionar o novo vídeo ao array
         destaquesAtuais.push(link_video);
 
-        const response = await fetch(`${API_URL}/configuracoes/${userID}`, {
+        const response = await fetch(`${API_URL}/configuracoes/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
