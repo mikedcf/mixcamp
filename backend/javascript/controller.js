@@ -1812,9 +1812,30 @@ async function updateImgMap(req, res){
 // ===============================================================================================
 // ==================================== [API EMAIL] =============================================
 
+async function enviarEmail(email,code){
+    try {
+        const response = await resend.emails.send({
+            from: process.env.FROM_TEXT_EMAIL,
+            to: [email],
+            subject: 'MIXCAMP - Código de verificação',
+            html: `
+            <h1>Seu código de verificação: ${code}</h1>
+            <p>Este código expira em 10 minutos.</p>
+            `
+        });
+    
+        return true
+    } catch (erro) {
+        console.error("ERRO AO ENVIAR:", erro);
+        return false
+        
+    }
+}
+
+
 async function enviarCodigoEmail(req, res){
     const {email} = req.body;
-    
+
     let conexao;
 
     try{
@@ -1827,30 +1848,24 @@ async function enviarCodigoEmail(req, res){
 
             query = 'INSERT INTO email_verificacao (email, codigo, expira_em) VALUES (?, ?, ?)';
             await conexao.execute(query, [email, code, new Date(Date.now() + 10 * 60 * 1000)]);
-            try {
-                console.log(process.env.FROM_TEXT_EMAIL);
-                console.log('verificando email do user:',email);
-                const response = await resend.emails.send({
-                  from: process.env.FROM_TEXT_EMAIL,
-                  to: [email],
-                  subject: 'Código de verificação',
-                  html: `
-                  <h2>Seu código de verificação</h2>
-                  <h1>${code}</h1>
-                  <p>Este código expira em 10 minutos.</p>
-                  `
-                });
-            
+
+
+            const response = await enviarEmail(email, code);
+            console.log('response:', response);
+
+
+            if(response){
                 console.log("EMAIL ENVIADO:", response);
                 res.status(200).json({ message: 'Código enviado com sucesso, verifique sua caixa de entrada' });
-              } catch (erro) {
-                console.error("ERRO AO ENVIAR:", erro);
+            }
+            else{
                 res.status(500).json({ message: 'Erro ao enviar código de e-mail' });
             }
         }
         else{
-            res.status(400).json({ message: `${email} já está cadastrado no sistema` });
+            res.status(400).json({ message: 'Email já cadastrado' });
         }
+        
     }
     catch(error){
         console.error('Erro ao enviar código de e-mail:', error);

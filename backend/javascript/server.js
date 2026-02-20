@@ -31,7 +31,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// PRODUÇÃO - descomente esta parte
+
 app.use(cors({
     origin: process.env.CORS_DOMAIN,
     credentials: true
@@ -42,34 +42,34 @@ app.use(cors({
 
 //  ative para produção
 
-app.set('trust proxy', 1);
+// app.set('trust proxy', 1);
 
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", 
-        sameSite: 'none'
-    }
-}));
+// app.use(session({
+//     secret: process.env.SESSION_SECRET,
+//     resave: false,
+//     saveUninitialized: false,
+//     proxy: true,
+//     cookie: {
+//         maxAge: 1000 * 60 * 60 * 24,
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production", 
+//         sameSite: 'none'
+//     }
+// }));
 
 
 // LOCALHOST - descomente esta parte
-// app.use(session({
-//     secret: process.env.SESSION_SECRET, // troque por algo aleatório e seguro
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//         maxAge: 1000 * 60 * 60 * 24, // 1 dia
-//         httpOnly: true, // impede acesso via JS do cliente
-//         secure: false, 
-//         sameSite: 'lax'
-//     }
-// }))
+app.use(session({
+    secret: process.env.SESSION_SECRET, // troque por algo aleatório e seguro
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 dia
+        httpOnly: true, // impede acesso via JS do cliente
+        secure: false, 
+        sameSite: 'lax'
+    }
+}))
 
 
 // Configuração do multer para upload de arquivos

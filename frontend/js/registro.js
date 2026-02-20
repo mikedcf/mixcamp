@@ -118,7 +118,6 @@ async function verificarDadosRegistro(dados){
     if (verifyemail){
         if(verifypassword){
             if(verifyusername){
-                showNotification("success", `Codigo de verificação enviado verifique seu e-mail`);
                 listdados.push({username, email, password, confirmPassword});
                 enviarCodigoEmail(email);
                 
@@ -139,6 +138,7 @@ async function verificarDadosRegistro(dados){
 }
 
 async function enviarCodigoEmail(email){
+    
 
     try{
         const response = await fetch(`${API_URL}/email/register`, {
@@ -152,8 +152,10 @@ async function enviarCodigoEmail(email){
         const data = await response.json();
 
         if (response.ok) {
-            showNotification("success", `${data.message}`);
-            verificarCodeEmail()
+            showNotification("alert", `${data.message}`);
+            abrirModalCodigoEmail();
+            
+            
         }
         else{
             showNotification("error", `${data.message}`);
@@ -166,9 +168,8 @@ async function enviarCodigoEmail(email){
 }
 
 async function verificarCodeEmail(){
-    const code = await abrirModalCodigoEmail();
-
-    console.log(code);
+    const codeInput = document.getElementById('emailCodeInput').value;
+    const code = codeInput;
     let email = '';
 
     if(code == ''){
@@ -193,7 +194,7 @@ async function verificarCodeEmail(){
         const data = await response.json();
 
         if (response.ok) {
-            showNotification("success", `${data.message}`);
+            fecharModalCodigoEmail();
             RegistrarUsuario();
         }
         else{
@@ -209,11 +210,23 @@ async function verificarCodeEmail(){
 
 }
 
+// Abre a modal onde o usuário vai digitar o código enviado por e-mail
+async function abrirModalCodigoEmail() {
+    const modal = document.getElementById('emailCodeModal');
+    if (!modal) {
+        console.error('Elemento #emailCodeModal não encontrado.');
+        return;
+    }
+    modal.style.display = 'flex'; // ou 'block', depende do seu CSS
+    return 
+}
+
 async function RegistrarUsuario(){
-    const dados = listdados[0];
-    const username = dados.username;
-    const email = dados.email;
-    const password = dados.password;
+
+
+    const username = listdados[0].username;
+    const email = listdados[0].email;
+    const password = listdados[0].password;
     
     try {
         const response = await fetch(`${API_URL}/register`, {
@@ -247,19 +260,7 @@ async function RegistrarUsuario(){
 
 }
 
-// Abre a modal onde o usuário vai digitar o código enviado por e-mail
-async function abrirModalCodigoEmail() {
-    
-    
-    const modal = document.getElementById('emailCodeModal');
-    const codeInput = document.getElementById('emailCodeInput');
-    if (!modal) {
-        console.error('Elemento #emailCodeModal não encontrado.');
-        return;
-    }
-    modal.style.display = 'flex'; // ou 'block', depende do seu CSS
-    return codeInput.value;
-}
+
 
 // Fecha a modal de código de e-mail
 function fecharModalCodigoEmail() {
