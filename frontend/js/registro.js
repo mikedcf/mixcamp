@@ -60,6 +60,23 @@ function showUserNotification(type, message, userPhoto, duration = 4000) {
 
 let listdados = [];
 
+async function Registro(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    const dados = {
+        username: username,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword
+    }
+    verificarDadosRegistro(dados);
+}
+
 async function verificarDadosRegistro(dados){
     const username = dados.username;
     const email = dados.email;
@@ -121,26 +138,6 @@ async function verificarDadosRegistro(dados){
     }
 }
 
-
-
-async function Registro(event) {
-    event.preventDefault();
-
-    const username = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    const dados = {
-        username: username,
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword
-    }
-    verificarDadosRegistro(dados);
-}
-
-
 async function enviarCodigoEmail(email){
 
     try{
@@ -156,7 +153,7 @@ async function enviarCodigoEmail(email){
 
         if (response.ok) {
             showNotification("success", `${data.message}`);
-            abrirModalCodigoEmail();
+            verificarCodeEmail()
         }
         else{
             showNotification("error", `${data.message}`);
@@ -249,8 +246,6 @@ async function RegistrarUsuario(){
     }
 
 }
-
-
 
 // Abre a modal onde o usuário vai digitar o código enviado por e-mail
 async function abrirModalCodigoEmail() {
