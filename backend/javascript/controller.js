@@ -3,78 +3,20 @@ const bcrypt = require('bcrypt');
 const FormData = require('form-data');
 const crypto = require('crypto');
 const axios = require("axios");
-const nodemailer = require("nodemailer");
+const {Resend} = require("resend")
 // const fetch = require('node-fetch');
 const { conectar, desconectar } = require('./db');
 const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
-
-
-
-
-const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
-
-// const transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//         user: process.env.EMAIL_USER,
-//         pass: process.env.EMAIL_PASSWORD
-//     }
-// })
-
-// const transporter = nodemailer.createTransport({
-//     host: "smtp.gmail.com",
-//     port: 465,
-//     secure: true, 
-//     family: 4, 
-//     auth: {
-//       user: process.env.EMAIL_USER,
-//       pass: process.env.EMAIL_PASSWORD,
-//     },
-    
-//     logger: true,
-//     debug: true, 
-//     connectionTimeout: 30000, 
-//     greetingTimeout: 30000,
-//     socketTimeout: 35000,
-//     tls: {
-        
-//         rejectUnauthorized: false 
-//     }
-// });
-
-
-const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    port: 2525,
-    auth: {
-      user: "302b0723fd9cd0", // Seu usuário que aparece na imagem
-      pass: "860b65ed679b40" // Clique no olho para ver a senha completa na imagem
-    }
-});
-
-
-  
-
-
-
-
-// console.log("email: ", process.env.EMAIL_USER);
-// console.log("pass: ", process.env.EMAIL_PASSWORD);
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
 
 const saltRounds = 10;
-
-// Credenciais do Cloudinary (SUBSTITUA SEU_CLOUD_NAME)
 const cloudName = process.env.APIKEYCLOUDINARY;
-// Tente diferentes presets se o primeiro não funcionar
 const uploadPreset = process.env.APIKEYUPLOAD;
 const apiKey = process.env.APIKEYFACEIT
 const steamApiKey = process.env.APIKEYSTEAM;
-
-
+const resend = new Resend(process.env.RESEND_KEY);
 
 
 async function setupDatabase() {
@@ -1883,21 +1825,24 @@ async function enviarCodigoEmail(req, res){
 
             query = 'INSERT INTO email_verificacao (email, codigo, expira_em) VALUES (?, ?, ?)';
             await conexao.execute(query, [email, code, new Date(Date.now() + 10 * 60 * 1000)]);
-
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: 'Código de verificação',
-                html: `
-                <h2>Seu código de verificação</h2>
-                <h1>${code}</h1>
-                <p>Este código expira em 10 minutos.</p>
-                `
-            };
-            await transporter.sendMail(mailOptions)
-                .then(() => console.log("✅ SMTP OK"))
-                .catch((e) => console.error("❌ SMTP FAIL:", e.message, e.code, e.response));
-            res.status(200).json({ message: 'Código enviado com sucesso' });
+            try {
+                const response = await resend.emails.send({
+                  from: process.env.FROM_TEXT_EMAIL,
+                  to: [email],
+                  subject: 'Código de verificação',
+                  html: `
+                  <h2>Seu código de verificação</h2>
+                  <h1>${code}</h1>
+                  <p>Este código expira em 10 minutos.</p>
+                  `
+                });
+            
+                console.log("EMAIL ENVIADO:", response);
+                res.status(200).json({ message: 'Código enviado com sucesso, verifique sua caixa de entrada' });
+              } catch (erro) {
+                console.error("ERRO AO ENVIAR:", erro);
+                res.status(500).json({ message: 'Erro ao enviar código de e-mail' });
+            }
         }
         else{
             res.status(400).json({ message: `${email} já está cadastrado no sistema` });
