@@ -1,10 +1,3 @@
-// =============================================================
-// ====================== [ Variáveis e Credenciais ] ======================
-
-// URL base da sua API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
-
 // =================================
 // ========= POSITION IMAGES =======
 // =================================
@@ -152,164 +145,6 @@ function getPosicoesEmojis() {
     };
 }
 
-
-// =================================
-// ========= NOTIFICATIONS =========
-
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        return;
-    }
-    
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-// =============== MODAL DE CONFIRMAÇÃO 
-
-let confirmModalResolve = null;
-
-/**
- * Mostra um modal de confirmação
- * @param {string} message - Mensagem a ser exibida
- * @param {string} title - Título do modal (opcional)
- * @returns {Promise<boolean>} - true se confirmou, false se cancelou
- */
-function showConfirmModal(message, title = 'Confirmação') {
-    return new Promise((resolve) => {
-        confirmModalResolve = resolve;
-        
-        // Configurar elementos
-        const modal = document.getElementById('confirmModal');
-        const titleElement = document.getElementById('confirmModalTitle');
-        const messageElement = document.getElementById('confirmModalMessage');
-        
-        if (!modal || !titleElement || !messageElement) {
-            console.error('Elementos do modal de confirmação não encontrados!');
-            resolve(false);
-            return;
-        }
-        
-        // Definir conteúdo
-        titleElement.textContent = title;
-        messageElement.textContent = message;
-        
-        // Mostrar modal
-        modal.style.display = 'block';
-        
-        // Focar no botão cancelar por padrão (mais seguro)
-        setTimeout(() => {
-            const cancelBtn = document.querySelector('.btn-confirm-cancel');
-            if (cancelBtn) cancelBtn.focus();
-        }, 100);
-    });
-}
-
-/**
- * Fecha o modal de confirmação
- * @param {boolean} result - true se confirmou, false se cancelou
- */
-function closeConfirmModal(result) {
-    const modal = document.getElementById('confirmModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-    
-    if (confirmModalResolve) {
-        confirmModalResolve(result);
-        confirmModalResolve = null;
-    }
-}
-
-// Fechar com Escape
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        const modal = document.getElementById('confirmModal');
-        if (modal && modal.style.display === 'block') {
-            closeConfirmModal(false);
-        }
-    }
-});
-
-// Fechar clicando fora do modal
-document.addEventListener('click', function(event) {
-    if (event.target && event.target.id === 'confirmModal') {
-        closeConfirmModal(false);
-    }
-});
-
-// Navegação por teclado
-document.addEventListener('keydown', function(event) {
-    const modal = document.getElementById('confirmModal');
-    if (modal && modal.style.display === 'block') {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            closeConfirmModal(true);
-        } else if (event.key === 'Tab') {
-            event.preventDefault();
-            const cancelBtn = document.querySelector('.btn-confirm-cancel');
-            const confirmBtn = document.querySelector('.btn-confirm-ok');
-            
-            if (document.activeElement === cancelBtn) {
-                confirmBtn.focus();
-            } else {
-                cancelBtn.focus();
-            }
-        }
-    }
-});
-
-
-
 // =============================================================
 // ====================== [ autenticação e logout ] ======================
 // Função principal de inicialização que cuida de tudo
@@ -371,7 +206,7 @@ async function verificar_auth() {
             // Usar avatar padrão se não houver avatar do usuário
             document.getElementById("ftPerfil").src = "img/user.png";
         }
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
@@ -407,8 +242,6 @@ async function logout() {
     }
 }
 
-
-
 // =================================
 // ========= BUSCAR DADOS DO PERFIL =========
 async function buscarDadosPerfil() {
@@ -437,8 +270,6 @@ async function buscarDadosPerfil() {
         return perfilData = null;
     }
 }
-
-
 async function buscarDadosTime() {
 
 
@@ -464,7 +295,6 @@ async function buscarDadosTime() {
         // Verificar se destaque existe e tem elementos antes de acessar
         if (data.destaques && data.destaques.length > 0) {
             video_antigo = data.destaques[0].video_url
-            console.log(video_antigo)
         } else {
             video_antigo = null
         }
@@ -586,7 +416,7 @@ async function carregarDadosTime() {
             } else {
                 console.warn('Dados de games do time não encontrados');
             }
-            // console.log(games)
+            
 
             // const radios = document.querySelectorAll('input[name="teamGame"]');
   
@@ -1082,7 +912,7 @@ async function excluirTime() {
             showNotification('success', data.message);
             
             setTimeout(() => {
-                window.location.href = 'times.html';
+                window.location.href = 'home.html';
             }, 2000);
             
         } else {
@@ -1188,7 +1018,7 @@ async function escolherJogo() {
         games.push(checkbox.value);
     });
     
-    console.log('Jogos selecionados:', games);
+    
 }
 
 
@@ -1205,7 +1035,7 @@ async function atualizarCorTime() {
     if (colorPicker && colorValue) {
         corTimeSelecionada = colorPicker.value;
         colorValue.textContent = corTimeSelecionada.toUpperCase();
-        console.log(corTimeSelecionada);
+        
         
         // Atualizar preview com a cor selecionada
         if (colorPreview) {
@@ -1493,56 +1323,6 @@ document.addEventListener('click', function(event) {
 
 // =============================================================
 // ====================== [ sistema ] ======================
-
-// barra de pesquisa
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
-    }
-}
-
 // abrir menu suspenso
 function abrirMenuSuspenso() {
     const menu = document.querySelector('#menuOpcoes');

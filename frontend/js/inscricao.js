@@ -1,74 +1,3 @@
-// URL base da API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
-let avatar = '';
-
-// =================================
-// ========= NOTIFICATIONS =========
-
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        // Fallback: usar alert se o container não existir
-        alert(message);
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        // Fallback: usar alert se o container não existir
-        alert(message);
-        return;
-    }
-    
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-
 // =============================================================
 // ====================== [ autenticação ] ======================
 
@@ -110,7 +39,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
 
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
@@ -126,6 +55,9 @@ async function verificar_auth() {
         }
 
         document.getElementById('btnPagamento').style.display = 'block';
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
     }
 }
 
@@ -258,7 +190,7 @@ async function btnPagamento(){
                 if (linksVerify.res == true){
                     for(const card of cards.inscricoes){
                         if(card.id == cardId){
-                            console.log(card.preco_inscricao);
+                            
                             if(card.preco_inscricao > 0){
                                 PagementoFree()
                                 return;
@@ -408,7 +340,7 @@ async function salvarMembroHistorico(timeId){
                         return 
                     }
                     else{
-                        console.log('foi registrado os membros')
+                        
                         
                         registerMembroHistorico(timeId,membro.usuario_id, membro.posicao)
                             
@@ -452,7 +384,7 @@ async function registerMembroHistorico(timeId,userId,posicao){
             body: JSON.stringify({ campeonato_id: cardId, usuario_id: userId, time_id: timeId, posicao: posicao })
         });
         const result = await response.json();
-        console.log(result);
+        
     }
     catch(error){
         console.error('Erro ao registrar membro no histórico:', error);
@@ -796,7 +728,7 @@ async function atualizarTimesInscritos(cardId, totalTimes) {
                 body: JSON.stringify({ id: cardId, status: "encerrado" })
             });
 
-            console.log('Status da inscrição de campeonato atualizado');
+            
             document.getElementById('inscricaoStatus').style.background = 'linear-gradient(135deg,rgb(255, 93, 53),rgb(255, 66, 66))';
             if (notifyOff == true) {
                 showNotification('success', 'Inscrição já foi encerrada!');
@@ -914,55 +846,6 @@ function abrirMenuSuspenso() {
         menu.style.display = 'none';
     } else {
         menu.style.display = 'flex';
-    }
-}
-
-
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
     }
 }
 
@@ -1181,7 +1064,7 @@ async function DadosUpdateCard(card){
     }
 
     if(authDados.logado){
-        console.log(card.status);
+        
         if(card.status == 'em breve'){
             status.textContent = 'Em Breve';
             status.style.backgroundColor = '#0373fc';
@@ -1210,9 +1093,9 @@ async function DadosUpdateCard(card){
             btnChaveamento.style.display = 'flex';
         }
         else if(card.status == 'cancelado'){
-            status.textContent = 'Encerrado';
-            status.style.backgroundColor = '#fc0345';
-            boxStatus.style.backgroundColor = 'rgba(252, 3, 69, 0.42)';
+            status.textContent = 'Cancelado';
+            status.style.backgroundColor = '#6b7280';
+            boxStatus.style.backgroundColor = 'rgba(136, 136, 136, 0.42)';
             btnPgamento.style.display = 'none';
             btnChaveamento.style.display = 'none';
         }
@@ -1265,7 +1148,7 @@ async function atualizarStatusCard(cardId, status){
             credentials: 'include',
             body: JSON.stringify({ id: cardId, status: status })
         });
-        console.log('Status do card atualizado');
+        
     } catch (error) {
         console.error('Erro ao atualizar status do card:', error);
     }

@@ -1,3 +1,7 @@
+// URL base da sua API
+// const API_URL = 'http://127.0.0.1:3000/api/v1';
+const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+
 // =================================
 // ========= NOTIFICATIONS =========
 
@@ -154,12 +158,14 @@ document.addEventListener('keydown', function (event) {
 
 // =================================
 // ========= VERIFICAR TIME DO USUÁRIO =========
+
+// =================================
+// ========= VERIFICAR TIME DO USUÁRIO =========
 async function verificarTimeUsuario() {
     const auth_dados = await autenticacao();
     try {
         if(auth_dados.logado) {
             const userId = auth_dados.usuario.id;
-        
             const response = await fetch(`${API_URL}/times/by-user/${userId}`, { 
                 credentials: 'include'
             });
@@ -167,6 +173,7 @@ async function verificarTimeUsuario() {
             if (response.ok) {
                 const data = await response.json();
                 if (data.time) {
+                    
                     // Usuário tem time - mostrar "Meu Time"
                     atualizarMenuTime(true, data.time.id);
                 } else {
@@ -184,16 +191,21 @@ async function verificarTimeUsuario() {
     }
 }
 
+
+
 function atualizarMenuTime(temTime, timeId = null) {
     const menuTimeLink = document.getElementById('menuTimeLink');
     const menuTimeText = document.getElementById('menuTimeText');
     
     if (temTime && timeId) {
+        
         // Usuário tem time - link para página do time
         menuTimeLink.href = `team.html?id=${timeId}`;
+        
         menuTimeText.textContent = 'Meu Time';
-        menuTimeLink.onclick = null; // Remove onclick se existir
+        // menuTimeLink.onclick = null; // Remove onclick se existir
     } else {
+        
         // Usuário não tem time - abrir modal de criação
         menuTimeLink.href = '#';
         menuTimeText.textContent = 'Criar Time';
@@ -207,7 +219,11 @@ function atualizarMenuTime(temTime, timeId = null) {
 
 // =================================
 // ========= CRIAR TIME =========
+let criandoTime = false; // evita duplo envio do formulário
 async function criarTime() {
+    if (criandoTime) return;
+    criandoTime = true;
+
     const auth_dados = await autenticacao();
     const userId = auth_dados.usuario.id;
     const form = document.getElementById('formCriarTime');
@@ -223,16 +239,19 @@ async function criarTime() {
     // Validações básicas
     if (!data.nome || !data.tag) {
         showNotification('alert', 'Nome e tag do time são obrigatórios.');
+        criandoTime = false;
         return;
     }
 
     if (data.nome.length < 3) {
         showNotification('alert', 'Nome do time deve ter pelo menos 3 caracteres.');
+        criandoTime = false;
         return;
     }
 
     if (data.tag.length < 2) {
         showNotification('alert', 'Tag do time deve ter pelo menos 2 caracteres.');
+        criandoTime = false;
         return;
     }
 
@@ -261,11 +280,14 @@ async function criarTime() {
                 window.location.href = `team.html?id=${result.time.id}`;
             }, 2000);
         } else {
-            showNotification('error', result.error || 'Erro ao criar time.');
+            const msg = result.error || (response.status === 409 ? 'Já existe um time com este nome ou tag. Escolha outro.' : 'Erro ao criar time.');
+            showNotification('error', msg);
         }
     } catch (error) {
         console.error('Erro ao criar time:', error);
         showNotification('error', 'Erro de conexão. Tente novamente.');
+    } finally {
+        criandoTime = false;
     }
 }
 
@@ -336,6 +358,7 @@ function setupImageUpload() {
 }
 
 
+
 function handleImageUpload(event, previewElement, uploadArea) {
     const file = event.target.files[0];
     
@@ -362,7 +385,6 @@ function handleImageUpload(event, previewElement, uploadArea) {
         reader.readAsDataURL(file);
     }
 }
-
 // =================================
 // ========= ABIR MENU SUSPENSO =========
 
@@ -384,11 +406,11 @@ function abrirMenuSuspenso() {
     }
 }
 
-// Fechar menu quando clicar fora dele
+// Fechar menu quando clicar fora dele (só roda se menu e perfil existirem)
 document.addEventListener('click', function (event) {
     const menu = document.querySelector('#menuOpcoes');
     const perfilBtn = document.querySelector('.perfil-btn');
-
+    if (!menu || !perfilBtn) return;
     if (!perfilBtn.contains(event.target) && !menu.contains(event.target)) {
         menu.style.display = 'none';
     }
@@ -399,13 +421,52 @@ document.addEventListener('click', function (event) {
 // ========= SCROLL DO HEADER =========
 window.addEventListener("scroll", function () {
     const header = document.querySelector(".header");
-    if (window.scrollY > 50) { // quando rolar 50px
+    if (header && window.scrollY > 50) {
         header.classList.add("scrolled");
-    } else {
+    } else if (header) {
         header.classList.remove("scrolled");
     }
 });
 
+// =================================
+// ========= MENU HAMBURGER (MOBILE) =========
+// Abre/fecha o painel com as opções do nav em telas que usam o header responsivo
+function toggleMenuMobile() {
+    const header = document.getElementById("mainHeader");
+    const overlay = document.getElementById("mobileNavOverlay");
+    const hamburger = document.getElementById("headerHamburger");
+    if (!header || !overlay || !hamburger) return;
+    const isOpen = header.classList.toggle("menu-open");
+    overlay.classList.toggle("is-open", isOpen);
+    overlay.setAttribute("aria-hidden", !isOpen);
+    hamburger.setAttribute("aria-expanded", isOpen);
+    document.body.style.overflow = isOpen ? "hidden" : "";
+}
+
+function fecharMenuMobile() {
+    const header = document.getElementById("mainHeader");
+    const overlay = document.getElementById("mobileNavOverlay");
+    const hamburger = document.getElementById("headerHamburger");
+    if (!header || !overlay) return;
+    header.classList.remove("menu-open");
+    overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
+    if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+    document.body.style.overflow = "";
+}
+
+(function initMenuMobile() {
+    const hamburger = document.getElementById("headerHamburger");
+    const overlay = document.getElementById("mobileNavOverlay");
+    if (!hamburger || !overlay) return;
+    hamburger.addEventListener("click", toggleMenuMobile);
+    overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) fecharMenuMobile();
+    });
+    overlay.querySelectorAll(".mobile-nav-menu a").forEach(function (link) {
+        link.addEventListener("click", fecharMenuMobile);
+    });
+})();
 
 // =================================
 // ========= ABIR BARRA DE PESQUISA =========
@@ -649,13 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-document.addEventListener('DOMContentLoaded', async function() {
-    // Carregar cache primeiro
-    // await loadPositionImagesCache();
-    
-    // Depois executar outras funções
-    // verificarTimeUsuario();
-});
+
 document.addEventListener('DOMContentLoaded', function () {
     // Setup upload de imagens
     setupImageUpload();
@@ -694,3 +749,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Adicionar barra de progresso
 addScrollProgress();
+
+document.addEventListener('DOMContentLoaded', verificarTimeUsuario);

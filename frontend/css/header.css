@@ -1,14 +1,30 @@
 /* ============================================================================
    HEADER COMPARTILHADO - MIXCAMP
-   Estilos apenas para o cabeçalho (logo, menu, busca, perfil, resultados)
+   Estilos do cabeçalho usado em todas as páginas.
+   Índice (organização do arquivo):
+   1. Container do header e estados (fixed, scrolled, hover)
+   2. Conteúdo central (center-content, nav)
+   3. Logo (nav-brand, logo-img)
+   4. Menu de navegação (nav-menu, dropdown)
+   5. Área de busca e perfil (search-profile-area, user-auth, user-perfil)
+   6. Botões de autenticação (auth-btn, login-btn, register-btn)
+   7. Perfil e menu suspenso (perfil-btn, menu-opcoes)
+   8. Barra de pesquisa (search-bar-container, search-input, box-lupa)
+   9. Resultados da busca (search-results, search-item, etc.)
+   10. Estilos duplicados/legado (header principal, center-content, nav, logo...)
+   11. RESPONSIVIDADE - Menu hamburger, overlay, painel mobile, media queries
    ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
 
+/* -----------------------------------------------------------------------------
+   1. CONTAINER DO HEADER - posição fixa, largura, altura, bordas
+   ----------------------------------------------------------------------------- */
 .header {
     display: flex;
     width: 95%;
+    max-width: 1600px;
     height: 90px;
-    margin: auto;
-    margin-top: 1%;
+    margin: 0 auto;
     padding: 1px 40px;
     background: linear-gradient(135deg,
         rgba(15, 15, 25, 0.85) 0%,
@@ -23,11 +39,15 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 107, 53, 0.1) inset,
                 0 2px 8px rgba(255, 107, 53, 0.1);
-    position: sticky;
-    top: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: none;
     z-index: 1000;
-    overflow: visible; /* garante que dropdowns como 'Matchs' não sejam cortados */
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
+    transition: width 0.55s cubic-bezier(0, 0, 0.2, 1), border-radius 0.55s cubic-bezier(0, 0, 0.2, 1), background 0.4s ease, box-shadow 0.4s ease;
+    box-sizing: border-box;
 }
 
 .header::before {
@@ -57,10 +77,13 @@
         rgba(20, 20, 35, 0.95) 0%,
         rgba(15, 15, 25, 0.95) 100%);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    top: 0;
     border-radius: 0 0 24px 24px;
     width: 100%;
-    margin-top: 0;
+    max-width: none;
+}
+
+.header.scrolled:hover {
+    transform: translateY(-2px);
 }
 
 .center-content {
@@ -300,11 +323,12 @@
         rgba(255, 255, 255, 0.08) 100%);
     backdrop-filter: blur(10px);
     color: #fff;
+    font-family: "Oswald", sans-serif;
     font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 600;
     letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: relative;
@@ -777,13 +801,13 @@
 ============================================================================ 
 */
 
-/* ==== HEADER PRINCIPAL ==== */
+/* ==== HEADER PRINCIPAL (fixo e centralizado - só anima width = sem balanço) ==== */
 .header {
     display: flex;
     width: 95%;
+    max-width: 1600px;
     height: 90px;
-    margin: auto;
-    margin-top: 1%;
+    margin: 0 auto;
     padding: 1px 40px;
     background: linear-gradient(135deg, 
         rgba(15, 15, 25, 0.85) 0%, 
@@ -798,10 +822,14 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 107, 53, 0.1) inset,
                 0 2px 8px rgba(255, 107, 53, 0.1);
-    position: sticky;
-    top: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: none;
     z-index: 1000;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.55s cubic-bezier(0, 0, 0.2, 1), border-radius 0.55s cubic-bezier(0, 0, 0.2, 1), background 0.4s ease, box-shadow 0.4s ease;
+    box-sizing: border-box;
 }
 
 .header::before {
@@ -827,14 +855,13 @@
 }
 
 .header.scrolled {
-    background: linear-gradient(135deg, 
-        rgba(20, 20, 35, 0.95) 0%, 
+    background: linear-gradient(135deg,
+        rgba(20, 20, 35, 0.95) 0%,
         rgba(15, 15, 25, 0.95) 100%);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    top: 0;
     border-radius: 0 0 24px 24px;
     width: 100%;
-    margin-top: 0;
+    max-width: none;
 }
 
 .header.expanded {
@@ -1107,7 +1134,7 @@
 
 /* ==== BOTÕES DE AUTENTICAÇÃO ==== */
 .user-auth {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     gap: 15px;
@@ -1124,11 +1151,12 @@
         rgba(255, 255, 255, 0.08) 100%);
     backdrop-filter: blur(10px);
     color: #fff;
+    font-family: "Oswald", sans-serif;
     font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 600;
     letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: relative;
@@ -1438,4 +1466,357 @@
     font-size: 1em;
 }
 
+/* ============================================================================
+   RESPONSIVIDADE DO HEADER
+   Layout mobile: [ Menu Hamburger ] [ Logo MIXCAMP centralizado ] [ user-auth ou user-perfil ]
+   O menu de navegação fica dentro do painel que abre ao clicar no hamburger.
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   Botão Hamburger - escondido no desktop, visível em telas médias/pequenas
+   ----------------------------------------------------------------------------- */
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin: 0;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 255, 255, 0.08) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    z-index: 1002;
+}
+
+.hamburger-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(255, 107, 53, 0.25) 0%,
+        rgba(255, 69, 0, 0.15) 100%);
+    border-color: rgba(255, 107, 53, 0.5);
+}
+
+.hamburger-line {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Estado ativo do hamburger (X) */
+.header.menu-open .hamburger-btn .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.header.menu-open .hamburger-btn .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+.header.menu-open .hamburger-btn .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* -----------------------------------------------------------------------------
+   Overlay do menu mobile - fundo escuro atrás do painel
+   ----------------------------------------------------------------------------- */
+.mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.mobile-nav-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* -----------------------------------------------------------------------------
+   Painel lateral com os itens do nav (Campeonato, Matchs, Comunidade, etc.)
+   ----------------------------------------------------------------------------- */
+.mobile-nav-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 85vw);
+    max-width: 280px;
+    height: 100%;
+    background: linear-gradient(180deg,
+        rgba(15, 15, 25, 0.98) 0%,
+        rgba(10, 10, 20, 0.98) 100%);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
+    padding: 80px 0 24px 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.mobile-nav-overlay.is-open .mobile-nav-panel {
+    transform: translateX(0);
+}
+
+.mobile-nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mobile-nav-menu li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-nav-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mobile-nav-menu li a:hover,
+.mobile-nav-menu li a:focus {
+    background: rgba(255, 107, 53, 0.15);
+    color: #ff6b35;
+}
+
+.mobile-nav-menu li a i {
+    width: 22px;
+    text-align: center;
+    font-size: 1.1rem;
+    color: rgba(255, 107, 53, 0.9);
+}
+
+/* ============================================================================
+   MEDIA QUERIES - HEADER RESPONSIVO
+   A partir de 992px o header usa layout normal (logo | nav | perfil).
+   Abaixo disso: hamburger | logo centralizado | user-auth/user-perfil
+   ========================================================================== */
+
+@media (max-width: 992px) {
+    /* Exibe o botão hamburger */
+    .hamburger-btn {
+        display: flex;
+    }
+
+    /* Logo no centro: ocupa o espaço do meio e centraliza a img */
+    .header .nav-brand {
+        flex: 1;
+        justify-content: center;
+        width: auto;
+        min-width: 0;
+    }
+
+    .header .logo-img {
+        height: 120px;
+        width: auto;
+        max-width: 140px;
+    }
+
+    /* Esconde o nav e a busca no header (ficam no painel mobile) */
+    .header .center-content {
+        display: none;
+    }
+
+    /* Área de perfil/auth mantém à direita, compacta */
+    .header .search-profile-area {
+        width: auto;
+        flex-shrink: 0;
+        gap: 10px;
+    }
+
+    /* Botões Login/Registrar um pouco menores no mobile */
+    .header .auth-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    /* Perfil: pode esconder o nome em telas muito pequenas (ver 768px) */
+    .header .perfil-nome {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Lupa de busca: escondida no header mobile (opcional manter se quiser) */
+    .header .box-lupa {
+        display: flex;
+    }
+}
+
+/* Exibir overlay e painel apenas quando existirem no DOM (páginas com hamburger) */
+@media (max-width: 992px) {
+    .mobile-nav-overlay {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 16px;
+        height: 70px;
+        width: 98%;
+    }
+
+    .header .logo-img {
+        height: 100px;
+        max-width: 120px;
+    }
+
+    .header .auth-btn span {
+        font-size: 0.8rem;
+    }
+
+    /* Opcional: só ícone no perfil em telas muito pequenas */
+    .header .perfil-nome {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 0 12px;
+        height: 64px;
+    }
+
+    .header .logo-img {
+        height: 85px;
+        max-width: 110px;
+    }
+
+    .hamburger-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .hamburger-line {
+        width: 20px;
+    }
+}
+
+/* 320px até 428px: header proporcional para caber bem (390px, 375px, 320px, etc.) */
+@media (max-width: 428px) {
+    .header {
+        padding: 0 10px;
+        height: 58px;
+        width: 100%;
+        border-radius: 0 0 18px 18px;
+        gap: 6px;
+    }
+
+    .header .logo-img {
+        height: 72px;
+        max-width: 92px;
+        object-fit: contain;
+    }
+
+    .hamburger-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        padding: 0;
+        gap: 4px;
+    }
+
+    .hamburger-line {
+        width: 18px;
+        height: 2px;
+    }
+
+    .header.menu-open .hamburger-btn .hamburger-line:nth-child(1) {
+        transform: translateY(6px) rotate(45deg);
+    }
+    .header.menu-open .hamburger-btn .hamburger-line:nth-child(3) {
+        transform: translateY(-6px) rotate(-45deg);
+    }
+
+    .header .search-profile-area {
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .header .auth-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .header .auth-btn span {
+        font-size: 0.75rem;
+    }
+
+    .header .perfil-btn {
+        padding: 6px 8px;
+        min-width: 0;
+    }
+
+    .header .icon-perfil {
+        width: 32px;
+        height: 32px;
+    }
+
+    .header .box-lupa {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+
+    .mobile-nav-panel {
+        width: min(260px, 88vw);
+        max-width: 260px;
+    }
+}
+
+/* Telas muito pequenas (até 360px): ainda mais compacto */
+@media (max-width: 360px) {
+    .header {
+        padding: 0 8px;
+        height: 54px;
+    }
+
+    .header .logo-img {
+        height: 64px;
+        max-width: 82px;
+    }
+
+    .hamburger-btn {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+    }
+
+    .hamburger-line {
+        width: 16px;
+    }
+
+    .header .auth-btn {
+        padding: 5px 8px;
+        font-size: 0.7rem;
+    }
+
+    .header .auth-btn span {
+        font-size: 0.7rem;
+    }
+}
 

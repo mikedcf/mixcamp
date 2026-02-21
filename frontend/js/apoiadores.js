@@ -1,69 +1,4 @@
-// URL base da sua API
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
 let avatar = '';
-
-
-
-
-// =================================
-// ========= NOTIFICATIONS =========
-
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
 
 // =============================================================
 // ====================== [ autenticação e logout ] ======================
@@ -114,7 +49,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
@@ -126,6 +61,9 @@ async function verificar_auth() {
         else{
             gerenciarCamp.style.display = 'none';
         }
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
     }
 }
 
@@ -217,56 +155,26 @@ async function buscarDadosPerfil() {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // =================================
 // ========= SISTEMA =========
 
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
-    }
-}
 
 
 // Função para abrir/fechar menu suspenso
@@ -574,7 +482,7 @@ function addSoundEffects() {
     buttons.forEach(button => {
         button.addEventListener('click', function() {
             // Simular som de clique (pode ser implementado com Web Audio API)
-            console.log('Som de clique reproduzido');
+            
         });
     });
 }
@@ -689,8 +597,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(typeWriter, 1000);
     }
     
-    // Adicionar efeito de scroll suave para links internos
-    const internalLinks = document.querySelectorAll('a[href^="#"]');
+    // Adicionar efeito de scroll suave apenas para âncoras dentro do conteúdo (main).
+    // Não incluir links do header (ex.: Meu Time, Meu Perfil) que têm href="#" no HTML e são atualizados via JS.
+    const internalLinks = document.querySelectorAll('main a[href^="#"]');
     internalLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();

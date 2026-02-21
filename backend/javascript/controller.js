@@ -2769,7 +2769,6 @@ async function listarSolicitacoesPorTime(req, res) {
 
 async function criarTime(req, res) {
     const { userId, nome, tag, sobre_time } = req.body;
-    console.log(userId, nome, tag, sobre_time)
     // const userId = req.session.userId;
 
 
@@ -2846,6 +2845,9 @@ async function criarTime(req, res) {
 
     } catch (error) {
         if (conexao) await conexao.rollback();
+        if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+            return res.status(409).json({ error: 'Já existe um time com este nome ou tag. Escolha outro nome ou tag.' });
+        }
         console.error('Erro ao criar time:', error);
         res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
     } finally {
@@ -4514,20 +4516,6 @@ async function getInscricoesCampeonato(req, res) {
             FROM inscricoes_campeonato ic
             LEFT JOIN usuarios u ON u.id = ic.id_organizador
         `);
-
-        // DEBUG focado em premiação (medalha/troféu) para o frontend do chaveamento
-        console.debug('[DEBUG PREMIAÇÃO BACKEND] getInscricoesCampeonato - total registros:', inscricoes.length);
-        inscricoes.forEach((item) => {
-            console.debug('[DEBUG PREMIAÇÃO BACKEND] inscrição', {
-                id: item.id,
-                tipo: item.tipo,
-                chave: item.chave,
-                qnt_times: item.qnt_times,
-                medalha_id: item.medalha_id,
-                trofeu_id: item.trofeu_id,
-                status: item.status
-            });
-        });
 
         res.status(200).json({ inscricoes });
     }

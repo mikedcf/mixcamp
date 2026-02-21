@@ -1,6 +1,4 @@
-// URL base da sua API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+
 let avatar = '';
 let dominio = 'http://127.0.0.1:5501';
 // ===== VARIÁVEIS GLOBAIS =====
@@ -66,15 +64,7 @@ async function verificar_auth() {
             
         }
         // Validar se time existe antes de definir o href
-        if (auth_dados.usuario.time) {
-            menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
-        } else {
-            menuTimeLink.href = '#';
-            menuTimeLink.onclick = (e) => {
-                e.preventDefault();
-                showNotification('info', 'Você não está em um time');
-            };
-        }
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
@@ -90,6 +80,8 @@ async function verificar_auth() {
     else {
         document.getElementById("userPerfil").style.display = "none";
         document.getElementById("buconfig").style.display = "none";
+        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById("followBtnBanner").style.display = "none";
 
     }
 }
@@ -490,7 +482,7 @@ async function faceitStatusCs() {
             body: JSON.stringify({ faceitid })
         });
         const data = await response.json();
-        // console.log(data)
+        
         return data;
     } catch (error) {
         return data = { horastotal: 'Não definido', horassemana: 'Não definido' };
@@ -514,15 +506,16 @@ async function atualizarDadosPerfil() {
     document.getElementById('profileUsername').textContent = perfilData.usuario.username.toUpperCase()
 
     // atualizar tag team
+    
 
     if (perfilData.time == null) {
         document.getElementById('teamTagContainer').style.display = 'block'
     }
     else {
         document.getElementById('teamTagName').textContent = perfilData.time.tag
+        document.getElementById('teamTagContainer').style.display = 'flex'
     }
 
-    document.getElementById('teamTagContainer').style.display = 'none'
 
 
 
@@ -534,7 +527,7 @@ async function atualizarDadosPerfil() {
     const verify = document.getElementById('verifiedCheck')
 
 
-    console.log(perfilData.usuario.posicoes)
+    
 
 
 
@@ -546,21 +539,28 @@ async function atualizarDadosPerfil() {
 
 
 
-    // verificar se tem link de faceit e steam
-    const redeSocialData = perfilData.redesSociais && perfilData.redesSociais.length > 0 ? perfilData.redesSociais[0] : null;
-    const faceit_link = redeSocialData ? redeSocialData.faceit_url : '';
-    const steam_link = redeSocialData ? redeSocialData.steam_url : '';
+    // verificar se tem link de faceit e steam (selo verificado ao lado do nome)
+    const redesSociaisArray = perfilData.redesSociais && Array.isArray(perfilData.redesSociais) ? perfilData.redesSociais : [];
+    const redeSocialData = redesSociaisArray.length > 0 ? redesSociaisArray[0] : null;
+    const faceit_link = redeSocialData ? (redeSocialData.faceit_url || '') : '';
+    const steam_link = redeSocialData ? (redeSocialData.steam_url || '') : '';
 
-    if (!faceit_link || !steam_link || faceit_link == '' || steam_link == '') {
-        verify.style.display = 'none'
-        if (faceit_link) {
+    if (verify) {
+        const temFaceit = faceit_link && String(faceit_link).trim() !== '';
+        const temSteam = steam_link && String(steam_link).trim() !== '';
+        if (temFaceit && temSteam) {
+            verify.style.display = 'flex';
             atualizarLevelFaceit(faceit_link);
+        } else {
+            // Só esconde o selo quando temos dados de redes e os dois links estão vazios.
+            // Se redesSociais não veio ou veio vazio, não esconde (evita sumir após config/salvar).
+            if (redeSocialData !== null && !temFaceit && !temSteam) {
+                verify.style.display = 'none';
+            }
+            if (faceit_link) {
+                atualizarLevelFaceit(faceit_link);
+            }
         }
-    }
-    else {
-        verify.style.display = 'flex'
-        // Buscar e atualizar level da Faceit
-        atualizarLevelFaceit(faceit_link);
     }
 
 
@@ -685,7 +685,7 @@ async function inserirHistoricoTimes(data) {
 
 
     if (data.lenght == 0) {
-        console.log('Nenhum time encontrado')
+        
         return;
     }
 
@@ -1622,12 +1622,12 @@ async function filtroMedalhas() {
     params = new URLSearchParams(window.location.search);
     const userId= params.get('id');
     const { medalhasData } = await buscarDadosPerfil(userId);
-    // console.log(medalhasData)
+    
     let data = []
 
     // ✅ CORREÇÃO: Verificar se medalhasData existe
     if (!medalhasData || !Array.isArray(medalhasData)) {
-        console.log('Nenhuma medalha encontrada');
+        
         insertMedalhas([]);
         return;
     }
@@ -1761,7 +1761,7 @@ async function insertMedalhas(dados) {
             // Adicionar evento de clique no slot
             slot.addEventListener('click', () => {
                 openMedalModal(dado);
-                console.log(dado)
+                
             });
         } else {
             // Esconder slots vazios que não têm medalhas
@@ -2743,12 +2743,7 @@ async function adicionarVideo() {
                 // Upload bem-sucedido
                 showNotification('success', `Vídeo "${file.name}" enviado com sucesso!`);
                 
-                console.log('Vídeo enviado com sucesso:', {
-                    nome: file.name,
-                    url: data.secure_url,
-                    tamanho: file.size,
-                    tipo: file.type
-                });
+                
 
                 return adicionarVideoUser(data.secure_url);
                 
@@ -3784,15 +3779,12 @@ function toggleMobileMenu() {
     const body = document.body;
 
     if (hamburger && mobileMenu && overlay) {
-        hamburger.classList.toggle('active');
-        mobileMenu.classList.toggle('active');
-        overlay.classList.toggle('active');
-        
-        if (mobileMenu.classList.contains('active')) {
-            body.style.overflow = 'hidden';
-        } else {
-            body.style.overflow = '';
-        }
+        const isOpen = !mobileMenu.classList.contains('active');
+        hamburger.classList.toggle('active', isOpen);
+        mobileMenu.classList.toggle('active', isOpen);
+        overlay.classList.toggle('active', isOpen);
+        hamburger.setAttribute('aria-expanded', isOpen);
+        body.style.overflow = isOpen ? 'hidden' : '';
     }
 }
 

@@ -1,6 +1,3 @@
-// URL base da sua API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 let avatar = '';
 
 let imagensMapas = {};
@@ -12,57 +9,9 @@ let searchInput = null;
 
 // Variável para armazenar a função de fechar, para poder removê-la depois
 // let fecharPesquisaHandler = null;
-// =================================
-// ========= NOTIFICATIONS =========
-// icons está definido em utils.js
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
 
 // =============================================================
 // ====================== [ autenticação ] ======================
-
-
 
 // ------ AUTENTICAÇÃO DO USUARIO
 async function autenticacao() {
@@ -97,7 +46,7 @@ async function verificar_auth() {
     if (auth_dados.logado) {
         const userId = auth_dados.usuario.id;
         const perfil_data = await buscarDadosPerfil();
-        console.log(perfil_data);
+        
         
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
@@ -108,7 +57,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
@@ -120,6 +69,9 @@ async function verificar_auth() {
         else{
             gerenciarCamp.style.display = 'none';
         }
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
     }
 }
 
@@ -323,7 +275,7 @@ async function criarTime() {
                 window.location.href = `team.html?id=${result.time.id}`;
             }, 2000);
         } else {
-            showNotification('error', result.error || 'Erro ao criar time.');
+            showNotification('error', result.error || (response.status === 409 ? 'Já existe um time com este nome ou tag. Escolha outro.' : 'Erro ao criar time.'));
         }
     } catch (error) {
         console.error('Erro ao criar time:', error);
@@ -1007,8 +959,7 @@ function renderizarCarrosselEventos(eventos) {
             
             const queueId = item.getAttribute('data-queue-id');
             buscarPartidas(queueId)
-            console.log('Card clicado - Queue ID:', queueId);
-            console.log('Evento completo:', evento);
+            
         });
 
         wrapper.appendChild(item);
@@ -1041,24 +992,76 @@ function configurarNavegacaoCarrossel() {
         const scrollWidth = carousel.scrollWidth;
         const clientWidth = carousel.clientWidth;
 
-        btnPrev.disabled = scrollLeft === 0;
+        btnPrev.disabled = scrollLeft <= 1;
         btnNext.disabled = scrollLeft + clientWidth >= scrollWidth - 1;
     };
+
+    // Define qual item está visível e marca como active (usado após scroll/touch)
+    const sincronizarActiveComScroll = () => {
+        const wrappers = carousel.querySelectorAll('.evento-item-wrapper');
+        if (wrappers.length === 0) return;
+        const scrollLeft = carousel.scrollLeft;
+        const clientWidth = carousel.clientWidth;
+        const center = scrollLeft + clientWidth / 2;
+        let melhor = wrappers[0];
+        let menorDist = Infinity;
+        wrappers.forEach((w) => {
+            const wLeft = w.offsetLeft;
+            const wCenter = wLeft + w.offsetWidth / 2;
+            const dist = Math.abs(center - wCenter);
+            if (dist < menorDist) {
+                menorDist = dist;
+                melhor = w;
+            }
+        });
+        const item = melhor.querySelector('.evento-item');
+        if (!item) return;
+        carousel.querySelectorAll('.evento-item-wrapper').forEach((w) => w.classList.remove('active'));
+        carousel.querySelectorAll('.evento-item').forEach((el) => el.classList.remove('active'));
+        melhor.classList.add('active');
+        item.classList.add('active');
+        const queueId = item.getAttribute('data-queue-id');
+        if (queueId) buscarPartidas(queueId);
+    };
+
+    // Scroll encerrou (touch ou botão): sincroniza active com o item visível
+    let scrollEndTimer = null;
+    const aoFimDoScroll = () => {
+        if (scrollEndTimer) clearTimeout(scrollEndTimer);
+        scrollEndTimer = setTimeout(() => {
+            sincronizarActiveComScroll();
+            atualizarBotoes();
+        }, 150);
+    };
+
+    if ('onscrollend' in carousel) {
+        carousel.addEventListener('scrollend', () => {
+            sincronizarActiveComScroll();
+            atualizarBotoes();
+        });
+    } else {
+        carousel.addEventListener('scroll', aoFimDoScroll);
+    }
+
+    // Passo de scroll: no mobile um item = 100% da largura, no desktop ~250px
+    const getScrollStep = () => (carousel.clientWidth <= 768 ? carousel.clientWidth : 250);
 
     // Botão anterior
     btnPrev.addEventListener('click', () => {
         carousel.scrollBy({
-            left: -250,
+            left: -getScrollStep(),
             behavior: 'smooth'
         });
+        setTimeout(aoFimDoScroll, 400);
     });
 
     // Botão próximo
     btnNext.addEventListener('click', () => {
         carousel.scrollBy({
-            left: 250,
+            left: getScrollStep(),
             behavior: 'smooth'
         });
+        setTimeout(aoFimDoScroll, 400);
     });
 
     // Atualizar botões ao scrollar
@@ -1068,7 +1071,10 @@ function configurarNavegacaoCarrossel() {
     atualizarBotoes();
 
     // Atualizar botões ao redimensionar
-    window.addEventListener('resize', atualizarBotoes);
+    window.addEventListener('resize', () => {
+        atualizarBotoes();
+        sincronizarActiveComScroll();
+    });
 }
 
 // Função para carregar e renderizar o carrossel

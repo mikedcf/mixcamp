@@ -1,58 +1,48 @@
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+// =============================================================
+// ====================== [ autenticação e logout ] ======================
+// ------ AUTENTICAÇÃO DO USUARIO
+async function autenticacao() {
+    try {
+        const response = await fetch(`${API_URL}/dashboard`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
 
-// =================================
-// ========= NOTIFICATIONS =========
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'login.html';
+            }
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
 
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
+        const data = await response.json();
 
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
+        return data;
 
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        showNotification('error', `${error}`);
 
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
+    }
 }
 
 
+async function verificar_auth() {
+    const auth_dados = await autenticacao();
+
+
+    if (auth_dados.logado) {
+        window.location.href = 'home.html';
+    }
+    else {
+        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById("registerBtn").style.display = "none";
+        document.getElementById("loginBtn").style.background = "linear-gradient(135deg, #ff6b35 0%, #ff4500 100%)";
+
+
+    }
+}
 
 
 // =================================
@@ -421,56 +411,6 @@ document.addEventListener('mousemove', function (e) {
 });
 
 
-// =================================
-// ========= ABRIR BARRA DE PESQUISA (HEADER) =========
-// Variável para armazenar o handler de fechamento, para poder removê-lo depois
-let fecharPesquisaHandler = null;
+verificar_auth();
 
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
 
-    if (!header || !searchBarContainer || !searchToggle) return;
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        if (searchInput) {
-            searchInput.focus();
-        }
-
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function (event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) &&
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
-    }
-}

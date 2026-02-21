@@ -1,58 +1,3 @@
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
-// =================================
-// ========= NOTIFICATIONS =========
-
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-
 
 // =============================================================
 // ===================== [ LÓGICA DE LOGIN ] =====================
@@ -74,12 +19,8 @@ async function autenticacao() {
 
         const data = await response.json();
 
-        if (data.logado) {
-            console.log(data.logado);
-            // assim que o usuario logar, ele é redirecionado para a pagina home
-            window.location.href = 'home.html';
+        return data;
 
-        }
     } catch (error) {
         console.error('Erro na inicialização:', error);
         showNotification('error', `${error}`);
@@ -88,8 +29,29 @@ async function autenticacao() {
 }
 
 
+async function verificar_auth() {
+    const auth_dados = await autenticacao();
+
+
+    if (auth_dados.logado) {
+        window.location.href = 'home.html';
+    }
+    else {
+        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById("registerBtn").style.display = "flex";
+        document.getElementById("loginBtn").style.display = "none";
+
+
+    }
+}
+
+
+
+
+// =================================
+// ========= SISTEMA LOGIN =========
 async function dados_e_Login(event) {
-    event.preventDefault(); // 👈 evita reload da página
+    event.preventDefault(); 
 
     const email = document.getElementById('email').value;
     const senha = document.getElementById('password').value;
@@ -119,9 +81,6 @@ async function dados_e_Login(event) {
             const sessionData = await sessionCheck.json();
 
             if (sessionData.logado) {
-                console.log(sessionData);
-
-                showNotification("success", `Login bem-sucedido!`, duration=1900);
                 showNotification("success", `Bem-vindo ao MixCamp ${sessionData.usuario.nome} <br> Redirecionando para a página inicial !`,duration=2000);
 
                 setTimeout(() => {
@@ -336,4 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // =================================
 // ========= STARTS =========
-document.addEventListener('DOMContentLoaded', autenticacao);
+document.addEventListener('DOMContentLoaded', function () {
+    autenticacao();
+    verificar_auth();
+});

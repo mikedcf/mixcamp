@@ -33,6 +33,16 @@ body {
     position: relative;
 }
 
+/* Telas até 1280px (ex.: 1280x800): libera scroll vertical */
+@media (max-width: 1280px) {
+    body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        min-height: 100vh;
+        height: auto;
+    }
+}
+
 @keyframes gradientShift {
     0% {
         background-position: 0% 50%;
@@ -1085,50 +1095,7 @@ body {
 
 
 
-/* ------- CAIXA LOGIN E REGISTRO ------- */
-/* Caixa de login/registro */
-.user-auth {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin: auto;
-    height: 60px;
-}
-
-/* Estilo dos botões de login/registro */
-.auth-btn {
-    padding: 8px 18px;
-    border-radius: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.auth-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 84, 4, 0.6);
-    color: #ff6b35;
-    transform: translateY(-2px);
-}
-
-.login-btn {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.register-btn {
-    background: #ff6b35;
-    border-color: #ff6b35;
-}
-
-.register-btn:hover {
-    background: #ff834f;
-    color: #fff;
-}
+/* Login/Registro: estilo unificado em header.css */
 
 /* 
 ============================================================================
@@ -1590,106 +1557,6 @@ body {
     color: rgba(255, 255, 255, 0.9);
 }
 
-/* ========================================================
-========================[NOTIFICATION STYLES]================================
-======================================================== */
-
-.notification-container {
-    position: fixed;
-    top: 130px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 9999;
-}
-
-.notification {
-    position: relative;
-    display: flex;
-    letter-spacing: 0.1em;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    border-radius: 10px;
-    color: #fff;
-    min-width: 300px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    animation: slideIn 0.3s ease-out;
-}
-
-.notification span.icon {
-    font-size: 20px;
-}
-
-.notification.with-user img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.7);
-    width: 100%;
-    animation: progressAnim linear forwards;
-}
-
-@keyframes progressAnim {
-    from {
-        width: 100%;
-    }
-
-    to {
-        width: 0%;
-    }
-}
-
-.success {
-    /* background: #2ecc71; */
-    background: #0c3b20;
-}
-
-/* verde */
-.alert {
-    background: #f1c40f;
-}
-
-/* amarelo */
-.error {
-    background: #e74c3c;
-}
-
-/* vermelho */
-.info {
-    background: #3498db;
-}
-
-/* azul */
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
 
 /* 
 ============================================================================
@@ -1713,8 +1580,9 @@ body {
     .login-container {
         flex-direction: column;
         padding: 0.3rem;
+        padding-top: clamp(100px, 14vh, 120px);
         min-height: calc(100vh - 130px);
-        margin-top: 3px;
+        margin-top: 0;
     }
 
     .character {
@@ -1752,8 +1620,9 @@ body {
 
 @media (max-width: 480px) {
     .login-container {
+        padding-top: clamp(90px, 12vh, 110px);
         min-height: calc(100vh - 140px);
-        margin-top: 1px;
+        margin-top: 0;
     }
 
     .login-card {

@@ -7,14 +7,34 @@
     <title>Configurações - Mixcamp</title>
     <link rel="stylesheet" href="../css/configuracoes.css">
     <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/ultils.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 </head>
 
-<body>
+<body class="claro">
+
+    <!-- Overlay do menu mobile (abre ao clicar no hamburger) -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" aria-hidden="true">
+        <nav class="mobile-nav-panel">
+            <ul class="mobile-nav-menu">
+                <li><a href="campeonato.html"><i class="fas fa-trophy"></i> Campeonato</a></li>
+                <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                <li><a href="comunidade.html"><i class="fas fa-users"></i> Comunidade</a></li>
+                <li><a href="noticias.html"><i class="fas fa-newspaper"></i> Notícias</a></li>
+                <li><a href="apoiadores.html"><i class="fas fa-heart"></i> Apoiadores</a></li>
+                <li><a href="sobre.html"><i class="fas fa-info-circle"></i> Sobre</a></li>
+            </ul>
+        </nav>
+    </div>
 
     <!-- Header -->
-    <header class="header">
+    <header class="header" id="mainHeader">
+        <button type="button" class="hamburger-btn" id="headerHamburger" aria-label="Abrir menu" aria-expanded="false">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
@@ -424,9 +444,13 @@
         </div>
     </div>
 
+    
+
     <!-- Notificação apenas mensagem -->
     <div class="notification-container" id="notificationContainer"></div>
 
+    
+    <script src="../js/utils.js"></script>
     <script src="../js/configuracoes.js"></script>
 </body>
 

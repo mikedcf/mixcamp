@@ -1,6 +1,4 @@
-// URL base da API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-// const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+
 
 // Funções de debug desabilitadas (mantidas apenas para evitar erros nas chamadas)
 function debugChaveamentoEtapa(etapa, payload = {}) {
@@ -311,8 +309,8 @@ document.addEventListener('click', (event) => {
         modalVetos.style.display = 'flex';
     }
 
-    // No próximo passo podemos usar matchId para preencher nomes dos times / infos no modal
-    console.log('[CHAVEAMENTO] abrir modal de vetos para partida', { matchId });
+    
+    
 });
 
 function salvarResultadosLocais(resultados) {
@@ -7301,7 +7299,7 @@ window.addEventListener('load', () => {
             const response = await fetch(`${API_URL}/imgmap`);
             const data = await response.json();
             
-            console.log('Dados recebidos da API imgmap:', data);
+            
             
             if (data && Array.isArray(data) && data.length > 0) {
                 // Se for array, pega o primeiro registro
@@ -7314,7 +7312,7 @@ window.addEventListener('load', () => {
                 imagensMapas = {};
             }
 
-            console.log('Imagens de mapas carregadas:', imagensMapas);
+            
             renderizarMapas();
         } catch (error) {
             console.error('Erro ao carregar imagens dos mapas:', error);
@@ -7513,7 +7511,7 @@ window.addEventListener('load', () => {
             return;
         }
 
-        console.log('Abrindo modal de vetos');
+        
         modalVetos.style.display = 'flex';
         modalVetos.style.visibility = 'visible';
         modalVetos.style.opacity = '1';

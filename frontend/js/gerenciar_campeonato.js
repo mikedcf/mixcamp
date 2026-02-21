@@ -1,37 +1,3 @@
-// URL base da API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
-
-// =================================
-// ========= NOTIFICATIONS =========
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) return;
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
 // =============================================================
 // ====================== [ autenticação ] ======================
 
@@ -72,7 +38,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
@@ -85,6 +51,9 @@ async function verificar_auth() {
         else{
             gerenciarCamp.style.display = 'none';
         }
+    }
+    else{
+        window.location.href = 'login.html';
     }
 }
 
@@ -278,7 +247,7 @@ async function criarTime() {
                 window.location.href = `team.html?id=${timeId}`;
             }, 2000);
         } else {
-            showNotification('error', result.error || 'Erro ao criar time.');
+            showNotification('error', result.error || (response.status === 409 ? 'Já existe um time com este nome ou tag. Escolha outro.' : 'Erro ao criar time.'));
         }
     } catch (error) {
         console.error('Erro ao criar time:', error);
@@ -388,55 +357,6 @@ function abrirMenuSuspenso() {
         menu.style.display = 'none';
     } else {
         menu.style.display = 'flex';
-    }
-}
-
-
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
     }
 }
 
@@ -588,8 +508,7 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
     grid.innerHTML = campeonatosFiltrados.map(campeonato => `
         <div class="campeonato-card">
             <div class="card-header">
-                <h3 class="card-title">${campeonato.titulo || 'Sem título'}</h3>
-                <div>
+                <div class="card-badges-row">
                     <span class="card-badge badge-status ${(campeonato.status || 'disponivel').toLowerCase()}">
                         ${(() => {
                             const status = (campeonato.status || '').toLowerCase().trim();
@@ -605,6 +524,7 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
                         ${campeonato.tipo === 'oficial' ? 'Oficial' : 'Comum'}
                     </span>
                 </div>
+                <h3 class="card-title">${campeonato.titulo || 'Sem título'}</h3>
             </div>
             
             <div class="card-info">
@@ -633,9 +553,11 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
                 <button class="btn-action btn-editar" onclick="editarCampeonato(${campeonato.id})">
                     <i class="fas fa-edit"></i> Editar
                 </button>
+                ${(['andamento', 'encerrado'].includes((campeonato.status || '').toLowerCase().trim()) ? `
                 <button class="btn-action btn-chaveamento" onclick="window.location.href='chaveamento.html?id=${campeonato.id}'" style="background: rgba(138, 43, 226, 0.2); color: #8A2BE2; border: 1px solid rgba(138, 43, 226, 0.3);">
                     <i class="fas fa-sitemap"></i> Chaveamento
                 </button>
+                ` : '')}
                 <button class="btn-action btn-excluir" onclick="excluirCampeonato(${campeonato.id}, '${campeonato.titulo}')">
                     <i class="fas fa-trash"></i> Excluir
                 </button>

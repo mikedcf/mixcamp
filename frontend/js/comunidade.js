@@ -1,10 +1,6 @@
 // =================================
 // ========= COMUNIDADE JS =========
 // =================================
-
-// URL base da API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 let avatar = '';
 // Estado da aplicação
 let currentMode = 'times';
@@ -13,63 +9,6 @@ let currentPage = 1;
 let itemsPerPage = 20;
 let allData = [];
 let filteredData = [];
-
-
-// =================================
-// ========= NOTIFICATIONS =========
-// =================================
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
 
 // =============================================================
 // ====================== [ autenticação ] ======================
@@ -97,6 +36,7 @@ async function autenticacao() {
     } catch (error) {
         console.error('Erro na inicialização:', error);
     }
+    
 }
 
 
@@ -107,6 +47,7 @@ async function verificar_auth() {
     if (auth_dados.logado) {
         const userId = auth_dados.usuario.id;
         const perfil_data = await buscarDadosPerfil(userId);
+
         
         
         const menuPerfilLink = document.getElementById('menuPerfilLink');
@@ -116,7 +57,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.usuario.time_id}`;
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
@@ -131,6 +72,9 @@ async function verificar_auth() {
             gerenciarCamp.style.display = 'none';
         }
         
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
     }
 }
 
@@ -430,7 +374,7 @@ async function loadTransfersAndDepartures() {
         setupCarousels();
     } catch (error) {
         console.error('Erro ao carregar transferências:', error);
-        showNotification('error', 'Erro ao carregar transferências');
+        
         // Em caso de erro, mostrar mensagem de erro em vez de mocks
         renderTransfers([]);
         renderDepartures([]);
@@ -856,6 +800,7 @@ function renderTransfers(data = null) {
         // Verificar se é dados completos (com player/team objects) ou dados básicos do backend
         const isCompleteData = transfer.player && transfer.team;
         
+        
         if (isCompleteData) {
             // Dados completos com player e team details
             card.innerHTML = `
@@ -866,7 +811,7 @@ function renderTransfers(data = null) {
                             ${getPositionBadges(transfer.player.posicao)}
                         </div>
                         <div class="player-details">
-                            <h3 class="player-name">${transfer.player.time_tag}</h3>
+                            <h3 class="player-name">${transfer.player.nome}</h3>
                         </div>
                     </div>
                     <div class="transfer-icon">
@@ -979,7 +924,7 @@ function renderDepartures(data = null) {
                             ${getPositionBadges(departure.player.posicao)}
                         </div>
                         <div class="player-details">
-                            <h3 class="player-name">${departure.player.time_tag}</h3>
+                            <h3 class="player-name">${departure.player.nome}</h3>
                         </div>
                     </div>
                     <div class="transfer-icon">
@@ -1156,7 +1101,7 @@ async function criarTime() {
             // Redirecionar para a página do time criado
             window.location.href = `team.html?id=${result.time.id}`;
         } else {
-            showNotification('error', result.error || 'Erro ao criar time.');
+            showNotification('error', result.error || (response.status === 409 ? 'Já existe um time com este nome ou tag. Escolha outro.' : 'Erro ao criar time.'));
         }
     } catch (error) {
         console.error('Erro ao criar time:', error);
@@ -1929,56 +1874,6 @@ async function getPositionImage(posicao) {
 
 // =================================
 // ========= SISTEMA =========
-
-// ------ ABIR BARRA DE PESQUISA
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
-    }
-}
-
 //------ SCROLL DO HEADER
 window.addEventListener("scroll", function () {
     const header = document.querySelector(".header");

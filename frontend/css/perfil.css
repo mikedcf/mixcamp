@@ -34,76 +34,44 @@ body {
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
+    padding-top: clamp(75px, 11vh, 105px);
 }
 
-/* Header */
+/* Header - sempre fixo no topo e centralizado (só anima width = sem balanço) */
+header,
 .header {
-    display: flex;
-    width: 95%;
-    max-width: 100%;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    width: 95% !important;
+    max-width: 1600px;
     height: clamp(60px, 9vh, 90px);
     min-height: 60px;
-    margin: auto;
-    margin-top: clamp(0.5%, 1vh, 1%);
     padding: clamp(5px, 1vh, 10px) clamp(10px, 4vw, 40px);
-    /* background: rgba(255, 255, 255, 0.1); */
     background: rgba(10, 10, 10, 0.219);
     align-items: center;
     justify-content: space-between;
-    /* Isso separa os 3 blocos (logo, centro, perfil) */
     border-radius: clamp(10px, 2vw, 20px);
     border: 1px solid rgba(255, 255, 255, 0.13);
-    position: sticky;
-    top: 0;
-    z-index: 999;
+    z-index: 1000;
     overflow-x: hidden;
     overflow-y: hidden;
     box-sizing: border-box;
+    display: flex;
+    transition: width 0.55s cubic-bezier(0, 0, 0.2, 1), border-radius 0.55s cubic-bezier(0, 0, 0.2, 1), background 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* ===== MENU HAMBÚRGUER ===== */
-.hamburger-menu {
-    display: none;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 30px;
-    height: 30px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 1002;
-    position: relative;
-}
-
-.hamburger-line {
-    width: 100%;
-    height: 3px;
-    background: #ffffff;
-    border-radius: 3px;
-    transition: all 0.3s ease;
-    transform-origin: center;
-}
-
-.hamburger-menu.active .hamburger-line:nth-child(1) {
-    transform: rotate(45deg) translate(8px, 8px);
-}
-
-.hamburger-menu.active .hamburger-line:nth-child(2) {
-    opacity: 0;
-}
-
-.hamburger-menu.active .hamburger-line:nth-child(3) {
-    transform: rotate(-45deg) translate(7px, -7px);
-}
-
-.hamburger-menu:hover .hamburger-line {
-    background: #ff6b35;
-}
-
+/* Ao rolar: header ocupa de ponta a ponta (só width muda, centro mantido) */
+header.scrolled,
 .header.scrolled {
-    background: #1e1e2f;
+    width: 100% !important;
+    max-width: none;
+    border-radius: 0 0 24px 24px;
 }
+/* Menu hambúrguer e overlay mobile: estilos vêm do header.css (igual às outras páginas) */
 
 .center-content {
     display: flex;
@@ -460,125 +428,6 @@ body {
     /* Troca para 'flex' para exibir a barra de busca */
 }
 
-/* Menu Mobile Overlay */
-.mobile-menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
-    z-index: 1001;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.mobile-menu-overlay.active {
-    display: block;
-    opacity: 1;
-}
-
-.mobile-nav-menu {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: clamp(250px, 28vw, 280px);
-    max-width: 85%;
-    height: 100%;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
-    z-index: 1002;
-    transition: right 0.3s ease;
-    overflow-y: auto;
-    padding: clamp(60px, 8vh, 80px) clamp(15px, 2vw, 20px) clamp(15px, 2vw, 20px);
-}
-
-.mobile-nav-menu.active {
-    right: 0;
-}
-
-.mobile-nav-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.mobile-nav-menu li {
-    margin-bottom: 10px;
-}
-
-.mobile-nav-menu a {
-    display: flex;
-    align-items: center;
-    padding: 15px 20px;
-    color: #ffffff;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    font-size: 1.1em;
-    border: 1px solid transparent;
-}
-
-.mobile-nav-menu a:hover,
-.mobile-nav-menu a:active {
-    background: rgba(255, 107, 53, 0.2);
-    border-color: rgba(255, 107, 53, 0.4);
-    color: #ff6b35;
-    transform: translateX(5px);
-}
-
-
-
-/* ------- CAIXA LOGIN E REGISTRO ------- */
-/* Caixa de login/registro */
-.user-auth {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(10px, 1.5vw, 15px);
-    margin: 0;
-    height: 100%;
-    max-height: 100%;
-}
-
-/* Estilo dos botões de login/registro */
-.auth-btn {
-    padding: clamp(6px, 0.8vw, 8px) clamp(14px, 1.8vw, 18px);
-    border-radius: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: clamp(0.85rem, 0.95vw, 0.95rem);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    height: fit-content;
-    white-space: nowrap;
-}
-
-.auth-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 84, 4, 0.6);
-    color: #ff6b35;
-    transform: translateY(-2px);
-}
-
-.login-btn {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.register-btn {
-    background: #ff6b35;
-    border-color: #ff6b35;
-}
-
-.register-btn:hover {
-    background: #ff834f;
-    color: #fff;
-}
-
 /* ===== MAIN CONTENT ===== */
 .profile-main {
     width: 95%;
@@ -631,17 +480,17 @@ body {
 /* ===== PROFILE CARD INSIDE BANNER ===== */
 .profile-card-inside {
     position: absolute;
-    bottom: clamp(15px, 3vw, 30px);
+    bottom: clamp(4px, 1vw, 10px);
     left: clamp(15px, 3vw, 30px);
-    width: clamp(200px, 28vw, 280px);
+    width: clamp(280px, 38vw, 360px);
     max-width: calc(100% - 30px);
-    background: linear-gradient(135deg, 
-        rgba(15, 15, 25, 0.95) 0%, 
+    background: linear-gradient(135deg,
+        rgba(15, 15, 25, 0.95) 0%,
         rgba(10, 10, 20, 0.95) 100%);
     backdrop-filter: blur(20px);
     border-radius: clamp(12px, 1.6vw, 16px);
     border: 2px solid rgba(255, 252, 252, 0.438);
-    padding: clamp(12px, 1.5vw, 15px) clamp(15px, 2vw, 20px);
+    padding: clamp(5px, 0.6vw, 8px) clamp(15px, 2vw, 22px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -653,6 +502,27 @@ body {
     clip-path: none;
 }
 
+/* Reduz altura do card: menos espaço interno */
+.profile-card-inside .card-avatar-wrapper {
+    margin: 14px 0 6px;
+    gap: 4px;
+}
+.profile-card-inside .card-username-wrap {
+    margin: 3px 0 2px;
+}
+.profile-card-inside .faceit-level-container {
+    margin: 2px 0 3px;
+    padding: 3px 12px;
+}
+.profile-card-inside .team-tag-container {
+    margin: 2px 0 3px;
+}
+
+.profile-card-inside .profile-positions {
+    margin: 4px 0 4px;
+    min-height: 60px;
+}
+
 .profile-card-inside::before {
     content: '';
     position: absolute;
@@ -660,6 +530,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 0;
     background-image: 
         radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(255, 69, 0, 0.1) 0%, transparent 50%);
@@ -667,34 +538,48 @@ body {
     pointer-events: none;
 }
 
-.card-top-icons {
-    position: absolute;
-    top: 25px;
-    left: 25px;
-    display: flex;
-    gap: 15px;
-    z-index: 2;
+/* Nome do usuário + selo verificado no final do nome */
+.card-username-wrap {
+    display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-    margin: 0;
-    padding: 0;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 8px 0 5px;
+    max-width: 100%;
+    min-width: 0;
 }
 
-.card-top-icons .verified-check {
-    width: 32px;
-    height: 32px;
-    background: transparent;
-    border-radius: 50%;
+.card-username-wrap .card-username {
+    margin: 0;
+    display: inline-block;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+/* Selo ao lado do nome: não usar position absolute da regra genérica .verified-check */
+.verified-check-by-name {
+    position: static;
+    bottom: auto;
+    right: auto;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(29, 161, 242, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 1px 6px rgba(29, 161, 242, 0.5);
     animation: pulse 2s infinite;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     overflow: hidden;
+    visibility: visible;
 }
 
-.card-top-icons .verified-check .verified-gif {
+.verified-check-by-name .verified-gif {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -704,10 +589,43 @@ body {
 /* ===== BOTÃO MENU COM AÇÕES EM CASCATA ===== */
 .card-menu-container {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 8px;
+    right: 12px;
     z-index: 20;
     overflow: visible;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Dentro do card do perfil: mais compacto */
+.profile-card-inside .card-menu-container {
+    top: 6px;
+    right: 10px;
+    gap: 6px;
+}
+
+.profile-card-inside .card-menu-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+}
+
+.profile-card-inside .card-action-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+}
+
+.profile-card-inside .mx-basic-img {
+    width: 32px;
+    height: 32px;
+}
+
+.profile-card-inside .admin-badge i,
+.profile-card-inside .supporter-icon i {
+    font-size: 12px;
 }
 
 /* Área invisível expandida para conectar menu aos botões */
@@ -957,8 +875,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 35px 0 15px; /* reduzido para diminuir altura do card */
-    gap: 10px;
+    margin: 30px 0 12px;
+    gap: 8px;
 }
 
 .admin-badge {
@@ -1008,16 +926,6 @@ body {
     cursor: pointer;
     position: relative;
     z-index: 1;
-}
-
-.card-menu-container {
-    position: absolute;
-    top: 8px;
-    right: 15px;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    gap: 18px; /* ainda mais espaço entre ícones e o botão de círculo */
 }
 
 .card-avatar-container:not(.spinning):hover {
@@ -1074,6 +982,29 @@ body {
     overflow: hidden;
 }
 
+.card-avatar-front {
+    transform: translateY(10px);
+}
+
+/* Responsivo: avatar front um pouco mais para baixo */
+@media (max-width: 968px) {
+    .card-avatar-front {
+        transform: translateY(18px);
+    }
+}
+
+@media (max-width: 768px) {
+    .card-avatar-front {
+        transform: translateY(20px);
+    }
+}
+
+@media (max-width: 480px) {
+    .card-avatar-front {
+        transform: translateY(22px);
+    }
+}
+
 .card-avatar-back {
     transform: rotateY(180deg);
 }
@@ -1124,7 +1055,7 @@ body {
     font-size: clamp(14px, 2vw, 22px);
     font-weight: 700;
     color: #fff;
-    margin: 10px 0 6px;
+    margin: 0;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
@@ -1167,7 +1098,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 8px 0 6px;
+    margin: 6px 0 5px;
     width: 100%;
     z-index: 1;
     position: relative;
@@ -1581,6 +1512,19 @@ body {
     height: 100%;
     object-fit: contain;
     border-radius: 50%;
+}
+
+/* Selo ao lado do nome: anula position absolute e força tamanho pequeno (esta regra vem depois de .verified-check) */
+.card-username-wrap .verified-check.verified-check-by-name {
+    position: static;
+    bottom: auto;
+    right: auto;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px;
+    min-height: 18px;
+    box-shadow: 0 1px 4px rgba(29, 161, 242, 0.5);
+    border-width: 1px;
 }
 
 @keyframes pulse {
@@ -2038,6 +1982,13 @@ body {
 
 .medalha-slot.animation-complete {
     visibility: visible;
+}
+
+/* Medalha expandida (animate-in / animation-complete): um pouco maior */
+.medalha-slot.animate-in,
+.medalha-slot.animation-complete {
+    width: clamp(128px, 18vw, 175px);
+    height: clamp(192px, 28vh, 265px);
 }
 
 @keyframes medalEnter {
@@ -5545,7 +5496,7 @@ body {
         order: 2;
     }
 
-    .hamburger-menu {
+    .hamburger-btn {
         display: flex;
         order: 1;
     }
@@ -5571,12 +5522,13 @@ body {
         gap: 20px;
     }
 
+    /* Sobre e Redes Sociais acima das tabs */
     .profile-sidebar {
-        order: 2;
+        order: 1;
     }
 
     .main-content {
-        order: 1;
+        order: 2;
     }
 
     .hero-banner {
@@ -5584,14 +5536,14 @@ body {
     }
 
     .profile-card-inside {
-        width: 220px;
-        padding: 12px 15px;
+        width: 260px;
+        padding: 8px 14px;
         bottom: 20px;
         left: 20px;
     }
 
     .card-avatar-wrapper {
-        margin: 50px 0 15px;
+        margin: 35px 0 12px;
         gap: 12px;
     }
 
@@ -5656,7 +5608,7 @@ body {
         order: 2;
     }
 
-    .hamburger-menu {
+    .hamburger-btn {
         order: 1;
     }
 
@@ -5704,14 +5656,14 @@ body {
     }
 
     .profile-card-inside {
-        width: 200px;
-        padding: 10px 14px;
+        width: 240px;
+        padding: 8px 12px;
         bottom: 15px;
         left: 15px;
     }
 
     .card-avatar-wrapper {
-        margin: 45px 0 12px;
+        margin: 30px 0 10px;
         gap: 10px;
     }
 
@@ -5859,7 +5811,7 @@ body {
         order: 2;
     }
 
-    .hamburger-menu {
+    .hamburger-btn {
         width: 25px;
         height: 25px;
         order: 1;
@@ -5909,8 +5861,8 @@ body {
     }
 
     .profile-card-inside {
-        width: 180px;
-        padding: 10px 12px;
+        width: 200px;
+        padding: 6px 10px;
         bottom: 10px;
         left: 10px;
     }
@@ -5952,8 +5904,8 @@ body {
 
     .medalha-slot.animate-in,
     .medalha-slot.animation-complete {
-        width: 90px;
-        height: 135px;
+        width: 108px;
+        height: 162px;
     }
 
     .content-tabs {
@@ -6093,7 +6045,7 @@ body {
         order: 2;
     }
 
-    .hamburger-menu {
+    .hamburger-btn {
         width: 22px;
         height: 22px;
         order: 1;
@@ -6116,8 +6068,8 @@ body {
     }
 
     .profile-card-inside {
-        width: 160px;
-        padding: 8px 10px;
+        width: 180px;
+        padding: 6px 10px;
         bottom: 8px;
         left: 8px;
     }
@@ -6163,8 +6115,8 @@ body {
 
     .medalha-slot.animate-in,
     .medalha-slot.animation-complete {
-        width: 80px;
-        height: 120px;
+        width: 96px;
+        height: 144px;
     }
 
     .content-tab {
@@ -6337,15 +6289,6 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .mobile-nav-menu {
-        width: 260px;
-        padding: 70px 15px 15px;
-    }
-
-    .mobile-nav-menu a {
-        padding: 12px 15px;
-        font-size: 1em;
-    }
 }
 
 /* ===== MOBILE SMALL (até 320px) ===== */
@@ -6360,7 +6303,6 @@ body {
         height: 50px;
         padding: 1px 5px;
         z-index: 10002;
-        position: relative;
         max-width: 100%;
         box-sizing: border-box;
     }
@@ -6380,7 +6322,7 @@ body {
         order: 2;
     }
 
-    .hamburger-menu {
+    .hamburger-btn {
         order: 1;
     }
 
@@ -6418,8 +6360,8 @@ body {
     }
 
     .profile-card-inside {
-        width: clamp(140px, 75vw, 240px);
-        padding: clamp(6px, 1.5vw, 8px);
+        width: clamp(160px, 80vw, 260px);
+        padding: clamp(5px, 1.2vw, 6px);
         bottom: clamp(5px, 1.5vw, 8px);
         left: clamp(5px, 1.5vw, 8px);
     }
@@ -6436,13 +6378,10 @@ body {
 
     .medalha-slot.animate-in,
     .medalha-slot.animation-complete {
-        width: 70px;
-        height: 105px;
+        width: 86px;
+        height: 130px;
     }
 
-    .mobile-nav-menu {
-        width: 100%;
-    }
 }
 
 /* ===== MODAL DE MEDALHAS ===== */
@@ -7233,97 +7172,7 @@ body.modal-open::before {
     }
 }
 
-/* ========================================================
-========================[NOTIFICATION STYLES]================================
-======================================================== */
 
-.notification-container {
-    position: fixed;
-    top: 130px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 9999;
-}
-
-.notification {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    border-radius: 10px;
-    color: #fff;
-    min-width: 300px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    animation: slideIn 0.3s ease-out;
-}
-
-.notification span.icon {
-    font-size: 20px;
-}
-
-.notification.with-user img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.notification .progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.7);
-    width: 100%;
-    animation: progressAnim linear forwards;
-}
-
-@keyframes progressAnim {
-    from {
-        width: 100%;
-    }
-    to {
-        width: 0%;
-    }
-}
-
-.notification.success {
-    background: #2ecc71;
-}
-
-.notification.alert {
-    background: #f1c40f;
-}
-
-.notification.error {
-    background: #e74c3c;
-}
-
-.notification.info {
-    background: #3498db;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
 
 /* ========================================================
 ========================[PREVENT HORIZONTAL SCROLL]================================

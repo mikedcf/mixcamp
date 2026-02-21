@@ -1,80 +1,9 @@
-// URL base da sua API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 let avatar = '';
-
 // ========= RANKING JS =========
 // Estado da aplicação
 let currentTab = 'teams';
 let teamsRanking = [];
 let playersRanking = [];
-
-
-// =================================
-// ========= NOTIFICATIONS =========
-
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        // Fallback: usar alert se o container não existir
-        alert(message);
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        // Fallback: usar alert se o container não existir
-        alert(message);
-        return;
-    }
-    
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
 
 // =============================================================
 // ====================== [ autenticação ] ======================
@@ -116,7 +45,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
@@ -129,6 +58,9 @@ async function verificar_auth() {
         else{
             gerenciarCamp.style.display = 'none';
         }
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
     }
 }
 
@@ -322,7 +254,7 @@ async function criarTime() {
                 window.location.href = `team.html?id=${timeId}`;
             }, 2000);
         } else {
-            showNotification('error', result.error || 'Erro ao criar time.');
+            showNotification('error', result.error || (response.status === 409 ? 'Já existe um time com este nome ou tag. Escolha outro.' : 'Erro ao criar time.'));
         }
     } catch (error) {
         console.error('Erro ao criar time:', error);

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../css/configuracoes.css">
     <link rel="stylesheet" href="../css/config_time.css">
     <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/ultils.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -468,6 +469,122 @@
         </div>
     </div>
 
+
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
+        <div class="modal-content-profissional">
+            <div class="modal-header-profissional">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="header-text">
+                        <h2>Criar Novo Time</h2>
+                        <p>Preencha as informações para criar seu time</p>
+                    </div>
+                </div>
+                <button class="close-profissional" id="closeModalCriarTime">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body-profissional">
+                <form id="formCriarTime" class="form-profissional">
+                    <!-- Seção de Imagens -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-image"></i>
+                            Imagens do Time
+                        </h3>
+                        
+                        <div class="image-upload-grid">
+                            <!-- Logo do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="logoUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-camera"></i>
+                                        <span class="upload-text">Logo do Time</span>
+                                        <span class="upload-specs">Recomendado: 200x200px</span>
+                                    </div>
+                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="logoPreview"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Banner do Time -->
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="bannerUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-image"></i>
+                                        <span class="upload-text">Banner do Time</span>
+                                        <span class="upload-specs">Recomendado: 1200x400px</span>
+                                    </div>
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="bannerPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Informações -->
+                    <div class="form-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Informações do Time
+                        </h3>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nomeTime" class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    Nome do Time
+                                </label>
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
+                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <div class="input-hint">Nome completo do seu time</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tagTime" class="form-label">
+                                    <i class="fas fa-hashtag"></i>
+                                    Tag do Time
+                                </label>
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
+                                       placeholder="Ex: LGZ" class="form-input">
+                                <div class="input-hint">Tag curta para identificação</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sobreTime" class="form-label">
+                                <i class="fas fa-align-left"></i>
+                                Sobre o Time
+                            </label>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
+                                      placeholder="Descreva a história, objetivos e características do seu time..." 
+                                      class="form-textarea"></textarea>
+                            <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="form-actions-profissional">
+                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-primary-profissional">
+                            <i class="fas fa-plus"></i>
+                            Criar Time
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <script src="../js/utils.js"></script>
     <script src="../js/config_time.js"></script>
 </body>
 

@@ -61,404 +61,94 @@ body.claro::after {
     }
 }
 
-/* Header */
-.header {
-    display: flex;
-    width: 95%;
-    height: 90px;
-    margin: auto;
-    margin-top: 1%;
-    padding: 1px 40px;
-    /* background: rgba(255, 255, 255, 0.1); */
-    background: rgba(10, 10, 10, 0.219);
-    align-items: center;
-    justify-content: space-between;
-    /* Isso separa os 3 blocos (logo, centro, perfil) */
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-
+/* Telas até 1280px: garante scroll vertical */
+@media (max-width: 1280px) {
+    body {
+        overflow-y: auto;
+    }
 }
 
-.header.scrolled {
-    background: #1e1e2f;
-}
-
-.center-content {
-    display: flex;
-    flex-grow: 1;
-    /* Faz com que este bloco ocupe todo o espaço disponível */
-    justify-content: center;
-    /* Centraliza o conteúdo (menu ou barra de busca) */
-    align-items: center;
-    overflow: visible;
-    /* Permite que dropdowns e buscas ultrapassem a área central */
-}
-
-.nav {
-    display: block;
-    /* Visível por padrão */
-    transition: all 0.3s ease;
-}
-
-/* ==== LOGO ==== */
-.nav-brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18%;
-    height: 100px;
-}
-
-
-.logo-img {
-    height: 180px;
-    width: 180px;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.logo-img:hover {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-}
-
-/* ==== MENU DE NAVEGAÇÃO ==== */
-.nav-menu {
-    list-style: none;
-    display: flex;
-    gap: 50px;
+/* Header: estilos vêm do header.css. User-perfil igual à página perfil */
+.header .search-profile-area {
+    width: 20%;
+    min-width: fit-content;
+    justify-content: flex-end;
+    gap: clamp(10px, 1.5vw, 20px);
     margin: 0;
     padding: 0;
 }
 
-
-.nav-menu li {
-    transition: transform 0.2s ease;
-}
-
-.nav-menu li:hover {
-    transform: translateY(-5px) scale(1.05);
-}
-
-
-.nav-menu li a {
-    text-decoration: none;
-    color: #ffffff;
-    font-weight: 500;
-    font-size: 1.3em;
-    transition: color 0.2s ease;
-    /* transition: transform 0.2s ease; */
-    position: relative;
-    padding: 5px 0;
-}
-
-.nav-menu li a:hover {
-    color: #ff6b35;
-    /* cor destaque */
-    transform: translateY(-2px) scale(1.05);
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-}
-
-.nav-menu li a:hover::after {
-    width: 100%;
-}
-
-.nav-menu li a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -3px;
-    /* distância abaixo do texto */
-    width: 0;
-    height: 2px;
-    background: #ff4500;
-    /* cor da barrinha */
-    transition: width 0.3s ease;
-}
-
-
-/* A barra de busca, inicialmente escondida */
-.search-bar-container {
-    display: none;
-    /* Inicia oculta */
-    width: 100%;
-    max-width: 600px;
-    /* Limite de largura para o input */
-    transition: all 0.3s ease;
-}
-
-/* ==== ÁREA DE BUSCA E PERFIL ==== */
-.search-profile-area {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-/* ==== PERFIL ==== */
-
-.search-profile-area {
-    display: flex;
-    width: 20%;
-    justify-items: center;
+.header .user-perfil {
+    margin: 0;
+    height: 100%;
+    max-height: 100%;
     align-items: center;
     justify-content: center;
-    margin: auto;
+    min-width: 0;
 }
 
-.user-perfil {
-    display: none;
-    position: relative;
-    margin: auto;
-    height: 60px;
-    /* margin-right: 2%; */
+.header .user-perfil[style*="display: flex"] {
+    display: flex !important;
 }
 
-.perfil-btn {
+.header .perfil-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    padding: 8px 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: #ffffff;
-    font-size: 0.9rem;
+    gap: clamp(6px, 1vw, 10px);
+    padding: clamp(6px, 0.8vw, 8px) clamp(12px, 1.5vw, 15px);
+    min-width: 0;
+    max-width: 100%;
 }
 
-.perfil-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 84, 4, 0.4);
-    transform: translateY(-2px);
-}
-
-.icon-perfil {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-}
-
-.perfil-nome {
+.header .perfil-nome {
     font-weight: 600;
     color: #fff;
     letter-spacing: 0.1em;
     white-space: nowrap;
     margin: 0;
-    margin-bottom: 0;
-    font-size: 16px;
-}
-
-.seta {
-    font-size: 14px;
-    color: #bbb;
-    transition: transform 0.2s ease;
-}
-
-.perfil-btn:hover .seta {
-    transform: rotate(180deg);
-}
-
-/* ==== MENU SUSPENSO ==== */
-.menu-opcoes {
-    position: absolute;
-    right: 0;
-    top: 60px;
-    background: #2b2b3c;
-    border-radius: 10px;
-    padding: 10px 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    display: none;
-    flex-direction: column;
-    min-width: 200px;
-    z-index: 1001;
-}
-
-.menu-opcoes a {
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #ddd;
-    text-decoration: none;
-    font-size: 14px;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-.menu-opcoes a:hover {
-    background: #ff6b35;
-    color: #fff;
-}
-
-.menu-separator {
-    height: 1px;
-    background: #444;
-    margin: 5px 0;
-}
-
-
-
-
-.box-lupa {
-    /* Apenas as regras de alinhamento e aparência, sem margens ou posicionamento */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    height: 50px;
-    /* Ou o tamanho que você preferir */
-    width: 50px;
-    /* Para que seja um quadrado, ajustando a altura também */
-    cursor: pointer;
-}
-
-
-
-
-.header.expanded {
-    height: 180px;
-    word-wrap: break-word;
-    flex-direction: column;
-    /* word-break: break-all; */
-    /* altura aumentada ao abrir pesquisa */
-}
-
-/* Caixa de pesquisa oculta inicialmente */
-.search-box {
-    display: flex;
-    margin-top: auto;
-    margin-left: auto;
-    margin-right: auto;
-    justify-content: center;
-    opacity: 0;
-    max-height: 0;
     overflow: hidden;
-    transition: all 0.3s ease;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
-.header.expanded .search-box {
-    opacity: 1;
-    max-height: 60px;
-    margin-top: 10px;
+.header .icon-perfil {
+    border-radius: 50%;
+    width: clamp(30px, 4vw, 40px);
+    height: clamp(30px, 4vw, 40px);
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
-.search-box input {
-    display: flex;
+@media (max-width: 768px) {
+    .header .search-profile-area {
+        width: auto;
+        gap: 10px;
+    }
 
-    width: 60%;
-    margin-top: 40%;
-    /* padding: 8px 12px; */
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
+    .header .perfil-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .header .perfil-nome {
+        display: none;
+    }
+
+    .header .icon-perfil {
+        width: 35px;
+        height: 35px;
+    }
 }
 
-.search-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.3em;
-    color: #fff;
-    transition: transform 0.2s ease;
-    padding: 0;
-}
+@media (max-width: 576px) {
+    .header .perfil-btn {
+        padding: 5px 10px;
+    }
 
-.search-btn:hover {
-    transform: scale(1.1);
-    color: #ff6b35;
-}
-
-
-.search-bar-container {
-    display: none;
-    /* Inicia oculta */
-    width: 100%;
-    max-width: 600px;
-    /* Limite de largura para o input */
-    transition: all 0.3s ease;
-}
-
-.search-input {
-    width: 100%;
-    padding: 10px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 25px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 1.1em;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.search-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.search-input:focus {
-    border-color: #ff6b35;
-    box-shadow: 0 0 8px rgba(255, 107, 53, 0.4);
-}
-
-/* Esconde o nav e mostra a barra de busca quando a classe 'search-active' está no header */
-.header.search-active .nav {
-    display: none;
-}
-
-.header.search-active .search-bar-container {
-    display: flex;
-    /* Troca para 'flex' para exibir a barra de busca */
-}
-
-
-
-/* ------- CAIXA LOGIN E REGISTRO ------- */
-/* Caixa de login/registro */
-.user-auth {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin: auto;
-    height: 60px;
-}
-
-/* Estilo dos botões de login/registro */
-.auth-btn {
-    padding: 8px 18px;
-    border-radius: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.auth-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 84, 4, 0.6);
-    color: #ff6b35;
-    transform: translateY(-2px);
-}
-
-.login-btn {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.register-btn {
-    background: #ff6b35;
-    border-color: #ff6b35;
-}
-
-.register-btn:hover {
-    background: #ff834f;
-    color: #fff;
+    .header .icon-perfil {
+        width: 30px;
+        height: 30px;
+    }
 }
 
 /* Loading */
@@ -502,8 +192,8 @@ body.claro::after {
 
 .matchs-container {
     max-width: 1400px;
-    margin: 30px auto;
-    padding: 0 20px 40px;
+    margin: 0 auto;
+    padding: clamp(100px, 14vh, 130px) 20px 40px;
 }
 
 .matchs-header {
@@ -737,6 +427,9 @@ body.claro::after {
     grid-template-columns: 1fr;
     gap: 14px;
     margin-top: 10px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .match-card {
@@ -749,6 +442,8 @@ body.claro::after {
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Container para mapas de fundo */
@@ -899,26 +594,111 @@ body.claro::after {
     gap: 10px;
 }
 
+/* 1ª linha: Time 1 | VS | Time 2 | 2ª linha: resultado sob cada time | 3ª linha: status */
 .match-teams {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: minmax(140px, 1fr) auto minmax(140px, 1fr);
+    grid-template-rows: auto auto auto;
     align-items: center;
-    gap: 14px;
+    gap: 10px 14px;
+}
+
+/* Times e VS na 1ª linha */
+.team:first-child {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.team:last-child {
+    grid-row: 1;
+    grid-column: 3;
+}
+
+.match-teams::after {
+    content: 'VS';
+    grid-row: 1;
+    grid-column: 2;
+}
+
+/* Summary ocupa linhas 2 e 3 do grid, com grid interno para placar e status */
+.match-score-summary {
+    grid-column: 1 / -1;
+    grid-row: 2 / 4;
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) auto minmax(140px, 1fr);
+    grid-template-rows: 28px auto; /* altura mínima na linha do placar */
+    align-items: center;
+    gap: 8px 14px;
+    min-height: 52px;
+}
+
+/* Placar: primeiro score col 1, VS col 2, segundo score col 3 (leve deslocamento à esquerda) */
+.match-score-summary > .score-number:first-of-type {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: end;
+    margin-right: 10px;
+    transform: translateX(-27px);
+}
+
+.match-score-summary > .vs-text {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: center;
+    transform: translateX(-27px);
+}
+
+.match-score-summary > .score-number:last-of-type {
+    grid-row: 1;
+    grid-column: 3;
+    justify-self: start;
+    margin-left: 10px;
+    transform: translateX(-27px);
+}
+
+/* Badge na segunda linha quando tem placar */
+.match-score-summary > .match-status-badge {
+    grid-column: 1 / -1;
+    justify-self: center;
+    transform: translateX(-27px);
+}
+
+.match-score-summary > .match-status-badge {
+    grid-row: 2;
+}
+
+/* Card só com status (ex: "Vai começar") — badge sozinho na primeira linha */
+.match-score-summary > .match-status-badge:only-child {
+    grid-row: 1;
 }
 
 .team {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
+    overflow: hidden;
 }
 
+/* Time 1: logo depois nome — visual: logo team1 */
 .team:first-child {
-    justify-content: flex-start;
+    flex-direction: row;
+    justify-content: flex-end;
+    text-align: right;
 }
 
+.team:first-child .team-avatar { order: 1; }
+.team:first-child .team-name { order: 2; }
+
+/* Time 2: nome depois logo — visual: team2 logo (força ordem com order) */
 .team:last-child {
-    justify-content: flex-end;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
 }
+
+.team:last-child .team-name { order: 1; }
+.team:last-child .team-avatar { order: 2; }
 
 .team-avatar {
     width: 32px;
@@ -932,14 +712,21 @@ body.claro::after {
     font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    line-height: 1.3;
 }
 
-.match-score-summary {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    min-width: 150px;
+/* Estilos dos filhos do summary (posição já definida no grid acima) */
+.match-score-summary .score-number {
+    margin: 0;
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.95);
+    visibility: visible;
 }
 
 .match-time {
@@ -949,13 +736,14 @@ body.claro::after {
 
 .live-score,
 .finished-score {
-    flex-direction: row;
     gap: 10px;
 }
 
-.score-number {
+/* Placar nos cards de lista (matchs) - garantir que apareça */
+.match-card .score-number {
     font-size: 22px;
     font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .score-number.winner {
@@ -963,9 +751,11 @@ body.claro::after {
 }
 
 .vs-text {
-    font-size: 12px;
+    font-size: 14px;
+    font-weight: 700;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .match-status-badge {
@@ -1024,9 +814,10 @@ body.claro::after {
 }
 
 .match-map {
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px;
 }
 
 .match-map-multi {
@@ -1051,8 +842,9 @@ body.claro::after {
 .match-map-info {
     display: flex;
     flex-direction: column;
-    margin-left: 10px;
-    text-align: left;
+    margin-left: 0;
+    text-align: center;
+    gap: 2px;
 }
 
 .match-map .label,
@@ -1078,151 +870,6 @@ body.claro::after {
 }
 
 
-
-/* =================================
-   ========= SEARCH RESULTS =========
-   ================================= */
-
-   .search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: rgba(26, 26, 46, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    max-height: 400px;
-    overflow-y: auto;
-    margin-top: 8px;
-}
-
-.search-results-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.search-results-header h3 {
-    color: #00d4ff;
-    font-size: 16px;
-    margin: 0;
-}
-
-.search-results-content {
-    padding: 12px 0;
-}
-
-.search-section {
-    margin-bottom: 16px;
-}
-
-.search-section:last-child {
-    margin-bottom: 0;
-}
-
-.search-section h4 {
-    color: #ffffff;
-    font-size: 14px;
-    margin: 0 20px 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.search-section h4 i {
-    color: #00d4ff;
-}
-
-.search-items {
-    display: flex;
-    flex-direction: column;
-}
-
-.search-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-}
-
-.search-item:hover {
-    background: rgba(0, 212, 255, 0.1);
-    border-left-color: #00d4ff;
-}
-
-.search-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 12px;
-    border: 2px solid rgba(0, 212, 255, 0.3);
-}
-
-.search-info {
-    flex: 1;
-}
-
-.search-info h5 {
-    color: #ffffff;
-    font-size: 14px;
-    margin: 0 0 4px;
-    font-weight: 600;
-}
-
-.search-info p {
-    color: #888;
-    font-size: 12px;
-    margin: 0;
-}
-
-.search-item i {
-    color: #00d4ff;
-    font-size: 12px;
-    opacity: 0.7;
-}
-
-.search-no-results {
-    padding: 40px 20px;
-    text-align: center;
-    color: #888;
-}
-
-.search-no-results i {
-    font-size: 24px;
-    color: #00d4ff;
-    margin-bottom: 12px;
-    display: block;
-}
-
-.search-no-results p {
-    margin: 0;
-    font-size: 14px;
-}
-
-/* Scrollbar personalizada para resultados */
-.search-results::-webkit-scrollbar {
-    width: 6px;
-}
-
-.search-results::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-}
-
-.search-results::-webkit-scrollbar-thumb {
-    background: #00d4ff;
-    border-radius: 3px;
-}
-
-.search-results::-webkit-scrollbar-thumb:hover {
-    background: #0099cc;
-}
-
 /* RESPONSIVIDADE */
 
 @media (max-width: 900px) {
@@ -1237,17 +884,30 @@ body.claro::after {
 }
 
 @media (max-width: 768px) {
+    /* Mantém Time 1 | VS | Time 2 na mesma linha, um de frente para o outro */
     .match-teams {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
+        gap: 8px;
     }
 
-    .team:first-child,
+    .team:first-child {
+        justify-content: flex-end;
+        text-align: right;
+    }
+
     .team:last-child {
-        justify-content: center;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .team-name {
+        font-size: 13px;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
     }
 
     .match-score-summary {
-        order: -1;
+        min-width: 80px;
     }
 
     .match-extra {
@@ -1870,17 +1530,47 @@ body.claro::after {
     }
 
     .carousel-btn-prev {
-        left: -15px;
+        left: 4px;
     }
 
     .carousel-btn-next {
-        right: -15px;
+        right: 4px;
+    }
+
+    /* Evita corte do primeiro/último card: padding no container */
+    .eventos-carousel-container {
+        padding: 0 12px;
+        box-sizing: border-box;
+    }
+
+    /* Mobile: um evento por vez, navegação por touch (swipe) */
+    .eventos-carousel {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 10px 0;
+        gap: 0;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .evento-item-wrapper {
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        box-sizing: border-box;
     }
 
     .evento-item {
-        min-width: 180px;
-        max-width: 200px;
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
         padding: 14px 16px;
+        box-sizing: border-box;
     }
 
     .evento-titulo {

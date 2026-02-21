@@ -10,7 +10,7 @@
 // ===============================================================================================
 
 // URL base da API
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+const API_URL = 'http://localhost:3000/api/v1';
 
 // Estado global da aplicação
 const appState = {
@@ -158,7 +158,7 @@ async function loadDashboardData() {
         console.log('📊 Carregando dados do dashboard...');
         
         // Carregar estatísticas dos usuários
-        const statsResponse = await fetch(`${API_BASE_URL}/admin/usuarios/estatisticas`);
+        const statsResponse = await fetch(`${API_URL}/admin/usuarios/estatisticas`);
         if (!statsResponse.ok) {
             throw new Error(`Erro HTTP: ${statsResponse.status}`);
         }
@@ -241,7 +241,7 @@ async function loadUsuarios() {
         console.log('👥 Carregando lista de usuários...');
         showLoading();
         
-        const response = await fetch(`${API_BASE_URL}/admin/usuarios`);
+        const response = await fetch(`${API_URL}/admin/usuarios`);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -730,7 +730,7 @@ async function handleEditGerenciaSubmit(event) {
         showLoading();
         
         // Fazer requisição para atualizar gerência
-        const response = await fetch(`${API_BASE_URL}/admin/usuarios/${userId}/gerencia`, {
+        const response = await fetch(`${API_URL}/admin/usuarios/${userId}/gerencia`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'

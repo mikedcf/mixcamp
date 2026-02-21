@@ -1,76 +1,9 @@
-// URL base da API
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
+
+
 let avatar = '';
 
 // Lista de IDs dos times inscritos no campeonato
 const times_inscritos = [];
-
-// =================================
-// ========= NOTIFICATIONS =========
-
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
-
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        // Fallback: usar alert se o container não existir
-        alert(message);
-        return;
-    }
-
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
-function showUserNotification(type, message, userPhoto, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
-    if (!container) {
-        console.error("Elemento #notificationContainer não encontrado.");
-        // Fallback: usar alert se o container não existir
-        alert(message);
-        return;
-    }
-    
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type, "with-user");
-    notif.innerHTML = `
-      <img src="${userPhoto}" alt="User">
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
-
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
-
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
-}
-
-
 // =============================================================
 // ====================== [ autenticação ] ======================
 
@@ -111,7 +44,7 @@ async function verificar_auth() {
         document.getElementById("userAuth").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
-        menuTimeLink.href = `team.html?id=${auth_dados.usuario.time}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
@@ -124,6 +57,9 @@ async function verificar_auth() {
         else{
             gerenciarCamp.style.display = 'none';
         }
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
     }
 }
 
@@ -276,7 +212,7 @@ async function criarTime() {
         });
 
         const result = await response.json();
-        console.log('Resposta da API ao criar time:', result);
+        
 
         if (response.ok) {
             // Verificar diferentes estruturas de resposta da API
@@ -295,7 +231,7 @@ async function criarTime() {
                 timeId = result.data.timeId;
             }
 
-            console.log('ID do time extraído:', timeId);
+            
 
             // Converter para número se for string
             if (timeId && typeof timeId === 'string') {
@@ -317,7 +253,7 @@ async function criarTime() {
                 window.location.href = `team.html?id=${timeId}`;
             }, 2000);
         } else {
-            showNotification('error', result.error || 'Erro ao criar time.');
+            showNotification('error', result.error || (response.status === 409 ? 'Já existe um time com este nome ou tag. Escolha outro.' : 'Erro ao criar time.'));
         }
     } catch (error) {
         console.error('Erro ao criar time:', error);
@@ -431,56 +367,6 @@ function abrirMenuSuspenso() {
     }
 }
 
-
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
-    }
-}
-
-
 // Fechar menu quando clicar fora dele
 document.addEventListener('click', function(event) {
     const menu = document.querySelector('#menuOpcoes');
@@ -562,7 +448,7 @@ async function getCardDados() {
     try {
         const response = await fetch(`${API_URL}/inscricoes/campeonato`);
         const data = await response.json();
-        console.log(data);
+        
         return data;
     } catch (error) {
         console.error('Erro ao buscar dados de campeonatos:', error);
@@ -720,22 +606,29 @@ function criarBannerSlides() {
         });
     });
 
-    // Event listeners para botões de navegação anterior/próximo
-    const btnPrev = document.getElementById('prevBanner');
-    const btnNext = document.getElementById('nextBanner');
+    // Navegação apenas por touch (swipe) no mobile e dots; setas removidas
+    // Navegação por touch (swipe) no banner
+    const viewport = document.querySelector('.banner-viewport');
+    if (viewport) {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipe = 50;
 
-    if (btnPrev) {
-        btnPrev.addEventListener('click', () => {
-            bannerIndex = (bannerIndex - 1 + bannerSlides.length) % bannerSlides.length;
-            atualizarBanner();
-        });
-    }
+        viewport.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches ? e.changedTouches[0].screenX : e.screenX;
+        }, { passive: true });
 
-    if (btnNext) {
-        btnNext.addEventListener('click', () => {
-            bannerIndex = (bannerIndex + 1) % bannerSlides.length;
+        viewport.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches ? e.changedTouches[0].screenX : e.screenX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) < minSwipe) return;
+            if (diff > 0) {
+                bannerIndex = (bannerIndex + 1) % bannerSlides.length;
+            } else {
+                bannerIndex = (bannerIndex - 1 + bannerSlides.length) % bannerSlides.length;
+            }
             atualizarBanner();
-        });
+        }, { passive: true });
     }
 
     // Inicia o autoplay sempre que os slides são recriados
@@ -915,7 +808,7 @@ function renderizarCampeonatos(lista) {
 
     grid.innerHTML = lista.map(campeonato => {
         let colorBackground = '';
-        console.log(campeonato.status);
+        
 
         if (campeonato.status === 'disponivel') {
             colorBackground = 'background: linear-gradient(180deg, #1f2937 0%, #065f46 100%);';
@@ -944,6 +837,8 @@ function renderizarCampeonatos(lista) {
         const tituloParts = campeonato.titulo.split(' ');
         const primeiraParte = tituloParts[0] || campeonato.titulo;
         const restoParte = tituloParts.slice(1).join(' ') || '';
+
+        
 
         return `
         <div class="campeonato-card" 

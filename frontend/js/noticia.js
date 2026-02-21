@@ -1,36 +1,152 @@
-// URL base da sua API
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+// =============================================================
+// ====================== [ autenticação ] ======================
 
-// =================================
-// ========= NOTIFICATIONS =========
-const icons = {
-    success: "✔️",
-    alert: "⚠️",
-    error: "❌",
-    info: "ℹ️"
-};
+// ------ AUTENTICAÇÃO DO USUARIO
+async function autenticacao() {
+    try {
+        const response = await fetch(`${API_URL}/dashboard`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
 
-function showNotification(type, message, duration = 4000) {
-    const container = document.getElementById("notificationContainer");
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'login.html';
+            }
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
 
-    const notif = document.createElement("div");
-    notif.classList.add("notification", type);
-    notif.innerHTML = `
-      <span class="icon">${icons[type] || ""}</span>
-      <span>${message}</span>
-      <div class="progress"></div>
-    `;
+        const data = await response.json();
+        return data;
 
-    container.appendChild(notif);
-    notif.querySelector(".progress").style.animationDuration = duration + "ms";
 
-    setTimeout(() => {
-        notif.style.animation = "fadeOut 0.5s forwards";
-        setTimeout(() => notif.remove(), 500);
-    }, duration);
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+    }
 }
 
+
+async function verificar_auth() {
+    const auth_dados = await autenticacao(); 
+    
+    
+    if (auth_dados.logado) {
+        const userId = auth_dados.usuario.id;
+        const perfil_data = await buscarDadosPerfil();
+        
+        const menuPerfilLink = document.getElementById('menuPerfilLink');
+        const menuTimeLink = document.getElementById('menuTimeLink');
+        // Atualiza a UI para o usuário logado
+        document.getElementById("userPerfil").style.display = "flex";
+        document.getElementById("userAuth").style.display = "none";
+        document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
+        document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
+        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
+        if (menuPerfilLink) {
+            menuPerfilLink.href = `perfil.html?id=${userId}`;
+        }
+
+        const gerenciarCamp = document.getElementById("gerenciarCamp");
+        if (perfil_data.perfilData.usuario.organizador == 'premium') {
+            gerenciarCamp.style.display = 'flex';
+            gerenciarCamp.href = `gerenciar_campeonato.html`;
+        }
+        else {
+            gerenciarCamp.style.display = 'none';
+        }
+    }
+    else{
+        document.getElementById("userAuth").style.display = "flex";
+    }
+}
+
+// ------ LOGOUT DO USUARIO
+async function logout() {
+
+    try {
+        const response = await fetch(`${API_URL}/logout`, {
+
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        })
+
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`)
+
+        }
+
+        const data = await response.json();
+        showNotification('success', 'Deslogado...', 1500)
+        setTimeout(() => {
+            document.getElementById("userPerfil").style.display = "none"
+            document.getElementById("userAuth").style.display = "flex"
+            // autenticacao();
+            verificar_auth();
+            // window.location.reload();
+        }, 1500)
+
+    }
+    catch (error) {
+        console.error('Erro na requisição:', error)
+        showNotification('error', 'Erro ao deslogar.', 1500)
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 1500)
+    }
+}
+
+
+// =================================
+// ========= BUSCAR DADOS DO PERFIL =========
+async function buscarDadosPerfil() {
+
+    const auth_dados = await autenticacao();
+    const userId = auth_dados.usuario.id;
+    try {
+
+        const perfilResponse = await fetch(`${API_URL}/perfil/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+
+        
+        const medalhasResponse = await fetch(`${API_URL}/medalhas/usuario/${userId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+
+        if (!perfilResponse.ok) {
+            throw new Error('Erro ao buscar dados do perfil.');
+        }
+
+
+        let medalhasData = [];
+        if (medalhasResponse.ok) {
+            medalhasData = await medalhasResponse.json();
+        }
+        else if(medalhasResponse.status == 404) {
+            medalhasData = [];
+
+        } else {
+            throw new Error('Erro ao buscar dados das medalhas.');
+        }
+
+        
+        const perfilData = await perfilResponse.json();
+
+
+        return {perfilData, medalhasData };
+    } catch (error) {
+        console.error('Erro ao buscar dados do perfil:', error);
+        return { perfilData: null, medalhasData: [] };
+    }
+}
 // =================================
 // ========= UTILITIES =========
 
@@ -465,55 +581,6 @@ function irParaPlayer(playerId) {
 // =================================
 // ========= HEADER FUNCTIONS =========
 
-// Funções do header (reutilizadas de noticias.js)
-// Variável para armazenar a função de fechar, para poder removê-la depois
-let fecharPesquisaHandler = null;
-
-function abrirBarraPesquisa() {
-    const header = document.querySelector('.header');
-    const searchBarContainer = document.getElementById('searchBarContainer');
-    const searchToggle = document.getElementById('searchToggle');
-
-    // Se já existe um handler, remove antes de adicionar um novo
-    if (fecharPesquisaHandler) {
-        document.removeEventListener('click', fecharPesquisaHandler);
-        fecharPesquisaHandler = null;
-    }
-
-    // Alterna a classe 'search-active' no header
-    header.classList.toggle('search-active');
-
-    // Se a barra de busca estiver ativa, foca no input
-    if (header.classList.contains('search-active')) {
-        const searchInput = searchBarContainer.querySelector('.search-input');
-        searchInput.focus();
-        
-        // Cria função para fechar ao clicar fora
-        fecharPesquisaHandler = function(event) {
-            // Verifica se o clique foi fora do container de busca e do botão de busca
-            if (!searchBarContainer.contains(event.target) && 
-                !searchToggle.contains(event.target)) {
-                // Fecha a barra de busca
-                header.classList.remove('search-active');
-                // Remove o listener após fechar
-                document.removeEventListener('click', fecharPesquisaHandler);
-                fecharPesquisaHandler = null;
-            }
-        };
-        
-        // Adiciona o listener após um pequeno delay para não fechar imediatamente ao abrir
-        setTimeout(() => {
-            document.addEventListener('click', fecharPesquisaHandler);
-        }, 100);
-    } else {
-        // Se fechou, remove o listener se existir
-        if (fecharPesquisaHandler) {
-            document.removeEventListener('click', fecharPesquisaHandler);
-            fecharPesquisaHandler = null;
-        }
-    }
-}
-
 function abrirMenuSuspenso() {
     const menu = document.querySelector('#menuOpcoes');
     if (menu.style.display === 'flex') {
@@ -541,4 +608,10 @@ window.addEventListener("scroll", function () {
     } else {
         header.classList.remove("scrolled");
     }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await verificar_auth();
 });

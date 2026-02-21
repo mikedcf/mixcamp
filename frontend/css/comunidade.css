@@ -44,6 +44,13 @@ body {
     overflow-x: hidden;
 }
 
+/* Telas até 1280px: garante scroll vertical */
+@media (max-width: 1280px) {
+    body {
+        overflow-y: auto;
+    }
+}
+
 @keyframes gradientShift {
     0% {
         background-position: 0% 50%;
@@ -89,420 +96,87 @@ body::before {
 ===========================================================================
 */
 
-/* Header */
-/* Header */
-.header {
-    display: flex;
-    width: 95%;
-    height: 90px;
-    margin: auto;
-    margin-top: 1%;
-    padding: 1px 40px;
-    /* background: rgba(255, 255, 255, 0.1); */
-    background: rgba(10, 10, 10, 0.219);
-    align-items: center;
-    justify-content: space-between;
-    /* Isso separa os 3 blocos (logo, centro, perfil) */
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-
-}
-
-.header.scrolled {
-    background: #1e1e2f;
-}
-
-.center-content {
-    display: flex;
-    flex-grow: 1;
-    /* Faz com que este bloco ocupe todo o espaço disponível */
-    justify-content: center;
-    /* Centraliza o conteúdo (menu ou barra de busca) */
-    align-items: center;
-    overflow: visible;
-    /* Permite que dropdowns e buscas ultrapassem a área central */
-}
-
-.nav {
-    display: block;
-    /* Visível por padrão */
-    transition: all 0.3s ease;
-}
-
-/* ==== LOGO ==== */
-.nav-brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18%;
-    height: 100px;
-}
-
-
-.logo-img {
-    height: 180px;
-    width: 180px;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.logo-img:hover {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-}
-
-/* ==== MENU DE NAVEGAÇÃO ==== */
-.nav-menu {
-    list-style: none;
-    display: flex;
-    gap: 50px;
+/* Header: estilos vêm do header.css. User-perfil igual à página perfil */
+.header .search-profile-area {
+    width: 20%;
+    min-width: fit-content;
+    justify-content: flex-end;
+    gap: clamp(10px, 1.5vw, 20px);
     margin: 0;
     padding: 0;
 }
 
-
-.nav-menu li {
-    transition: transform 0.2s ease;
-}
-
-.nav-menu li:hover {
-    transform: translateY(-5px) scale(1.05);
-}
-
-
-.nav-menu li a {
-    text-decoration: none;
-    color: #ffffff;
-    font-weight: 500;
-    font-size: 1.3em;
-    transition: color 0.2s ease;
-    /* transition: transform 0.2s ease; */
-    position: relative;
-    padding: 5px 0;
-}
-
-.nav-menu li a:hover {
-    color: #ff6b35;
-    /* cor destaque */
-    transform: translateY(-2px) scale(1.05);
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
-}
-
-.nav-menu li a:hover::after {
-    width: 100%;
-}
-
-.nav-menu li a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -3px;
-    /* distância abaixo do texto */
-    width: 0;
-    height: 2px;
-    background: #ff4500;
-    /* cor da barrinha */
-    transition: width 0.3s ease;
-}
-
-
-/* A barra de busca, inicialmente escondida */
-.search-bar-container {
-    display: none;
-    /* Inicia oculta */
-    width: 100%;
-    max-width: 600px;
-    /* Limite de largura para o input */
-    transition: all 0.3s ease;
-}
-
-/* ==== ÁREA DE BUSCA E PERFIL ==== */
-.search-profile-area {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-/* ==== PERFIL ==== */
-
-.search-profile-area {
-    display: flex;
-    width: 20%;
-    justify-items: center;
+.header .user-perfil {
+    margin: 0;
+    height: 100%;
+    max-height: 100%;
     align-items: center;
     justify-content: center;
-    margin: auto;
+    min-width: 0;
 }
 
-.user-perfil {
-    display: none;
-    position: relative;
-    margin: auto;
-    height: 60px;
-    /* margin-right: 2%; */
+.header .user-perfil[style*="display: flex"] {
+    display: flex !important;
 }
 
-.perfil-btn {
+.header .perfil-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    padding: 8px 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: #ffffff;
-    font-size: 0.9rem;
+    gap: clamp(6px, 1vw, 10px);
+    padding: clamp(6px, 0.8vw, 8px) clamp(12px, 1.5vw, 15px);
+    min-width: 0;
+    max-width: 100%;
 }
 
-.perfil-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 84, 4, 0.4);
-    transform: translateY(-2px);
-}
-
-.icon-perfil {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-}
-
-.perfil-nome {
+.header .perfil-nome {
     font-weight: 600;
     color: #fff;
     letter-spacing: 0.1em;
     white-space: nowrap;
     margin: 0;
-    margin-bottom: 0;
-    font-size: 16px;
-}
-
-.seta {
-    font-size: 14px;
-    color: #bbb;
-    transition: transform 0.2s ease;
-}
-
-.perfil-btn:hover .seta {
-    transform: rotate(180deg);
-}
-
-/* ==== MENU SUSPENSO ==== */
-.menu-opcoes {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 10px);
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.98) 0%, rgba(26, 26, 46, 0.95) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 10px 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                0 0 20px rgba(0, 212, 255, 0.2);
-    display: none;
-    flex-direction: column;
-    min-width: 200px;
-    z-index: 1001;
-    backdrop-filter: blur(20px);
-    animation: menuDropdown 0.3s ease;
-}
-
-@keyframes menuDropdown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.menu-opcoes a {
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #ddd;
-    text-decoration: none;
-    font-size: 14px;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-.menu-opcoes a:hover {
-    background: #ff6b35;
-    color: #fff;
-}
-
-.menu-separator {
-    height: 1px;
-    background: #444;
-    margin: 5px 0;
-}
-
-
-
-
-.box-lupa {
-    /* Apenas as regras de alinhamento e aparência, sem margens ou posicionamento */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    height: 50px;
-    /* Ou o tamanho que você preferir */
-    width: 50px;
-    /* Para que seja um quadrado, ajustando a altura também */
-    cursor: pointer;
-}
-
-
-
-
-.header.expanded {
-    height: 180px;
-    word-wrap: break-word;
-    flex-direction: column;
-    /* word-break: break-all; */
-    /* altura aumentada ao abrir pesquisa */
-}
-
-/* Caixa de pesquisa oculta inicialmente */
-.search-box {
-    display: flex;
-    margin-top: auto;
-    margin-left: auto;
-    margin-right: auto;
-    justify-content: center;
-    opacity: 0;
-    max-height: 0;
     overflow: hidden;
-    transition: all 0.3s ease;
+    text-overflow: ellipsis;
+    max-width: 120px;
 }
 
-.header.expanded .search-box {
-    opacity: 1;
-    max-height: 60px;
-    margin-top: 10px;
+.header .icon-perfil {
+    border-radius: 50%;
+    width: clamp(30px, 4vw, 40px);
+    height: clamp(30px, 4vw, 40px);
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
-.search-box input {
-    display: flex;
+@media (max-width: 768px) {
+    .header .search-profile-area {
+        width: auto;
+        gap: 10px;
+    }
 
-    width: 60%;
-    margin-top: 40%;
-    /* padding: 8px 12px; */
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
+    .header .perfil-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .header .perfil-nome {
+        display: none;
+    }
+
+    .header .icon-perfil {
+        width: 35px;
+        height: 35px;
+    }
 }
 
-.search-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.3em;
-    color: #fff;
-    transition: transform 0.2s ease;
-    padding: 0;
-}
+@media (max-width: 576px) {
+    .header .perfil-btn {
+        padding: 5px 10px;
+    }
 
-.search-btn:hover {
-    transform: scale(1.1);
-    color: #ff6b35;
-}
-
-
-.search-bar-container {
-    display: none;
-    /* Inicia oculta */
-    width: 100%;
-    max-width: 600px;
-    /* Limite de largura para o input */
-    transition: all 0.3s ease;
-}
-
-.search-input {
-    width: 100%;
-    padding: 10px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 25px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 1.1em;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.search-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.search-input:focus {
-    border-color: #ff6b35;
-    box-shadow: 0 0 8px rgba(255, 107, 53, 0.4);
-}
-
-/* Esconde o nav e mostra a barra de busca quando a classe 'search-active' está no header */
-.header.search-active .nav {
-    display: none;
-}
-
-.header.search-active .search-bar-container {
-    display: flex;
-    /* Troca para 'flex' para exibir a barra de busca */
-}
-
-
-
-/* ------- CAIXA LOGIN E REGISTRO ------- */
-/* Caixa de login/registro */
-.user-auth {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin: auto;
-    height: 60px;
-}
-
-/* Estilo dos botões de login/registro */
-.auth-btn {
-    padding: 8px 18px;
-    border-radius: 25px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.auth-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 84, 4, 0.6);
-    color: #ff6b35;
-    transform: translateY(-2px);
-}
-
-.login-btn {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.register-btn {
-    background: #ff6b35;
-    border-color: #ff6b35;
-}
-
-.register-btn:hover {
-    background: #ff834f;
-    color: #fff;
+    .header .icon-perfil {
+        width: 30px;
+        height: 30px;
+    }
 }
 
 /* =================================
@@ -510,7 +184,7 @@ body::before {
    ================================= */
 
 .transfers-section {
-    padding: 60px 0;
+    padding: clamp(100px, 14vh, 130px) 0 60px 0;
     background: rgba(255, 255, 255, 0.02);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
@@ -2224,233 +1898,7 @@ body::before {
     margin: 0 20px;
 }
 
-/* =================================
-   ========= NOTIFICATIONS =========
-   ================================= */
 
-#notificationContainer {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.notification {
-    background: rgba(0, 0, 0, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 15px 20px;
-    margin-bottom: 10px;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: slideIn 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.notification.success {
-    border-color: #4caf50;
-}
-
-.notification.error {
-    border-color: #f44336;
-}
-
-.notification.info {
-    border-color: #2196f3;
-}
-
-.notification .progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: #00d4ff;
-    animation: progress 4s linear;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes progress {
-    from {
-        width: 100%;
-    }
-
-    to {
-        width: 0%;
-    }
-}
-
-
-
-/* =================================
-   ========= SEARCH RESULTS =========
-   ================================= */
-
-.search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.98) 0%, rgba(26, 26, 46, 0.95) 100%);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                0 0 20px rgba(0, 212, 255, 0.2);
-    z-index: 1000;
-    max-height: 400px;
-    overflow-y: auto;
-    margin-top: 8px;
-    animation: searchResultsDropdown 0.3s ease;
-}
-
-@keyframes searchResultsDropdown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.search-results-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.search-results-header h3 {
-    color: #00d4ff;
-    font-size: 16px;
-    margin: 0;
-}
-
-.search-results-content {
-    padding: 12px 0;
-}
-
-.search-section {
-    margin-bottom: 16px;
-}
-
-.search-section:last-child {
-    margin-bottom: 0;
-}
-
-.search-section h4 {
-    color: #ffffff;
-    font-size: 14px;
-    margin: 0 20px 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.search-section h4 i {
-    color: #00d4ff;
-}
-
-.search-items {
-    display: flex;
-    flex-direction: column;
-}
-
-.search-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-}
-
-.search-item:hover {
-    background: rgba(0, 212, 255, 0.1);
-    border-left-color: #00d4ff;
-}
-
-.search-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 12px;
-    border: 2px solid rgba(0, 212, 255, 0.3);
-}
-
-.search-info {
-    flex: 1;
-}
-
-.search-info h5 {
-    color: #ffffff;
-    font-size: 14px;
-    margin: 0 0 4px;
-    font-weight: 600;
-}
-
-.search-info p {
-    color: #888;
-    font-size: 12px;
-    margin: 0;
-}
-
-.search-item i {
-    color: #00d4ff;
-    font-size: 12px;
-    opacity: 0.7;
-}
-
-.search-no-results {
-    padding: 40px 20px;
-    text-align: center;
-    color: #888;
-}
-
-.search-no-results i {
-    font-size: 24px;
-    color: #00d4ff;
-    margin-bottom: 12px;
-    display: block;
-}
-
-.search-no-results p {
-    margin: 0;
-    font-size: 14px;
-}
-
-/* Scrollbar personalizada para resultados */
-.search-results::-webkit-scrollbar {
-    width: 6px;
-}
-
-.search-results::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-}
-
-.search-results::-webkit-scrollbar-thumb {
-    background: #00d4ff;
-    border-radius: 3px;
-}
-
-.search-results::-webkit-scrollbar-thumb:hover {
-    background: #0099cc;
-}
 
 /* =================================
    ========= SCROLLBAR =========
@@ -2519,85 +1967,9 @@ body {
    RESPONSIVE - MOBILE (até 480px)
    ================================= */
 @media (max-width: 480px) {
-    /* Header Mobile */
-    .header {
-        width: 100%;
-        height: auto;
-        min-height: 70px;
-        padding: 10px 15px;
-        margin-top: 0;
-        border-radius: 0;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .nav-brand {
-        width: auto;
-        height: auto;
-        order: 1;
-    }
-
-    .logo-img {
-        height: 50px;
-        width: auto;
-        max-width: 120px;
-    }
-
-    .center-content {
-        order: 3;
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    .nav-menu {
-        gap: 15px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .nav-menu li a {
-        font-size: 0.9rem;
-        padding: 5px 8px;
-    }
-
-    .search-profile-area {
-        width: auto;
-        order: 2;
-        gap: 8px;
-    }
-
-    .user-auth {
-        gap: 8px;
-        height: auto;
-    }
-
-    .auth-btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-    }
-
-    .perfil-btn {
-        padding: 6px 10px;
-        font-size: 0.8rem;
-    }
-
-    .perfil-nome {
-        display: none;
-    }
-
-    .icon-perfil {
-        width: 30px;
-        height: 30px;
-    }
-
-    .box-lupa {
-        width: 40px;
-        height: 40px;
-    }
-
     /* Seção de Transferências Mobile */
     .transfers-section {
-        padding: 30px 0;
+        padding: clamp(90px, 12vh, 110px) 0 30px 0;
     }
 
     .section-title {
@@ -2675,7 +2047,7 @@ body {
     }
 
     .sidebar {
-        order: 2;
+        order: 1;
         padding: 20px;
         position: relative;
         top: 0;
@@ -2683,7 +2055,7 @@ body {
     }
 
     .results-area {
-        order: 1;
+        order: 2;
         padding: 20px 15px;
         border-radius: 15px;
     }
@@ -2840,54 +2212,9 @@ body {
    RESPONSIVE - TABLET (481px - 768px)
    ================================= */
 @media (min-width: 481px) and (max-width: 768px) {
-    /* Header Tablet */
-    .header {
-        width: 98%;
-        padding: 10px 25px;
-        height: auto;
-        min-height: 80px;
-    }
-
-    .nav-brand {
-        width: 15%;
-    }
-
-    .logo-img {
-        height: 70px;
-        width: auto;
-        max-width: 140px;
-    }
-
-    .nav-menu {
-        gap: 25px;
-    }
-
-    .nav-menu li a {
-        font-size: 1rem;
-    }
-
-    .search-profile-area {
-        width: auto;
-        gap: 12px;
-    }
-
-    .auth-btn {
-        padding: 7px 14px;
-        font-size: 0.85rem;
-    }
-
-    .perfil-btn {
-        padding: 7px 12px;
-        font-size: 0.85rem;
-    }
-
-    .perfil-nome {
-        font-size: 0.85rem;
-    }
-
     /* Seção de Transferências Tablet */
     .transfers-section {
-        padding: 40px 0;
+        padding: clamp(95px, 13vh, 120px) 0 40px 0;
     }
 
     .section-title {
@@ -2969,19 +2296,6 @@ body {
     .container {
         max-width: 1200px;
         padding: 0 30px;
-    }
-
-    .header {
-        width: 96%;
-        padding: 10px 35px;
-    }
-
-    .nav-menu {
-        gap: 35px;
-    }
-
-    .nav-menu li a {
-        font-size: 1.1rem;
     }
 
     .main-content {
@@ -3093,15 +2407,6 @@ body {
 
 /* Ajustes para orientação landscape em mobile */
 @media (max-width: 768px) and (orientation: landscape) {
-    .header {
-        height: auto;
-        min-height: 60px;
-    }
-
-    .logo-img {
-        height: 45px;
-    }
-
     .transfers-section,
     .main-section {
         padding: 25px 0;
@@ -3138,29 +2443,6 @@ body {
 
 /* Ajustes para telas muito pequenas (menos de 360px) */
 @media (max-width: 360px) {
-    .header {
-        padding: 8px 10px;
-    }
-
-    .logo-img {
-        height: 40px;
-        max-width: 100px;
-    }
-
-    .nav-menu {
-        gap: 10px;
-    }
-
-    .nav-menu li a {
-        font-size: 0.8rem;
-        padding: 4px 6px;
-    }
-
-    .auth-btn {
-        padding: 5px 10px;
-        font-size: 0.75rem;
-    }
-
     .section-title,
     .main-section-title {
         font-size: 1.5rem;
