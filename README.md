@@ -126,13 +126,13 @@ BASE_URL=http://127.0.0.1:3000
 NGROK_URL=
 
 # Rotas principais da API (exemplos – ajustar conforme suas definições atuais em server.js)
-ROUTE_REGISTER=/api/v1/register
-ROUTE_LOGIN=/api/v1/login
-ROUTE_DASHBOARD=/api/v1/dashboard
-ROUTE_LOGOUT=/api/v1/logout
+ROUTE_REGISTER=
+ROUTE_LOGIN=
+ROUTE_DASHBOARD=
+ROUTE_LOGOUT=
 
-ROUTE_EMAIL_CODIGO=/api/v1/email/register
-ROUTE_EMAIL_VERYCODE=/api/v1/email/verify-code
+ROUTE_EMAIL_CODIGO=
+ROUTE_EMAIL_VERYCODE=
 ```
 
 > **Importante**: não commitar o `.env` no repositório (deve estar no `.gitignore`).
