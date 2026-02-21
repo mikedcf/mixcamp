@@ -321,6 +321,11 @@
                         <i class="fas fa-history"></i>
                         <span>Team History</span>
                     </button>
+                    <button class="content-tab" data-content="chat" onclick="showContent('chat')">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat</span>
+                        <span class="tab-count" id="chatUnreadCount" data-count="0">0</span>
+                    </button>
                 </div>
 
                 <!-- Conteúdo: Estatísticas -->
@@ -747,6 +752,45 @@
                 <div class="content-panel" id="panelHighlights">
                     <div class="team-history-container" id="teamHistoryContainer">
                         <!-- Cards de histórico de times serão inseridos via JS -->
+                    </div>
+                </div>
+
+                <!-- Conteúdo: Chat -->
+                <div class="content-panel" id="panelChat">
+                    <div class="chat-container">
+                        <div class="chat-conversations" id="chatConversations">
+                            <div class="chat-conversations-header">
+                                <h3><i class="fas fa-comments"></i> Conversas</h3>
+                            </div>
+                            <div class="chat-conversations-list" id="chatConversationsList">
+                                <!-- Lista de conversas será preenchida via JS ou exibirá estado vazio -->
+                                <div class="chat-empty-state" id="chatEmptyConversations">
+                                    <i class="fas fa-comment-dots"></i>
+                                    <p>Nenhuma conversa ainda.</p>
+                                    <span>Suas conversas com outros jogadores aparecerão aqui.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-messages-area" id="chatMessagesArea">
+                            <div class="chat-messages-placeholder" id="chatMessagesPlaceholder">
+                                <i class="fas fa-comments"></i>
+                                <p>Selecione uma conversa ou inicie uma nova</p>
+                            </div>
+                            <div class="chat-messages-view" id="chatMessagesView" style="display: none;">
+                                <div class="chat-messages-header" id="chatMessagesHeader">
+                                    <span class="chat-with-name" id="chatWithName">--</span>
+                                </div>
+                                <div class="chat-messages-list" id="chatMessagesList">
+                                    <!-- Mensagens serão inseridas via JS -->
+                                </div>
+                                <div class="chat-input-area">
+                                    <input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" autocomplete="off">
+                                    <button type="button" class="chat-send-btn" id="chatSendBtn" aria-label="Enviar mensagem">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

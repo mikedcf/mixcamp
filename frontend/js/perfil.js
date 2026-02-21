@@ -2194,7 +2194,8 @@ function showContent(contentType) {
         'reels': 'panelReels',
         'followers': 'panelFollowers',
         'matches': 'panelMatches',
-        'highlights': 'panelHighlights'
+        'highlights': 'panelHighlights',
+        'chat': 'panelChat'
     };
 
     const panelId = panelMap[contentType] || `panel${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`;
