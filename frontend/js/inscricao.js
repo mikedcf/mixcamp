@@ -166,15 +166,10 @@ async function btnPagamento(){
 
     params = new URLSearchParams(window.location.search);
     const cardId = params.get('id');
-    
-
 
     const logado = await autenticacao();
     const lider = await verificarSeELider();
     const cards = await getCardDados();
-    
-
-    
     
     if(logado.logado){
         const dados = await buscarDadosPerfil(logado.usuario.id);
@@ -182,43 +177,43 @@ async function btnPagamento(){
             const timeId = dados.perfilData.usuario.time_id
 
             
-            // let dadosMembros = await topullMembersTime(timeId)
-            let dadosMembros = 5;
+            const dadosMembros = await topullMembersTime(timeId)
+
             if(dadosMembros == 5){
-                // for(const membro of dadosMembros){
-                //     idsMembros.push(membro.usuario_id)
-                // }
+                for(const membro of dadosMembros){
+                    idsMembros.push(membro.usuario_id)
+                }
                 const linksVerify = await verificarLinksAuth(idsMembros);
-                // if (linksVerify.res == true){
+                if (linksVerify.res == true){
                     for(const card of cards.inscricoes){
                         if(card.id == cardId){
 
                             if(card.preco_inscricao <= 0.99){
-                                console.log('PagamentoFree');
+                                
                                 await PagamentoFree()
                                 return;
                             }
                             else{
-                                console.log('pago')
+
                                 await iniciarPagamentoMercadoPago()
                                 return;
                             }
                 
                         }
                     }
-                // }
-                // else{
+                }
+                else{
 
-                //     let usuarios = [];
+                    let usuarios = [];
 
-                //     for(const user of linksVerify){
-                //         usuarios.push(user.username);
-                //     }
+                    for(const user of linksVerify){
+                        usuarios.push(user.username);
+                    }
                     
-                //     showNotification('error', 'A membros faltando preencher os links das redes steam e faceit.!', 3000);
-                //     showNotification('alert', `Os membros que estão faltando são: ${usuarios.join(', ')}`);
-                //     return;
-                // }
+                    showNotification('error', 'A membros faltando preencher os links das redes steam e faceit.!', 3000);
+                    showNotification('alert', `Os membros que estão faltando são: ${usuarios.join(', ')}`);
+                    return;
+                }
             }
             else{
                 
@@ -237,9 +232,6 @@ async function btnPagamento(){
         return;
     }
 
-
-    
-    
 }
 
 
