@@ -172,7 +172,7 @@ async function btnPagamento(){
     const logado = await autenticacao();
     const lider = await verificarSeELider();
     const cards = await getCardDados();
-    await iniciarPagamentoMercadoPago()
+    
 
     
     
@@ -180,44 +180,48 @@ async function btnPagamento(){
         const dados = await buscarDadosPerfil(logado.usuario.id);
         if(lider){
             const timeId = dados.perfilData.usuario.time_id
-            console.log('btnpagamento', timeId);
+
             
-            dadosMembros = await topullMembersTime(timeId)
-            if(dadosMembros.length >= 0){
-                for(const membro of dadosMembros){
-                    idsMembros.push(membro.usuario_id)
-                }
+            // let dadosMembros = await topullMembersTime(timeId)
+            let dadosMembros = 5;
+            if(dadosMembros == 5){
+                // for(const membro of dadosMembros){
+                //     idsMembros.push(membro.usuario_id)
+                // }
                 const linksVerify = await verificarLinksAuth(idsMembros);
-                if (linksVerify.res == true){
+                // if (linksVerify.res == true){
                     for(const card of cards.inscricoes){
                         if(card.id == cardId){
-                            
-                            if(card.preco_inscricao > 0){
-                                PagementoFree()
+
+                            if(card.preco_inscricao <= 0.99){
+                                console.log('PagamentoFree');
+                                await PagamentoFree()
                                 return;
                             }
                             else{
+                                console.log('pago')
                                 await iniciarPagamentoMercadoPago()
                                 return;
                             }
                 
                         }
                     }
-                }
-                else{
+                // }
+                // else{
 
-                    let usuarios = [];
+                //     let usuarios = [];
 
-                    for(const user of linksVerify){
-                        usuarios.push(user.username);
-                    }
+                //     for(const user of linksVerify){
+                //         usuarios.push(user.username);
+                //     }
                     
-                    showNotification('error', 'A membros faltando preencher os links das redes steam e faceit.!', 3000);
-                    showNotification('alert', `Os membros que estão faltando são: ${usuarios.join(', ')}`);
-                    return;
-                }
+                //     showNotification('error', 'A membros faltando preencher os links das redes steam e faceit.!', 3000);
+                //     showNotification('alert', `Os membros que estão faltando são: ${usuarios.join(', ')}`);
+                //     return;
+                // }
             }
             else{
+                
                 showNotification('error', 'A line do Time não esta completa.');
                 return;
             }
@@ -478,7 +482,7 @@ async function topullMembersTime(timeId) {
 // =================================
 // ========= SISTEMA DE PAGAMENTO =========
 
-async function PagementoFree(){
+async function PagamentoFree(){
     const params = new URLSearchParams(window.location.search);
     const cardId = params.get('id');
 
@@ -695,9 +699,6 @@ async function verificarStatusAprovado() {
         
                         // Atualizar quantidade de times inscritos
                         showNotification('success', 'Inscrição confirmada com sucesso!');
-                        
-                        await salvarMembroHistorico(timeId);
-        
                         return true;
                     }
                 }

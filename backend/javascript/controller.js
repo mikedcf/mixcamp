@@ -4779,6 +4779,7 @@ async function criarInscricaoTimes(req, res) {
 // Mantém a rota manual para criar histórico de um único membro (se precisar no futuro)
 async function criarHistoricoMembros(req, res) {
     const { campeonato_id, usuario_id, time_id, posicao } = req.body;
+    console.log('criarHistoricoMembros', campeonato_id, usuario_id, time_id, posicao);
     let conexao;
     try {
         conexao = await conectar();
