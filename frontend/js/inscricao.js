@@ -323,7 +323,7 @@ async function salvarMembroHistorico(timeId){
     const MembrosRegistrados = await buscarMembrosjaRegistrados()
     if(!MembrosRegistrados.historico.length){
         for(const membro of dadosMembros){
-            // await registerMembroHistorico(timeId,membro.usuario_id, membro.posicao) 
+            await registerMembroHistorico(timeId,membro.usuario_id, membro.posicao) 
         }
         
 
