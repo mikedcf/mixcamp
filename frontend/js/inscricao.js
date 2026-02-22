@@ -295,6 +295,9 @@ async function verificarSeELider() {
             const userId = auth_dados.usuario.id;
             const perfilData = await buscarDadosPerfil(userId);
             const timeId = perfilData.perfilData.usuario.time_id;
+            if(timeId == null){
+                return false
+            }
             const response = await fetch(`${API_URL}/times/${timeId}`, {
                 credentials: 'include'
             });
@@ -445,7 +448,7 @@ function atualizarMenuTime(temTime, timeId = null) {
 
 
 async function topullMembersTime(timeId) {
-    console.log(timeId);
+    
     try {
 
         
@@ -682,6 +685,7 @@ async function verificarStatusAprovado() {
             return
         }
         const timeId = dados_user.perfilData.usuario.time_id;
+        console.log('verificarStatusAprovado', timeId);
         
         if(!pagamento.inscricoes.length == 0){
            
@@ -691,7 +695,7 @@ async function verificarStatusAprovado() {
         
                         // Atualizar quantidade de times inscritos
                         showNotification('success', 'Inscrição confirmada com sucesso!');
-                        console.log('verificarStatusAprovado', timeId);
+                        
                         await salvarMembroHistorico(timeId);
         
                         return true;
