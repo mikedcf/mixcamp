@@ -350,6 +350,7 @@ CREATE TABLE IF NOT EXISTS inscricoes_campeonato (
     id_organizador INT UNSIGNED NOT NULL,
     link_hub VARCHAR(200) NOT NULL,
     link_convite VARCHAR(200) NOT NULL,
+    link_whatsapp VARCHAR(255) DEFAULT NULL,
     status ENUM(
         'em breve',
         'disponivel',
@@ -364,6 +365,8 @@ CREATE TABLE IF NOT EXISTS inscricoes_campeonato (
     FOREIGN KEY (medalha_id) REFERENCES medalhas (id) ON DELETE CASCADE
 );
 
+ALTER TABLE inscricoes_campeonato ADD COLUMN link_whatsapp VARCHAR(255) DEFAULT NULL;
+ALTER TABLE inscricoes_campeonato ADD COLUMN link_whatsapp VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE IF NOT EXISTS inscricoes_campeonato
 MODIFY status ENUM(
@@ -373,6 +376,8 @@ MODIFY status ENUM(
     'encerrado',
     'cancelado'
 ) NOT NULL DEFAULT 'disponivel';
+
+-- Se a tabela já existia sem link_whatsapp, execute uma vez: ALTER TABLE inscricoes_campeonato ADD COLUMN link_whatsapp VARCHAR(255) DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS inscricoes_times (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

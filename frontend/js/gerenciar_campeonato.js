@@ -706,6 +706,7 @@ async function editarCampeonato(id) {
     document.getElementById('imagem_url').value = campeonato.imagem_url || '';
     document.getElementById('link_convite').value = campeonato.link_convite || '';
     document.getElementById('url_hub').value = campeonato.link_hub || ''; // Backend retorna link_hub
+    document.getElementById('link_whatsapp').value = campeonato.link_whatsapp || '';
     document.getElementById('trofeu_id').value = campeonato.trofeu_id || '';
     document.getElementById('medalha_id').value = campeonato.medalha_id || '';
     document.getElementById('edicao_campeonato').value = campeonato.edicao_campeonato || '';
@@ -801,7 +802,10 @@ async function salvarCampeonato(event) {
         regras: formData.get('regras'),
         status: formData.get('status'),
         previsao_data_inicio: formData.get('previsao_data_inicio'),
-        id_organizador: auth_dados.usuario.id
+        id_organizador: auth_dados.usuario.id,
+        link_hub: formData.get('url_hub'),
+        link_convite: formData.get('link_convite'),
+        link_whatsapp: formData.get('link_whatsapp') || null
     };
     console.log(dados.tipo);
     // Só adicionar troféu e medalha se for premium

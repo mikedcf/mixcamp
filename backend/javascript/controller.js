@@ -375,6 +375,7 @@ async function setupDatabase() {
         id_organizador INT UNSIGNED NOT NULL,
         link_hub VARCHAR(200) NOT NULL,
         link_convite VARCHAR(200) NOT NULL,
+        link_whatsapp VARCHAR(255) DEFAULT NULL,
         status ENUM('em breve','disponivel','andamento','encerrado','cancelado') NOT NULL DEFAULT 'disponivel',
         previsao_data_inicio DATETIME NOT NULL,
         data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -4585,16 +4586,18 @@ async function getHistoricoMembros(req, res) {
 }
 // ----- INSCRICAO POST
 async function criarInscricaoCampeonato(req, res) {
-    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio } = req.body;
+    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio, link_hub, link_convite,link_whatsapp } = req.body;
     let conexao;
     try {
         conexao = await conectar();
         
-        // Converter undefined para null nos campos opcionais
+        // Converter undefined para null nos campos opcionais (mysql2 não aceita undefined)
         const trofeuIdValue = trofeu_id !== undefined ? trofeu_id : null;
         const medalhaIdValue = medalha_id !== undefined ? medalha_id : null;
         const imagemUrlValue = imagem_url !== undefined ? imagem_url : null;
         const edicaoValue = edicao_campeonato !== undefined ? edicao_campeonato : null;
+        const linkWhatsappValue = link_whatsapp !== undefined && link_whatsapp !== '' ? link_whatsapp : null;
+        const mixcampValue = mixcamp !== undefined && mixcamp !== '' ? mixcamp : 'desconhecido';
 
         // DEBUG focado em premiação na criação de campeonatos
         console.debug('[DEBUG PREMIAÇÃO BACKEND] criarInscricaoCampeonato', {
@@ -4607,12 +4610,41 @@ async function criarInscricaoCampeonato(req, res) {
             trofeuIdValue,
             medalhaIdValue,
             id_organizador,
-            status
+            status,
+            link_hub,
+            link_convite,
+            link_whatsapp
         });
-        
+
+        const valores = [
+            tipo ?? null,
+            mixcampValue,
+            titulo ?? null,
+            descricao ?? null,
+            preco_inscricao ?? null,
+            premiacao ?? null,
+            imagemUrlValue,
+            trofeuIdValue,
+            medalhaIdValue,
+            chave ?? null,
+            edicaoValue,
+            plataforma ?? null,
+            game ?? null,
+            nivel ?? null,
+            formato ?? null,
+            qnt_times ?? null,
+            regras ?? null,
+            id_organizador ?? null,
+            status ?? null,
+            previsao_data_inicio ?? null,
+            link_hub ?? null,
+            link_convite ?? null,
+            linkWhatsappValue
+        ];
+
         await conexao.execute(
-            'INSERT INTO inscricoes_campeonato (tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagemUrlValue, trofeuIdValue, medalhaIdValue, chave, edicaoValue, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio]
+            'INSERT INTO inscricoes_campeonato (tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            valores
         );
         res.status(201).json({ message: 'Inscrição de campeonato criada com sucesso!' });
     }
