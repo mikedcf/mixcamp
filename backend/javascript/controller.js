@@ -4592,12 +4592,22 @@ async function criarInscricaoCampeonato(req, res) {
         conexao = await conectar();
         
         // Converter undefined para null nos campos opcionais (mysql2 não aceita undefined)
-        const trofeuIdValue = trofeu_id !== undefined ? trofeu_id : null;
-        const medalhaIdValue = medalha_id !== undefined ? medalha_id : null;
+        let trofeuIdValue = trofeu_id !== undefined ? trofeu_id : null;
+        let medalhaIdValue = medalha_id !== undefined ? medalha_id : null;
         const imagemUrlValue = imagem_url !== undefined ? imagem_url : null;
         const edicaoValue = edicao_campeonato !== undefined ? edicao_campeonato : null;
         const linkWhatsappValue = link_whatsapp !== undefined && link_whatsapp !== '' ? link_whatsapp : null;
         const mixcampValue = mixcamp !== undefined && mixcamp !== '' ? mixcamp : 'desconhecido';
+
+        // Se trofeu_id/medalha_id não existirem nas tabelas referenciadas, usar null (evita ER_NO_REFERENCED_ROW_2)
+        if (trofeuIdValue != null) {
+            const [rowsTrofeu] = await conexao.execute('SELECT 1 FROM time_conquistas WHERE id = ?', [trofeuIdValue]);
+            if (rowsTrofeu.length === 0) trofeuIdValue = null;
+        }
+        if (medalhaIdValue != null) {
+            const [rowsMedalha] = await conexao.execute('SELECT 1 FROM medalhas WHERE id = ?', [medalhaIdValue]);
+            if (rowsMedalha.length === 0) medalhaIdValue = null;
+        }
 
         // DEBUG focado em premiação na criação de campeonatos
         console.debug('[DEBUG PREMIAÇÃO BACKEND] criarInscricaoCampeonato', {
