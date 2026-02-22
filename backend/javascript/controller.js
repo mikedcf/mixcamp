@@ -4600,13 +4600,24 @@ async function criarInscricaoCampeonato(req, res) {
         const mixcampValue = mixcamp !== undefined && mixcamp !== '' ? mixcamp : 'desconhecido';
 
         // Se trofeu_id/medalha_id não existirem nas tabelas referenciadas, usar null (evita ER_NO_REFERENCED_ROW_2)
-        if (trofeuIdValue != null) {
-            const [rowsTrofeu] = await conexao.execute('SELECT 1 FROM time_conquistas WHERE id = ?', [trofeuIdValue]);
-            if (rowsTrofeu.length === 0) trofeuIdValue = null;
+        // Nota: A foreign key está referenciando time_conquistas incorretamente, mas vamos validar em trofeus que é a tabela correta
+        if (trofeuIdValue != null && trofeuIdValue !== 0) {
+            const [rowsTrofeu] = await conexao.execute('SELECT 1 FROM trofeus WHERE id = ?', [trofeuIdValue]);
+            if (rowsTrofeu.length === 0) {
+                console.warn(`Trofeu ID ${trofeuIdValue} não encontrado, definindo como NULL`);
+                trofeuIdValue = null;
+            }
+        } else {
+            trofeuIdValue = null;
         }
-        if (medalhaIdValue != null) {
+        if (medalhaIdValue != null && medalhaIdValue !== 0) {
             const [rowsMedalha] = await conexao.execute('SELECT 1 FROM medalhas WHERE id = ?', [medalhaIdValue]);
-            if (rowsMedalha.length === 0) medalhaIdValue = null;
+            if (rowsMedalha.length === 0) {
+                console.warn(`Medalha ID ${medalhaIdValue} não encontrada, definindo como NULL`);
+                medalhaIdValue = null;
+            }
+        } else {
+            medalhaIdValue = null;
         }
 
         // DEBUG focado em premiação na criação de campeonatos
@@ -4660,7 +4671,19 @@ async function criarInscricaoCampeonato(req, res) {
     }
     catch (error) {
         console.error('Erro ao criar inscrição de campeonato:', error);
-        res.status(500).json({ message: 'Erro interno no servidor' });
+        
+        // Tratamento específico para erro de foreign key
+        if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.errno === 1452) {
+            return res.status(400).json({ 
+                message: 'Erro de referência: O trofeu_id ou medalha_id fornecido não existe no banco de dados. Verifique os IDs e tente novamente.',
+                error: error.message 
+            });
+        }
+        
+        res.status(500).json({ 
+            message: 'Erro interno no servidor',
+            error: error.message 
+        });
     } finally {
         if (conexao) await desconectar(conexao);
     }
@@ -4697,10 +4720,24 @@ async function registrarHistoricoMembrosCampeonato(conexao, campeonatoId, timeId
         // Montar valores para insert em lote
         const values = membros.map(m => [campeonatoId, m.usuario_id, timeId, m.posicao]);
 
-        await conexao.query(
-            'INSERT INTO membros_campeonato (campeonato_id, usuario_id, time_id, posicao) VALUES ?',
-            [values]
-        );
+        try {
+            await conexao.query(
+                'INSERT INTO membros_campeonato (campeonato_id, usuario_id, time_id, posicao) VALUES ?',
+                [values]
+            );
+        } catch (insertError) {
+            // Se for erro de ENUM, tentar executar a migração
+            if (insertError.code === 'WARN_DATA_TRUNCATED' || insertError.errno === 1265) {
+                await garantirMigracaoPosicao(conexao);
+                // Tentar inserir novamente após a migração
+                await conexao.query(
+                    'INSERT INTO membros_campeonato (campeonato_id, usuario_id, time_id, posicao) VALUES ?',
+                    [values]
+                );
+            } else {
+                throw insertError;
+            }
+        }
     } catch (error) {
         console.error('Erro ao registrar histórico de membros do campeonato:', error);
         // Não lançar erro para não quebrar o fluxo principal de inscrição/pagamento
@@ -4782,7 +4819,17 @@ async function criarHistoricoMembros(req, res) {
     console.log('criarHistoricoMembros', campeonato_id, usuario_id, time_id, posicao);
     let conexao;
     try {
+        // Validação dos valores permitidos para posicao
+        const posicoesValidas = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach', 'rifle', 'lurker'];
+        if (!posicoesValidas.includes(posicao)) {
+            return res.status(400).json({ 
+                message: `Posição inválida: ${posicao}. Valores permitidos: ${posicoesValidas.join(', ')}` 
+            });
+        }
+
         conexao = await conectar();
+        
+        // Tentar inserir
         await conexao.execute(
             'INSERT INTO membros_campeonato (campeonato_id, usuario_id, time_id, posicao) VALUES (?, ?, ?, ?)',
             [campeonato_id, usuario_id, time_id, posicao]
@@ -4790,9 +4837,57 @@ async function criarHistoricoMembros(req, res) {
         res.status(201).json({ message: 'Histórico de membros criado com sucesso!' });
     } catch (error) {
         console.error('Erro ao criar histórico de membros:', error);
-        res.status(500).json({ message: 'Erro interno no servidor' });
+        
+        // Verificar se é erro de ENUM/truncamento
+        if (error.code === 'WARN_DATA_TRUNCATED' || error.errno === 1265) {
+            // Tentar executar a migração automaticamente
+            try {
+                await garantirMigracaoPosicao(conexao);
+                // Tentar inserir novamente após a migração
+                await conexao.execute(
+                    'INSERT INTO membros_campeonato (campeonato_id, usuario_id, time_id, posicao) VALUES (?, ?, ?, ?)',
+                    [campeonato_id, usuario_id, time_id, posicao]
+                );
+                res.status(201).json({ message: 'Histórico de membros criado com sucesso!' });
+                return;
+            } catch (migError) {
+                console.error('Erro ao executar migração:', migError);
+                return res.status(500).json({ 
+                    message: 'Erro: A coluna posicao não aceita o valor "' + posicao + '". Execute a migração migrate_add_capitao_membros_campeonato.sql no banco de dados.',
+                    error: error.message 
+                });
+            }
+        }
+        
+        res.status(500).json({ message: 'Erro interno no servidor', error: error.message });
     } finally {
         if (conexao) await desconectar(conexao);
+    }
+}
+
+// Função auxiliar para garantir que a migração do ENUM foi aplicada
+async function garantirMigracaoPosicao(conexao) {
+    try {
+        await conexao.execute(`
+            ALTER TABLE \`membros_campeonato\` 
+            MODIFY COLUMN \`posicao\` ENUM(
+                'capitao',
+                'awp',
+                'entry',
+                'support',
+                'igl',
+                'sub',
+                'coach',
+                'rifle',
+                'lurker'
+            ) NOT NULL
+        `);
+        console.log('Migração de posicao aplicada com sucesso');
+    } catch (error) {
+        // Se já existe, não é problema
+        if (error.code !== 'ER_DUP_FIELDNAME') {
+            throw error;
+        }
     }
 }
 
@@ -4803,9 +4898,49 @@ async function atualizarInscricaoCampeonato(req, res) {
         conexao = await conectar();
         const { id, ...dados } = req.body;
 
+        // Validar e tratar trofeu_id
+        if (dados.trofeu_id !== undefined) {
+            if (dados.trofeu_id === null || dados.trofeu_id === '' || dados.trofeu_id === 0) {
+                dados.trofeu_id = null;
+            } else {
+                // Verificar se o trofeu existe na tabela trofeus
+                // Nota: A foreign key está referenciando time_conquistas incorretamente
+                // Mas vamos validar em trofeus que é a tabela correta
+                const [trofeuExiste] = await conexao.execute(
+                    'SELECT id FROM trofeus WHERE id = ?',
+                    [dados.trofeu_id]
+                );
+                if (trofeuExiste.length === 0) {
+                    console.warn(`Trofeu ID ${dados.trofeu_id} não encontrado, definindo como NULL`);
+                    dados.trofeu_id = null;
+                }
+            }
+        }
+
+        // Validar e tratar medalha_id
+        if (dados.medalha_id !== undefined) {
+            if (dados.medalha_id === null || dados.medalha_id === '' || dados.medalha_id === 0) {
+                dados.medalha_id = null;
+            } else {
+                // Verificar se a medalha existe
+                const [medalhaExiste] = await conexao.execute(
+                    'SELECT id FROM medalhas WHERE id = ?',
+                    [dados.medalha_id]
+                );
+                if (medalhaExiste.length === 0) {
+                    console.warn(`Medalha ID ${dados.medalha_id} não encontrada, definindo como NULL`);
+                    dados.medalha_id = null;
+                }
+            }
+        }
+
         // Monta o SQL dinamicamente
         const campos = Object.keys(dados);
         const valores = Object.values(dados);
+
+        if (campos.length === 0) {
+            return res.status(400).json({ message: 'Nenhum campo para atualizar' });
+        }
 
         const setClause = campos.map(campo => `${campo} = ?`).join(', ');
 
@@ -4815,7 +4950,19 @@ async function atualizarInscricaoCampeonato(req, res) {
         res.json({ message: 'Inscrição atualizada com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar inscrição de campeonato:', error);
-        res.status(500).json({ message: 'Erro interno no servidor' });
+        
+        // Tratamento específico para erro de foreign key
+        if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.errno === 1452) {
+            return res.status(400).json({ 
+                message: 'Erro de referência: O trofeu_id ou medalha_id fornecido não existe no banco de dados. Verifique os IDs e tente novamente.',
+                error: error.message 
+            });
+        }
+        
+        res.status(500).json({ 
+            message: 'Erro interno no servidor',
+            error: error.message 
+        });
     } finally {
         if (conexao) await desconectar(conexao);
     }

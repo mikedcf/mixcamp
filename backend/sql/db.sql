@@ -406,6 +406,7 @@ CREATE TABLE IF NOT EXISTS membros_campeonato(
     usuario_id INT NOT NULL,
     time_id INT NOT NULL,
     posicao ENUM(
+        'capitao',
         'awp',
         'entry',
         'support',
