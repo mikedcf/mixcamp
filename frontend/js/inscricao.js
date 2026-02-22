@@ -180,6 +180,7 @@ async function btnPagamento(){
         const dados = await buscarDadosPerfil(logado.usuario.id);
         if(lider){
             const timeId = dados.perfilData.usuario.time_id
+            console.log('btnpagamento', timeId);
             
             dadosMembros = await topullMembersTime(timeId)
             if(dadosMembros.length >= 0){
@@ -444,6 +445,7 @@ function atualizarMenuTime(temTime, timeId = null) {
 
 
 async function topullMembersTime(timeId) {
+    console.log(timeId);
     try {
 
         
@@ -689,6 +691,7 @@ async function verificarStatusAprovado() {
         
                         // Atualizar quantidade de times inscritos
                         showNotification('success', 'Inscrição confirmada com sucesso!');
+                        console.log('verificarStatusAprovado', timeId);
                         await salvarMembroHistorico(timeId);
         
                         return true;
