@@ -53,8 +53,8 @@ async function verificar_auth() {
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
         // Atualiza a UI para o usuário logado
-        document.getElementById("userPerfil").style.display = "flex";
-        document.getElementById("userAuth").style.display = "none";
+        document.getElementById('userAuth').classList.add('hidden');
+        document.getElementById('userPerfil').classList.remove('hidden');
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.usuario.avatar_url;
         menuTimeLink.href = `team.html?id=${perfil_data.usuario.time_id}`;
@@ -74,7 +74,8 @@ async function verificar_auth() {
         
     }
     else{
-        document.getElementById("userAuth").style.display = "flex";
+        
+        document.getElementById('userAuth').classList.remove('hidden');
     }
 }
 
@@ -211,6 +212,7 @@ async function DadosPlayersLista(){
 // ------ TRANSFERÊNCIA DE DADOS
 async function TransferenciaDeDados(){
     const dadosTimes = await DadosTimeLista();
+    
     const todosOsTimes = []; // Array para armazenar todos os times
     
     // Verificar se há dados válidos
@@ -220,7 +222,6 @@ async function TransferenciaDeDados(){
 
     for(let i = 0; i < dadosTimes.dados.length; i++){
         const time = dadosTimes.dados[i];
-        
         // Calcular quantidade de membros para este time
         const quantidadesMembros = dadosTimes.dadosMembros 
             ? dadosTimes.dadosMembros.filter(m => m.time_id === time.id).length 
@@ -246,10 +247,12 @@ async function TransferenciaDeDados(){
             tag: time.tag,
             logo: time.avatar_time_url,
             membros: quantidadesMembros,
-            posicao: time.posicao,
+            posicao: time.posices,
             lider: nickLider,
             lider_id: lider_id
         };
+
+        
         
         // Adicionar ao array de times
         todosOsTimes.push(dadosDoTime);
@@ -343,11 +346,13 @@ async function loadData() {
             id: player.id,
             username: player.username,
             avatar: player.avatar,
-            posicao: player.posicao,
+            posicao: player.posicoes,
             time: player.time,
             status: player.status
         })
     }
+
+    
 
 
 
@@ -455,6 +460,7 @@ async function renderResults() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const pageData = filteredData.slice(startIndex, endIndex);
+    
 
     if (currentView === 'cards') {
         await renderCards(pageData);
@@ -474,6 +480,7 @@ async function renderCards(data) {
     container.innerHTML = '';
 
     for (const item of data) {
+        
         const card = await createCard(item);
         container.appendChild(card);
     }
@@ -501,6 +508,7 @@ function renderBlocks(data) {
 }
 
 function createBlockItem(item) {
+    
     const block = document.createElement('div');
     block.className = 'result-block';
     block.onclick = () => handleItemClick(item);
@@ -1723,6 +1731,7 @@ async function buscarDadosCompletosSaidas(){
 
 // Versão híbrida que tenta buscar do banco, mas funciona síncrona
 function getPositionBadges(posicoes) {
+    
     if (!posicoes || (Array.isArray(posicoes) && posicoes.length === 0)) {
         return '<div class="position-badge-container"></div>';
     }
@@ -1762,6 +1771,7 @@ function getPositionBadges(posicoes) {
         // 4+ posições: mostrar as 2 principais + indicador
         const posicoesPrincipais = posicoesArray.slice(0, 2);
         badgesHTML = posicoesPrincipais.map((posicao, index) => {
+            
             const imageUrl = getPositionImageSync(posicao);
             return `<img src="${imageUrl}" alt="${posicao}" class="position-badge position-badge-stack">`;
         }).join('');
@@ -2018,6 +2028,7 @@ function mostrarResultados(dados) {
         `;
         
         players.forEach(player => {
+            
             html += `
                 <div class="search-item" onclick="irParaPlayer(${player.id})">
                     <img src="${player.avatar_url || '../img/cs2.png'}" alt="${player.username}" class="search-avatar">

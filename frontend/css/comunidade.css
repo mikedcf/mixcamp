@@ -184,11 +184,49 @@ body::before {
    ================================= */
 
 .transfers-section {
+    width: 100%;
     padding: clamp(100px, 14vh, 130px) 0 60px 0;
     background: rgba(255, 255, 255, 0.02);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.transfers-section .section-title-wrap {
+    width: 100%;
+    margin-bottom: 50px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+}
+
+.transfers-section .section-title-wrap .section-title {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-block;
+    text-align: center;
+    margin: 0;
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: clamp(2.75rem, 6.5vw, 5rem);
+    font-weight: 700;
+}
+
+/* Evita quebra do título em telas pequenas (opcional) */
+@media (max-width: 480px) {
+    .transfers-section .section-title-wrap .section-title {
+        white-space: normal;
+        padding: 0 10px;
+        font-size: clamp(2rem, 8vw, 3rem);
+    }
 }
 
 .transfers-section::before {
@@ -207,14 +245,28 @@ body::before {
 .transfers-section .container {
     position: relative;
     z-index: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-sizing: border-box;
 }
 
 .section-title {
+    
     font-family: "Oswald", sans-serif;
     text-align: center;
-    font-size: 3.5rem;
+    font-size: clamp(3rem, 8vw, 6rem);
     margin-bottom: 50px;
     font-weight: 700;
+    width: 100%;
+    max-width: 100%;
+    display: block;
     background: linear-gradient(135deg, #00d4ff 0%, #ff6b35 50%, #00d4ff 100%);
     background-size: 200% 200%;
     -webkit-background-clip: text;
@@ -238,11 +290,12 @@ body::before {
 .transfers-subsection,
 .departures-subsection {
     margin-bottom: 40px;
+    width: 100%;
 }
 
 .subsection-title {
     font-family: "Oswald", sans-serif;
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: 600;
     color: #00d4ff;
     margin-bottom: 25px;
@@ -1950,6 +2003,7 @@ body::before {
 /* Melhorar espaçamento do container */
 .container {
     max-width: 1400px;
+    margin: 0 auto;
     padding: 0 clamp(15px, 3vw, 40px);
 }
 
@@ -1973,9 +2027,11 @@ body {
     }
 
     .section-title {
-        font-size: clamp(1.8rem, 8vw, 2.5rem);
+        font-size: clamp(2.5rem, 9vw, 3.8rem);
         margin-bottom: 30px;
         padding: 0 15px;
+        text-align: center;
+        width: 100%;
     }
 
     .subsection-title {
@@ -2218,8 +2274,10 @@ body {
     }
 
     .section-title {
-        font-size: clamp(2.2rem, 6vw, 3rem);
+        font-size: clamp(3rem, 7vw, 4.5rem);
         margin-bottom: 40px;
+        text-align: center;
+        width: 100%;
     }
 
     .subsection-title {
@@ -2445,7 +2503,7 @@ body {
 @media (max-width: 360px) {
     .section-title,
     .main-section-title {
-        font-size: 1.5rem;
+        font-size: 2.25rem;
     }
 
     .sidebar {
