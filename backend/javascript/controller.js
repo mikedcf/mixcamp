@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const FormData = require('form-data');
 const crypto = require('crypto');
 const axios = require("axios");
-const {Resend} = require("resend")
+const { Resend } = require("resend")
 // const fetch = require('node-fetch');
 const { conectar, desconectar } = require('./db');
 const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
@@ -17,6 +17,34 @@ const uploadPreset = process.env.APIKEYUPLOAD;
 const apiKey = process.env.APIKEYFACEIT
 const steamApiKey = process.env.APIKEYSTEAM;
 const resend = new Resend(process.env.RESEND_KEY);
+
+
+async function enviar() {
+    try {
+        const response = await resend.emails.send({
+            from: process.env.FROM_TEXT_EMAIL,
+            to: ["mixcamp78@gmail.com"],
+            subject: "teste",
+            html: `<h1>Seu código</h1>`,
+        });
+
+        if (response.error) {
+            console.error("RESEND ERROR:", response.error);
+            return false;
+        }
+
+        console.log("RESEND OK:", response.data);
+        return true;
+    } catch (erro) {
+        console.error("ERRO AO ENVIAR (catch):", erro);
+        return false;
+    }
+}
+
+(async () => {
+    const ok = await enviar();
+    console.log("teste de email:", ok);
+})();
 
 
 async function setupDatabase() {
@@ -51,7 +79,7 @@ async function setupDatabase() {
         cores_perfil VARCHAR(50) DEFAULT '#ffffff80'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
-    
+
     // Garantir que a coluna posicoes existe (para tabelas criadas antes desta atualização)
     try {
         // Verificar se a coluna existe
@@ -62,7 +90,7 @@ async function setupDatabase() {
             AND TABLE_NAME = 'usuarios' 
             AND COLUMN_NAME = 'posicoes'
         `);
-        
+
         if (columns.length === 0) {
             // Coluna não existe, adicionar
             await conexao.execute(`
@@ -75,7 +103,7 @@ async function setupDatabase() {
             await conexao.execute(`
                 ALTER TABLE usuarios 
                 MODIFY COLUMN posicoes VARCHAR(255) DEFAULT NULL;
-            `).catch(() => {});
+            `).catch(() => { });
         }
     } catch (error) {
         // Ignora erros (coluna pode já existir com estrutura diferente)
@@ -654,7 +682,7 @@ async function setupDatabase() {
 
     await conexao.execute(`
         CREATE INDEX idx_email ON email_verificacao(email);
-    `).catch(()=>{})
+    `).catch(() => { })
 
     /*
     =====================================================
@@ -823,7 +851,7 @@ async function setupDatabase() {
     ]
 
     for (const fk of foreignKeys) {
-        await conexao.execute(fk).catch(()=>{})
+        await conexao.execute(fk).catch(() => { })
     }
 
     await conexao.execute(`SET FOREIGN_KEY_CHECKS = 1;`)
@@ -836,34 +864,34 @@ async function setupDatabase() {
 // ===============================================================================================
 // ==================================== [API MERCADOPAGO] ================================================
 // --- POST
-async function CreatePreference(req, res){
+async function CreatePreference(req, res) {
     const { title, quantity, unit_price, cardId, timeId } = req.body;
-    
+
     // Validar e garantir que o título não esteja vazio
     const itemTitle = title && title.trim() ? title.trim() : 'Inscrição em Campeonato';
     const itemQuantity = parseInt(quantity) || 1;
     const itemPrice = parseFloat(unit_price) || 0;
-    
+
     if (!itemTitle || itemPrice <= 0) {
         return res.status(400).json({
             error: "Título e preço são obrigatórios"
         });
     }
-    
+
     // Validar cardId e timeId
     if (!cardId || !timeId) {
         return res.status(400).json({
             error: "cardId e timeId são obrigatórios"
         });
     }
-    
+
     // Criar external_reference com cardId e timeId para rastrear o pagamento
     const externalReference = `CAMP_${cardId}_TIME_${timeId}_${Date.now()}`;
-    
+
     // URL base - usar ngrok URL se disponível, senão usar localhost (notification_url será opcional)
     const baseUrl = process.env.BASE_URL || process.env.NGROK_URL || 'http://127.0.0.1:3000';
     const isPublicUrl = baseUrl.startsWith('https://') || baseUrl.includes('ngrok');
-    
+
     // Construir body da preferência
     const preferenceBody = {
         items: [
@@ -881,32 +909,32 @@ async function CreatePreference(req, res){
             pending: `${baseUrl}/api/v1/mercadopago/pending`
         }
     };
-    
+
     // Só adicionar notification_url se for uma URL pública válida
     if (isPublicUrl) {
         preferenceBody.notification_url = `${baseUrl}${process.env.ROUTE_MERCADOPAGO_WEBHOOK}`;
     }
-    
+
     const preference = new Preference(client);
 
     preference.create({
         body: preferenceBody
     })
-    .then(data => {
-        res.status(200).json({
-            preference_id: data.id,
-            preference_url: data.init_point,
-            external_reference: externalReference
+        .then(data => {
+            res.status(200).json({
+                preference_id: data.id,
+                preference_url: data.init_point,
+                external_reference: externalReference
+            });
+        })
+        .catch((error) => {
+            console.error('❌ Erro ao criar preferência:', error);
+            console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
+            res.status(500).json({
+                error: "Erro ao criar preferência",
+                details: error.message || 'Erro desconhecido'
+            });
         });
-    })
-    .catch((error) => {
-        console.error('❌ Erro ao criar preferência:', error);
-        console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
-        res.status(500).json({
-            error: "Erro ao criar preferência",
-            details: error.message || 'Erro desconhecido'
-        });
-    });
 
 }
 
@@ -915,22 +943,22 @@ async function webhookMercadoPago(req, res) {
     try {
         console.log('📥 [WEBHOOK] Recebida notificação do Mercado Pago');
         console.log('📥 [WEBHOOK] Body recebido:', JSON.stringify(req.body, null, 2));
-        
+
         // Verificar se req.body existe
         if (!req.body) {
             console.log('⚠️ [WEBHOOK] Body vazio, retornando OK');
             return res.status(200).send('OK');
         }
-        
+
 
         const type = req.body.topic || req.body.type || req.body.action?.split('.')[0];
         const paymentId = req.body.resource || req.body.data?.id;
-        
+
         console.log('📥 [WEBHOOK] Tipo extraído:', type);
         console.log('📥 [WEBHOOK] Payment ID extraído:', paymentId);
 
         res.status(200).send('OK');
-        
+
         // Processar a notificação de forma assíncrona (após enviar resposta)
         if (type === 'payment' && paymentId) {
             console.log('✅ [WEBHOOK] Processando pagamento:', paymentId);
@@ -959,19 +987,19 @@ async function processarPagamento(paymentId) {
     try {
         const payment = new Payment(client);
         const paymentData = await payment.get({ id: paymentId });
-        
+
         // Extrair cardId e timeId do external_reference
         const externalRef = paymentData.external_reference || '';
         const match = externalRef.match(/CAMP_(\d+)_TIME_(\d+)_/);
-        
+
         if (!match) {
             console.error('❌ External reference inválido:', externalRef);
             return { success: false, error: 'External reference inválido' };
         }
-        
+
         const cardId = match[1];
         const timeId = match[2];
-        
+
         // Verificar se o pagamento foi aprovado
         if (paymentData.status === 'approved') {
             // Registrar a inscrição do time no campeonato
@@ -982,14 +1010,14 @@ async function processarPagamento(paymentId) {
         } else if (paymentData.status === 'pending') {
             return { success: false, status: 'pending', cardId, timeId };
         }
-        
+
         return { success: false, status: paymentData.status };
     } catch (error) {
         // Tratar erro específico de pagamento não encontrado
         if (error.status === 404 || error.error === 'not_found') {
             return { success: false, error: 'Payment not found', isTest: true };
         }
-        
+
         console.error('❌ Erro ao processar pagamento:', error);
         return { success: false, error: error.message || 'Erro desconhecido' };
     }
@@ -1000,56 +1028,56 @@ async function registrarInscricaoAposPagamento(cardId, timeId, paymentId) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Verificar se o time já está inscrito neste campeonato
         const [existe] = await conexao.execute(
             'SELECT id FROM inscricoes_times WHERE inscricao_id = ? AND time_id = ?',
             [cardId, timeId]
         );
-        
+
         if (existe.length > 0) {
             return;
         }
-        
+
         // Buscar dados do pagamento para obter valor e status
         const payment = new Payment(client);
         const paymentData = await payment.get({ id: paymentId });
-        
+
         // Verificar se o campeonato existe e se há vagas disponíveis
         const [campeonato] = await conexao.execute(
             'SELECT qnt_times, preco_inscricao FROM inscricoes_campeonato WHERE id = ?',
             [cardId]
         );
-        
+
         if (campeonato.length === 0) {
             console.error('Campeonato não encontrado:', cardId);
             return;
         }
-        
+
         // Contar quantos times já estão inscritos
         const [inscritos] = await conexao.execute(
             'SELECT COUNT(*) as total FROM inscricoes_times WHERE inscricao_id = ?',
             [cardId]
         );
-        
+
         const totalInscritos = inscritos[0].total;
         const qntTimesMax = parseInt(campeonato[0].qnt_times);
-        
+
         if (totalInscritos >= qntTimesMax) {
             console.error('Campeonato já atingiu o número máximo de times');
             return;
         }
-        
+
         // Inserir a inscrição com dados do pagamento
         await conexao.execute(
             `INSERT INTO inscricoes_times 
              (inscricao_id, time_id, payment_id, status_pagamento, valor_pago, data_pagamento) 
              VALUES (?, ?, ?, ?, ?, NOW())`,
             [
-                cardId, 
-                timeId, 
-                paymentId, 
-                paymentData.status, 
+                cardId,
+                timeId,
+                paymentId,
+                paymentData.status,
                 paymentData.transaction_amount || campeonato[0].preco_inscricao
             ]
         );
@@ -1067,19 +1095,19 @@ async function registrarInscricaoAposPagamento(cardId, timeId, paymentId) {
 async function verificarStatusPagamento(req, res) {
     try {
         const { preference_id, payment_id } = req.query;
-        
+
         if (payment_id) {
             // Se temos o payment_id, verificar diretamente
             const payment = new Payment(client);
             const paymentData = await payment.get({ id: payment_id });
-            
+
             return res.status(200).json({
                 status: paymentData.status,
                 payment_id: paymentData.id,
                 external_reference: paymentData.external_reference
             });
         }
-        
+
         if (preference_id) {
             // Buscar pagamentos relacionados à preferência
             const payment = new Payment(client);
@@ -1089,7 +1117,7 @@ async function verificarStatusPagamento(req, res) {
                 preference_id: preference_id
             });
         }
-        
+
         return res.status(400).json({ error: 'payment_id ou preference_id é obrigatório' });
     } catch (error) {
         console.error('Erro ao verificar status do pagamento:', error);
@@ -1100,10 +1128,10 @@ async function verificarStatusPagamento(req, res) {
 // --- Rotas de retorno (success, failure, pending)
 async function retornoPagamentoSuccess(req, res) {
     const { preference_id, payment_id, collection_id, collection_status } = req.query;
-    
+
     // O Mercado Pago pode enviar collection_id como payment_id
     const finalPaymentId = payment_id || collection_id || '';
-    
+
     // Tentar extrair cardId do external_reference se temos payment_id
     let cardId = '';
     if (finalPaymentId) {
@@ -1119,16 +1147,16 @@ async function retornoPagamentoSuccess(req, res) {
             console.error('Erro ao buscar payment:', error);
         }
     }
-    
+
     const redirectUrl = `http://127.0.0.1:5501/frontend/html/inscricao.html${cardId ? `?id=${cardId}&` : '?'}payment_status=success&payment_id=${finalPaymentId}&preference_id=${preference_id || ''}`;
     res.redirect(redirectUrl);
 }
 
 async function retornoPagamentoFailure(req, res) {
     const { preference_id, payment_id, collection_id } = req.query;
-    
+
     const finalPaymentId = payment_id || collection_id || '';
-    
+
     // Tentar extrair cardId do external_reference
     let cardId = '';
     if (finalPaymentId) {
@@ -1144,16 +1172,16 @@ async function retornoPagamentoFailure(req, res) {
             console.error('Erro ao buscar payment:', error);
         }
     }
-    
+
     const redirectUrl = `http://127.0.0.1:5501/frontend/html/inscricao.html${cardId ? `?id=${cardId}&` : '?'}payment_status=failure&payment_id=${finalPaymentId}&preference_id=${preference_id || ''}`;
     res.redirect(redirectUrl);
 }
 
 async function retornoPagamentoPending(req, res) {
     const { preference_id, payment_id, collection_id } = req.query;
-    
+
     const finalPaymentId = payment_id || collection_id || '';
-    
+
     // Tentar extrair cardId do external_reference
     let cardId = '';
     if (finalPaymentId) {
@@ -1169,7 +1197,7 @@ async function retornoPagamentoPending(req, res) {
             console.error('Erro ao buscar payment:', error);
         }
     }
-    
+
     const redirectUrl = `http://127.0.0.1:5501/frontend/html/inscricao.html${cardId ? `?id=${cardId}&` : '?'}payment_status=pending&payment_id=${finalPaymentId}&preference_id=${preference_id || ''}`;
     res.redirect(redirectUrl);
 }
@@ -1179,7 +1207,7 @@ async function retornoPagamentoPending(req, res) {
 
 
 
-async function buscarStatusplayer(req,res){
+async function buscarStatusplayer(req, res) {
     const faceitid = req.body.faceitid;
 
     const url = `https://open.faceit.com/data/v4/players/${faceitid}/stats/cs2`;
@@ -1219,11 +1247,11 @@ async function buscarDadosFaceitPlayer(req, res) {
     }
 
     const link = req.body.link;
-    
-    
+
+
     try {
-        if(link == '' || link == null || link == undefined){
-            return res.status(400).json({nivel: null});
+        if (link == '' || link == null || link == undefined) {
+            return res.status(400).json({ nivel: null });
         }
         const nickname = link.split('/')[5];
 
@@ -1251,22 +1279,22 @@ async function buscarDadosFaceitPlayer(req, res) {
 
 
         return res.json({ nivel, data: data });
-    
-    
+
+
     } catch (error) {
         console.error('Erro na rota /api/v1/faceit/player:', error);
         return res.status(500).json({ message: 'Erro interno ao consultar Faceit' });
     }
-    
+
 }
 
 // Buscar IDs de partidas de uma hub específica
 async function locationMatchesIds(req, res) {
-    const {queue_id} = req.body;
+    const { queue_id } = req.body;
 
     if (!apiKey || !queue_id) {
-        return res.status(400).json({ 
-            message: 'queue_id é obrigatório' 
+        return res.status(400).json({
+            message: 'queue_id é obrigatório'
         });
     }
 
@@ -1347,20 +1375,20 @@ async function buscarInfoMatchId(req, res) {
     const { match_id } = req.body;
 
     if (!match_id) {
-        return res.status(400).json({ 
-            message: 'match_id é obrigatório' 
+        return res.status(400).json({
+            message: 'match_id é obrigatório'
         });
     }
 
     if (!apiKey) {
-        return res.status(500).json({ 
-            message: 'API Key não configurada' 
+        return res.status(500).json({
+            message: 'API Key não configurada'
         });
     }
 
     try {
         const matchInfo = await infoMatchId(apiKey, match_id);
-        
+
         if (matchInfo) {
             return res.status(200).json(matchInfo);
         } else {
@@ -1380,20 +1408,20 @@ async function buscarInfoMatchId(req, res) {
 async function buscarInfoMatchIdStatus(req, res) {
     const { match_id } = req.body;
     if (!match_id) {
-        return res.status(400).json({ 
-            message: 'match_id é obrigatório' 
+        return res.status(400).json({
+            message: 'match_id é obrigatório'
         });
     }
 
     if (!apiKey) {
-        return res.status(500).json({ 
-            message: 'API Key não configurada' 
+        return res.status(500).json({
+            message: 'API Key não configurada'
         });
     }
 
     try {
         const matchInfo = await infoMatchIdStatus(apiKey, match_id);
-        
+
         if (matchInfo) {
             return res.status(200).json(matchInfo);
         } else {
@@ -1470,22 +1498,22 @@ async function infoMatchIdStats(apiKeyParam, match_id) {
 // Endpoint para buscar estatísticas de uma partida específica
 async function buscarInfoMatchIdStats(req, res) {
     const { match_id } = req.body;
-    
+
     if (!match_id) {
-        return res.status(400).json({ 
-            message: 'match_id é obrigatório' 
+        return res.status(400).json({
+            message: 'match_id é obrigatório'
         });
     }
 
     if (!apiKey) {
-        return res.status(500).json({ 
-            message: 'API Key não configurada' 
+        return res.status(500).json({
+            message: 'API Key não configurada'
         });
     }
 
     try {
         const matchStats = await infoMatchIdStats(apiKey, match_id);
-        
+
         if (matchStats) {
             return res.status(200).json(matchStats);
         } else {
@@ -1504,7 +1532,7 @@ async function buscarInfoMatchIdStats(req, res) {
 // ===============================================================================================
 // ==================================== [API STEAM] ================================================
 
-async function steamIdFromUrl(req,res) {
+async function steamIdFromUrl(req, res) {
     const url = req.body.url;
     // Caso seja /profiles/ (já contém o SteamID64)
     if (url.includes("/profiles/")) {
@@ -1527,7 +1555,7 @@ async function steamIdFromUrl(req,res) {
             );
             res.status(200).json({ steamid: response.data.response.steamid });
 
-            
+
 
         } catch (err) {
             console.error("Erro ao buscar SteamID:", err);
@@ -1539,14 +1567,14 @@ async function steamIdFromUrl(req,res) {
 }
 
 
-async function buscarTimeGame(req, res){
+async function buscarTimeGame(req, res) {
 
     // const STEAM_ID = "76561198208042323"
     // 76561198042949697
-    
+
     const STEAM_ID = req.body.STEAMID;
- 
-    try{
+
+    try {
         const response = await axios.get(
             "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/",
             {
@@ -1558,8 +1586,8 @@ async function buscarTimeGame(req, res){
             }
         );
         let dados = response.data.response.games;
-        for(const game of dados){
-            if (game.appid === 730){
+        for (const game of dados) {
+            if (game.appid === 730) {
                 let minutos = game.playtime_forever / 60;
                 const horasFormatadas = new Intl.NumberFormat('pt-BR', {
                     maximumFractionDigits: 0
@@ -1578,29 +1606,29 @@ async function buscarTimeGame(req, res){
             }
         }
     }
-    catch(error){
+    catch (error) {
         console.error("Erro ao buscar time game:", error);
         res.status(500).json({ message: 'Erro ao buscar horas do game' });
     }
 }
 
-async function statuscs(req,res){
+async function statuscs(req, res) {
     // const STEAM_ID = req.body.STEAMID;
     const STEAM_ID = "76561198208042323";
     const appid = 730;
     console.log(STEAM_ID);
     console.log('1')
-    try{
+    try {
         const response = await axios.get(
             `https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=${steamApiKey}&steamid=${STEAM_ID}&appid=${appid}`
 
         );
         // const data = response;
         console.log('2');
-       
+
         res.status(200).json(response.data);
     }
-    catch(error){
+    catch (error) {
         console.error("Erro ao buscar status cs:", error);
         res.status(500).json({ message: 'Erro ao buscar status cs' });
     }
@@ -1621,7 +1649,7 @@ async function uploadImagemCloudinary(req, res) {
     // Validação do arquivo
     const isImage = file.mimetype.startsWith('image/');
     const isVideo = file.mimetype.startsWith('video/');
-    
+
     if (!isImage && !isVideo) {
         return res.status(400).json({ message: 'Por favor, selecione apenas arquivos de imagem ou vídeo.' });
     }
@@ -1651,10 +1679,10 @@ async function uploadImagemCloudinary(req, res) {
 
     try {
         // Usar endpoint de vídeo ou imagem dependendo do tipo
-        const uploadEndpoint = isVideo 
+        const uploadEndpoint = isVideo
             ? `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`
             : `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-        
+
         const response = await fetch(uploadEndpoint, {
             method: 'POST',
             body: formData,
@@ -1701,7 +1729,7 @@ async function buscarImgPosition(req, res) {
     }
 }
 
-async function buscarImgMap(req, res){
+async function buscarImgMap(req, res) {
     let conexao;
     try {
         conexao = await conectar();
@@ -1751,7 +1779,7 @@ async function createImgPosition(req, res) {
     }
 }
 
-async function createImgMap(req, res){
+async function createImgMap(req, res) {
     const { mirage, train, vertigo, nuke, ancient, inferno, overpass, dust2, cache, anubis } = req.body;
     console.log(req.body);
 
@@ -1817,7 +1845,7 @@ async function updateImgPosition(req, res) {
     }
 }
 
-async function updateImgMap(req, res){
+async function updateImgMap(req, res) {
     const { id, ...campos } = req.body;
     if (!id) {
         return res.status(400).json({ message: 'ID é obrigatório' });
@@ -1826,7 +1854,7 @@ async function updateImgMap(req, res){
     const valores = colunas.map(([_, valor]) => valor);
     const query = `UPDATE img_map SET ${setClause} WHERE id = ?`;
 
-    let conexao;        
+    let conexao;
     try {
         conexao = await conectar();
         await conexao.execute(query, [...valores, id]);
@@ -1843,7 +1871,7 @@ async function updateImgMap(req, res){
 // ===============================================================================================
 // ==================================== [API EMAIL] =============================================
 
-async function enviarEmail(email,code){
+async function enviarEmail(email, code) {
     try {
         const response = await resend.emails.send({
             from: process.env.FROM_TEXT_EMAIL,
@@ -1854,26 +1882,26 @@ async function enviarEmail(email,code){
             <p>Este código expira em 10 minutos.</p>
             `
         });
-    
+
         return true
     } catch (erro) {
         console.error("ERRO AO ENVIAR:", erro);
         return false
-        
+
     }
 }
 
 
-async function enviarCodigoEmail(req, res){
-    const {email} = req.body;
+async function enviarCodigoEmail(req, res) {
+    const { email } = req.body;
 
     let conexao;
 
-    try{
+    try {
         conexao = await conectar();
         let query = "SELECT * FROM usuarios WHERE email = ?";
         const [dados] = await conexao.execute(query, [email]);
-        if(dados.length == 0){
+        if (dados.length == 0) {
 
             const code = Math.floor(100000 + Math.random() * 900000);
 
@@ -1885,20 +1913,20 @@ async function enviarCodigoEmail(req, res){
             console.log('response:', response);
 
 
-            if(response){
+            if (response) {
                 console.log("EMAIL ENVIADO:", response);
                 res.status(200).json({ message: 'Código enviado com sucesso, verifique sua caixa de entrada' });
             }
-            else{
+            else {
                 res.status(500).json({ message: 'Erro ao enviar código de e-mail' });
             }
         }
-        else{
+        else {
             res.status(400).json({ message: 'Email já cadastrado' });
         }
-        
+
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao enviar código de e-mail:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
     }
@@ -1909,7 +1937,7 @@ async function enviarCodigoEmail(req, res){
 }
 
 
-async function verificarCodigoEmail(req,res){
+async function verificarCodigoEmail(req, res) {
     const { email, codigo } = req.body;
 
     // Validação dos parâmetros
@@ -1931,7 +1959,7 @@ async function verificarCodigoEmail(req,res){
         await conexao.execute(query, [email]);
         res.status(200).json({ message: 'Código de verificação registrado com sucesso' });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao registrar código de e-mail:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
     }
@@ -2255,17 +2283,17 @@ async function register(req, res) {
 
 async function updateConfig(req, res) {
     const userID = req.params.id;
-    const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid} = req.body;
-    
+    const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid } = req.body;
+
     // Valores válidos para posicoes (incluindo rifle e lurker)
     const valoresValidosPosicoes = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach', 'rifle', 'lurker'];
-    
+
     // Processar posicoes: aceita array ou string separada por vírgulas
     // Armazena como string separada por vírgulas no banco: "awp,entry,coach"
     let posicoesString = null;
     if (posicoes !== undefined && posicoes !== null) {
         let posicoesArray = [];
-        
+
         if (Array.isArray(posicoes)) {
             // Se for array, filtrar apenas valores válidos
             posicoesArray = posicoes
@@ -2278,13 +2306,13 @@ async function updateConfig(req, res) {
                 .map(p => p.trim())
                 .filter(p => p !== '' && valoresValidosPosicoes.includes(p));
         }
-        
+
         // Remover duplicatas e converter para string separada por vírgulas
         if (posicoesArray.length > 0) {
             posicoesString = [...new Set(posicoesArray)].join(',');
         }
     }
-    
+
     // Log para debug
     console.log('DEBUG posicoes:', {
         recebido: posicoes,
@@ -2302,19 +2330,19 @@ async function updateConfig(req, res) {
         // Se forem inválidos, não atualiza essas colunas (mantém os valores existentes no banco)
         let steamidValido = false;
         let faceitidValido = false;
-        
-        if (steamid !== null && 
-            steamid !== undefined && 
+
+        if (steamid !== null &&
+            steamid !== undefined &&
             steamid !== 'null' &&  // Verifica se não é a string "null"
-            typeof steamid === 'string' && 
+            typeof steamid === 'string' &&
             steamid.trim() !== '') {
             steamidValido = true;
         }
-        
-        if (faceitid !== null && 
-            faceitid !== undefined && 
+
+        if (faceitid !== null &&
+            faceitid !== undefined &&
             faceitid !== 'null' &&  // Verifica se não é a string "null"
-            typeof faceitid === 'string' && 
+            typeof faceitid === 'string' &&
             faceitid.trim() !== '') {
             faceitidValido = true;
         }
@@ -2322,7 +2350,7 @@ async function updateConfig(req, res) {
         // Monta a query dinamicamente - só atualiza os campos que têm valores válidos
         let camposUpdate = [];
         let valoresUpdate = [];
-        
+
         // Adicionar campos apenas se tiverem valores
         if (username !== undefined) {
             camposUpdate.push('username');
@@ -2358,13 +2386,13 @@ async function updateConfig(req, res) {
         } catch (error) {
             console.log('Erro ao verificar coluna posicoes:', error.message);
         }
-        
+
         // Atualiza posicoes apenas se foi fornecido no body E a coluna existe
         if (posicoes !== undefined && colunaPosicoesExiste) {
             // posicoesString já foi processado acima (string separada por vírgulas ou null)
             camposUpdate.push('posicoes');
             valoresUpdate.push(posicoesString); // Pode ser null se não houver posições válidas
-            
+
             // Log adicional
             console.log('DEBUG VALIDACAO FINAL posicoes:', {
                 valorOriginal: posicoes,
@@ -2372,40 +2400,40 @@ async function updateConfig(req, res) {
                 tipoValorFinal: typeof posicoesString
             });
         }
-        
+
         if (steamidValido) {
             camposUpdate.push('steamid');
             valoresUpdate.push(steamid.trim());
         }
-        
+
         if (faceitidValido) {
             camposUpdate.push('faceitid');
             valoresUpdate.push(faceitid.trim());
         }
-        
+
         // Só atualiza a tabela usuarios se houver campos para atualizar
         if (camposUpdate.length > 0) {
             // Adiciona o userID no final para o WHERE
             valoresUpdate.push(userID);
-            
+
             // Monta a query SQL dinamicamente
             const queryUpdate = `UPDATE usuarios SET ${camposUpdate.map(campo => `${campo}=?`).join(', ')} WHERE id=?`;
-            
+
             // Validação final antes de executar a query (especialmente para posicoes)
             if (camposUpdate.includes('posicoes')) {
                 const posicaoIndex = camposUpdate.indexOf('posicoes');
                 const valorPosicoesNoArray = valoresUpdate[posicaoIndex];
-                
+
                 // Garantir que o valor seja uma string válida (pode ser null ou string com vírgulas)
-                const valorValidado = valorPosicoesNoArray === null || valorPosicoesNoArray === undefined 
-                    ? null 
+                const valorValidado = valorPosicoesNoArray === null || valorPosicoesNoArray === undefined
+                    ? null
                     : String(valorPosicoesNoArray).trim();
-                
+
                 // Validar se a string contém apenas valores válidos separados por vírgulas
                 if (valorValidado !== null && valorValidado !== '') {
                     const valores = valorValidado.split(',').map(p => p.trim());
                     const valoresInvalidos = valores.filter(p => !valoresValidosPosicoes.includes(p));
-                    
+
                     if (valoresInvalidos.length > 0) {
                         console.error('ERRO: Valores inválidos detectados antes da query:', {
                             valor: valorPosicoesNoArray,
@@ -2421,7 +2449,7 @@ async function updateConfig(req, res) {
                 } else {
                     valoresUpdate[posicaoIndex] = null;
                 }
-                
+
                 console.log('DEBUG SQL posicoes ANTES DE EXECUTAR:', {
                     query: queryUpdate,
                     valorPosicoes: valoresUpdate[posicaoIndex],
@@ -2430,7 +2458,7 @@ async function updateConfig(req, res) {
                     arrayPosicoes: valoresUpdate[posicaoIndex] ? valoresUpdate[posicaoIndex].split(',') : []
                 });
             }
-            
+
             await conexao.execute(queryUpdate, valoresUpdate);
         }
 
@@ -2475,7 +2503,7 @@ async function updateConfig(req, res) {
             sqlMessage: error.sqlMessage,
             stack: error.stack
         });
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Erro ao salvar configurações',
             message: error.message,
             details: process.env.NODE_ENV === 'production' ? 'Erro interno do servidor' : error.message
@@ -4003,7 +4031,7 @@ async function criarMedalhas(req, res) {
     let conexao;
 
     try {
-        const { nome, descricao, imagem_url_campeao, imagem_url_segundo, iframe_url_campeao, iframe_url_segundo, edicao_campeonato} = req.body;
+        const { nome, descricao, imagem_url_campeao, imagem_url_segundo, iframe_url_campeao, iframe_url_segundo, edicao_campeonato } = req.body;
 
         if (!nome || !descricao || !imagem_url_campeao || !imagem_url_segundo || !edicao_campeonato) {
             return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
@@ -4011,7 +4039,7 @@ async function criarMedalhas(req, res) {
 
         conexao = await conectar();
         const query = 'INSERT INTO medalhas (nome, descricao, imagem_url_campeao, imagem_url_segundo, iframe_url_campeao, iframe_url_segundo, edicao_campeonato) VALUES (?,?,?,?,?,?,?)';
-        await conexao.execute(query, [nome, descricao, imagem_url_campeao, imagem_url_segundo, iframe_url_campeao, iframe_url_segundo,edicao_campeonato]);
+        await conexao.execute(query, [nome, descricao, imagem_url_campeao, imagem_url_segundo, iframe_url_campeao, iframe_url_segundo, edicao_campeonato]);
         res.status(201).json({ message: 'Medalhas adicionadas com sucesso!' })
     } catch (error) {
         console.error('Erro ao criar medalhas:', error);
@@ -4032,15 +4060,15 @@ async function addMedalhasuser(req, res) {
         }
 
         conexao = await conectar();
-        
+
         // Verifica se a medalha já foi atribuída ao usuário
         const checkQuery = 'SELECT * FROM usuario_medalhas WHERE usuario_id = ? AND medalha_id = ?';
         const [existing] = await conexao.execute(checkQuery, [usuario_id, medalha_id]);
-        
+
         if (existing.length > 0) {
             return res.status(409).json({ message: 'Este usuário já possui esta medalha.' });
         }
-        
+
         // Insere a medalha apenas se não existir
         // Se position_medalha não for fornecido, usa NULL
         const query = 'INSERT INTO usuario_medalhas (usuario_id, medalha_id, position_medalha) VALUES (?, ?, ?)';
@@ -4119,9 +4147,9 @@ async function atualizarMedalhas(req, res) {
 // ==================================== [API TROFEUS] ================================================
 
 // ----- TROFEU GET
-async function getTrofeus(req, res){
+async function getTrofeus(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const [trofeus] = await conexao.execute('SELECT * FROM trofeus');
         res.status(200).json({ trofeus });
@@ -4142,7 +4170,7 @@ async function criarTrofeus(req, res) {
         conexao = await conectar();
 
         const { nome, descricao, imagem_url, iframe_url, edicao_campeonato, categoria } = req.body;
-        
+
 
         if (!nome || !descricao || !imagem_url || !iframe_url || !edicao_campeonato || !categoria) {
             return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
@@ -4169,7 +4197,7 @@ async function getTrofeusTime(req, res) {
 
     try {
         conexao = await conectar();
-        
+
         const [trofeus] = await conexao.execute(
             `SELECT t.*, tc.time_id 
              FROM trofeus t
@@ -4177,7 +4205,7 @@ async function getTrofeusTime(req, res) {
              WHERE tc.time_id = ?`,
             [timeId]
         );
-        
+
         res.status(200).json(trofeus);
     } catch (error) {
         console.error('Erro ao buscar troféus do time:', error);
@@ -4187,10 +4215,10 @@ async function getTrofeusTime(req, res) {
     }
 }
 
-async function addTrofeuTime(req, res){
+async function addTrofeuTime(req, res) {
     let conexao;
 
-    try{
+    try {
         conexao = await conectar();
         const { time_id, trofeu_id } = req.body;
 
@@ -4215,18 +4243,18 @@ async function addTrofeuTime(req, res){
 }
 
 // ----- TROFEU DELETE
-async function deletarTrofeus(req, res){
+async function deletarTrofeus(req, res) {
     const { id } = req.params;
     let conexao;
-    try{
+    try {
         conexao = await conectar();
-        
+
         // Verificar se o troféu existe
         const [trofeu] = await conexao.execute('SELECT id FROM trofeus WHERE id = ?', [id]);
         if (trofeu.length === 0) {
             return res.status(404).json({ message: 'Troféu não encontrado' });
         }
-        
+
         await conexao.execute('DELETE FROM trofeus WHERE id = ?', [id]);
         res.status(200).json({ message: 'Trofeu deletado com sucesso!' });
     }
@@ -4239,23 +4267,23 @@ async function deletarTrofeus(req, res){
 }
 
 // ----- TROFEU UPDATE
-async function atualizarTrofeus(req, res){
+async function atualizarTrofeus(req, res) {
     const { id } = req.params;
     const { nome, descricao, imagem_url, iframe_url, edicao_campeonato, categoria } = req.body;
     let conexao;
-    try{
+    try {
         conexao = await conectar();
-        
+
         if (!nome || !descricao || !imagem_url || !iframe_url || !edicao_campeonato || !categoria) {
             return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
         }
-        
+
         // Verificar se o troféu existe
         const [trofeu] = await conexao.execute('SELECT id FROM trofeus WHERE id = ?', [id]);
         if (trofeu.length === 0) {
             return res.status(404).json({ message: 'Troféu não encontrado' });
         }
-        
+
         await conexao.execute('UPDATE trofeus SET nome = ?, descricao = ?, imagem_url = ?, iframe_url = ?, edicao_campeonato = ?, categoria = ? WHERE id = ?', [nome, descricao, imagem_url, iframe_url, edicao_campeonato, categoria, id]);
         res.status(200).json({ message: 'Trofeu atualizado com sucesso!' });
     }
@@ -4549,7 +4577,7 @@ async function getHistoricoMembros(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         const { campeonato_id, time_id } = req.query;
 
         let sql = `SELECT mc.*, u.username, u.avatar_url 
@@ -4586,11 +4614,11 @@ async function getHistoricoMembros(req, res) {
 }
 // ----- INSCRICAO POST
 async function criarInscricaoCampeonato(req, res) {
-    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio, link_hub, link_convite,link_whatsapp } = req.body;
+    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp } = req.body;
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Converter undefined para null nos campos opcionais (mysql2 não aceita undefined)
         let trofeuIdValue = trofeu_id !== undefined ? trofeu_id : null;
         let medalhaIdValue = medalha_id !== undefined ? medalha_id : null;
@@ -4671,18 +4699,18 @@ async function criarInscricaoCampeonato(req, res) {
     }
     catch (error) {
         console.error('Erro ao criar inscrição de campeonato:', error);
-        
+
         // Tratamento específico para erro de foreign key
         if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.errno === 1452) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 message: 'Erro de referência: O trofeu_id ou medalha_id fornecido não existe no banco de dados. Verifique os IDs e tente novamente.',
-                error: error.message 
+                error: error.message
             });
         }
-        
-        res.status(500).json({ 
+
+        res.status(500).json({
             message: 'Erro interno no servidor',
-            error: error.message 
+            error: error.message
         });
     } finally {
         if (conexao) await desconectar(conexao);
@@ -4746,48 +4774,48 @@ async function registrarHistoricoMembrosCampeonato(conexao, campeonatoId, timeId
 
 async function criarInscricaoTimes(req, res) {
     const { cardId, timeId } = req.body;
-    
+
     if (!cardId || !timeId) {
         return res.status(400).json({ message: 'cardId e timeId são obrigatórios' });
     }
-    
+
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Verificar se o time já está inscrito neste campeonato
         const [existe] = await conexao.execute(
             'SELECT id FROM inscricoes_times WHERE inscricao_id = ? AND time_id = ?',
             [cardId, timeId]
         );
-        
+
         if (existe.length > 0) {
             return res.status(400).json({ message: 'Este time já está inscrito neste campeonato' });
         }
-        
+
         // Verificar se o campeonato existe e se há vagas disponíveis
         const [campeonato] = await conexao.execute(
             'SELECT qnt_times FROM inscricoes_campeonato WHERE id = ?',
             [cardId]
         );
-        
+
         if (campeonato.length === 0) {
             return res.status(404).json({ message: 'Campeonato não encontrado' });
         }
-        
+
         // Contar quantos times já estão inscritos
         const [inscritos] = await conexao.execute(
             'SELECT COUNT(*) as total FROM inscricoes_times WHERE inscricao_id = ?',
             [cardId]
         );
-        
+
         const totalInscritos = inscritos[0].total;
         const qntTimesMax = parseInt(campeonato[0].qnt_times);
-        
+
         if (totalInscritos >= qntTimesMax) {
             return res.status(400).json({ message: 'Campeonato já atingiu o número máximo de times' });
         }
-        
+
         // Inserir a inscrição
         await conexao.execute(
             'INSERT INTO inscricoes_times (inscricao_id, time_id) VALUES (?, ?)',
@@ -4796,8 +4824,8 @@ async function criarInscricaoTimes(req, res) {
 
         // Registrar histórico de membros deste time para este campeonato
         await registrarHistoricoMembrosCampeonato(conexao, cardId, timeId);
-        
-        res.status(201).json({ 
+
+        res.status(201).json({
             message: 'Inscrição realizada com sucesso!',
             vagasRestantes: qntTimesMax - totalInscritos - 1
         });
@@ -4822,13 +4850,13 @@ async function criarHistoricoMembros(req, res) {
         // Validação dos valores permitidos para posicao
         const posicoesValidas = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach', 'rifle', 'lurker'];
         if (!posicoesValidas.includes(posicao)) {
-            return res.status(400).json({ 
-                message: `Posição inválida: ${posicao}. Valores permitidos: ${posicoesValidas.join(', ')}` 
+            return res.status(400).json({
+                message: `Posição inválida: ${posicao}. Valores permitidos: ${posicoesValidas.join(', ')}`
             });
         }
 
         conexao = await conectar();
-        
+
         // Tentar inserir
         await conexao.execute(
             'INSERT INTO membros_campeonato (campeonato_id, usuario_id, time_id, posicao) VALUES (?, ?, ?, ?)',
@@ -4837,7 +4865,7 @@ async function criarHistoricoMembros(req, res) {
         res.status(201).json({ message: 'Histórico de membros criado com sucesso!' });
     } catch (error) {
         console.error('Erro ao criar histórico de membros:', error);
-        
+
         // Verificar se é erro de ENUM/truncamento
         if (error.code === 'WARN_DATA_TRUNCATED' || error.errno === 1265) {
             // Tentar executar a migração automaticamente
@@ -4852,13 +4880,13 @@ async function criarHistoricoMembros(req, res) {
                 return;
             } catch (migError) {
                 console.error('Erro ao executar migração:', migError);
-                return res.status(500).json({ 
+                return res.status(500).json({
                     message: 'Erro: A coluna posicao não aceita o valor "' + posicao + '". Execute a migração migrate_add_capitao_membros_campeonato.sql no banco de dados.',
-                    error: error.message 
+                    error: error.message
                 });
             }
         }
-        
+
         res.status(500).json({ message: 'Erro interno no servidor', error: error.message });
     } finally {
         if (conexao) await desconectar(conexao);
@@ -4950,18 +4978,18 @@ async function atualizarInscricaoCampeonato(req, res) {
         res.json({ message: 'Inscrição atualizada com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar inscrição de campeonato:', error);
-        
+
         // Tratamento específico para erro de foreign key
         if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.errno === 1452) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 message: 'Erro de referência: O trofeu_id ou medalha_id fornecido não existe no banco de dados. Verifique os IDs e tente novamente.',
-                error: error.message 
+                error: error.message
             });
         }
-        
-        res.status(500).json({ 
+
+        res.status(500).json({
             message: 'Erro interno no servidor',
-            error: error.message 
+            error: error.message
         });
     } finally {
         if (conexao) await desconectar(conexao);
@@ -4970,56 +4998,56 @@ async function atualizarInscricaoCampeonato(req, res) {
 
 async function atualizarInscricaoTimes(req, res) {
     const { id, inscricao_id, time_id, status_pagamento } = req.body;
-    
+
     if (!id) {
         return res.status(400).json({ message: 'ID da inscrição é obrigatório' });
     }
-    
+
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Verificar se a inscrição existe
         const [existe] = await conexao.execute(
             'SELECT id FROM inscricoes_times WHERE id = ?',
             [id]
         );
-        
+
         if (existe.length === 0) {
             return res.status(404).json({ message: 'Inscrição não encontrada' });
         }
-        
+
         // Construir query dinamicamente baseado nos campos fornecidos
         const updates = [];
         const values = [];
-        
+
         if (inscricao_id !== undefined) {
             updates.push('inscricao_id = ?');
             values.push(inscricao_id);
         }
-        
+
         if (time_id !== undefined) {
             updates.push('time_id = ?');
             values.push(time_id);
         }
-        
+
         if (status_pagamento !== undefined) {
             updates.push('status_pagamento = ?');
             values.push(status_pagamento);
         }
-        
+
         if (updates.length === 0) {
             return res.status(400).json({ message: 'Nenhum campo para atualizar' });
         }
-        
+
         values.push(id);
-        
+
         await conexao.execute(
             `UPDATE inscricoes_times SET ${updates.join(', ')} WHERE id = ?`,
             values
         );
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Inscrição atualizada com sucesso!'
         });
     } catch (error) {
@@ -5067,38 +5095,38 @@ async function deletarInscricaoCampeonato(req, res) {
 
 async function deletarInscricaoTimes(req, res) {
     const { id } = req.body;
-    
+
     if (!id) {
         return res.status(400).json({ message: 'ID da inscrição é obrigatório' });
     }
-    
+
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Verificar se a inscrição existe
         const [existe] = await conexao.execute(
             'SELECT id, payment_id, status_pagamento FROM inscricoes_times WHERE id = ?',
             [id]
         );
-        
+
         if (existe.length === 0) {
             return res.status(404).json({ message: 'Inscrição não encontrada' });
         }
-        
+
         // Aviso se houver pagamento associado
         if (existe[0].payment_id && existe[0].status_pagamento === 'approved') {
             console.warn(`⚠️ Tentativa de deletar inscrição com pagamento aprovado. ID: ${id}, Payment: ${existe[0].payment_id}`);
             // Você pode escolher bloquear a exclusão ou apenas avisar
             // return res.status(400).json({ message: 'Não é possível deletar inscrição com pagamento aprovado' });
         }
-        
+
         await conexao.execute(
             'DELETE FROM inscricoes_times WHERE id = ?',
             [id]
         );
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: 'Inscrição deletada com sucesso!'
         });
     } catch (error) {
@@ -5393,7 +5421,7 @@ async function getChaveamento(req, res) {
              ORDER BY p.round_num, p.bracket_type, p.match_id`,
             [chaveamento.id]
         );
-        
+
         // IMPORTANTE: Corrigir round_num de todas as partidas baseado no match_id
         // Isso corrige partidas que foram criadas com round_num incorreto
         for (const partida of partidas) {
@@ -5401,13 +5429,13 @@ async function getChaveamento(req, res) {
                 const matchIdParts = partida.match_id.split('_');
                 if (matchIdParts.length >= 2) {
                     let roundNumCorreto = null;
-                    
+
                     if (matchIdParts[0] === 'upper' || matchIdParts[0] === 'lower') {
                         roundNumCorreto = parseInt(matchIdParts[1]);
                     } else if (partida.match_id.startsWith('grand_final')) {
                         roundNumCorreto = 1; // Grand Final sempre é round 1
                     }
-                    
+
                     if (roundNumCorreto && partida.round_num !== roundNumCorreto) {
                         await conexao.execute(
                             'UPDATE partidas SET round_num = ? WHERE id = ?',
@@ -5419,7 +5447,7 @@ async function getChaveamento(req, res) {
                 }
             }
         }
-        
+
         // Buscar novamente para ter os dados atualizados
         [partidas] = await conexao.execute(
             `SELECT p.*, 
@@ -5478,7 +5506,7 @@ async function getChaveamento(req, res) {
 async function salvarResultadoPartida(req, res) {
     const maxRetries = 3;
     let attempt = 0;
-    
+
     while (attempt < maxRetries) {
         let conexao;
         try {
@@ -5494,7 +5522,7 @@ async function salvarResultadoPartida(req, res) {
 
             // Configurar timeout para evitar deadlocks (5 segundos)
             await conexao.execute('SET SESSION innodb_lock_wait_timeout = 5');
-            
+
             // Iniciar transação
             await conexao.beginTransaction();
 
@@ -5505,7 +5533,7 @@ async function salvarResultadoPartida(req, res) {
             );
 
             let partida;
-            
+
             // Se a partida não existir, criar automaticamente
             if (partidas.length === 0) {
                 // Extrair informações do match_id (ex: "upper_1_1", "lower_2_3", "grand_final_1")
@@ -5513,7 +5541,7 @@ async function salvarResultadoPartida(req, res) {
                 let bracket_type = 'upper';
                 let round_num = 1;
                 let formato_partida = 'B01'; // Padrão BO1
-                
+
                 if (match_id.startsWith('lower_')) {
                     bracket_type = 'lower';
                     round_num = parseInt(matchParts[1]) || 1;
@@ -5525,24 +5553,24 @@ async function salvarResultadoPartida(req, res) {
                     bracket_type = 'upper';
                     round_num = parseInt(matchParts[1]) || 1;
                 }
-                
+
                 // Determinar formato baseado no round (se for final, geralmente é BO3)
                 // Buscar informações do chaveamento para determinar formato
                 const [chaveamentos] = await conexao.execute(
                     'SELECT * FROM chaveamentos WHERE id = ?',
                     [chaveamento_id]
                 );
-                
+
                 if (chaveamentos.length > 0) {
                     const chaveamento = chaveamentos[0];
                     const formatoChave = chaveamento.formato_chave;
-                    
+
                     // Se for final e formato não for single_b01, usar BO3
                     if (bracket_type === 'grand_final' || (bracket_type === 'upper' && round_num > 1 && formatoChave !== 'single_b01')) {
                         formato_partida = 'B03';
                     }
                 }
-                
+
                 // Criar a partida usando INSERT IGNORE para evitar erro se já existir
                 try {
                     const [result] = await conexao.execute(
@@ -5550,7 +5578,7 @@ async function salvarResultadoPartida(req, res) {
                          VALUES (?, ?, ?, ?, ?, 'agendada')`,
                         [chaveamento_id, match_id, round_num, bracket_type, formato_partida]
                     );
-                    
+
                     // Se foi inserido, buscar pelo insertId
                     if (result.insertId) {
                         [partidas] = await conexao.execute(
@@ -5575,7 +5603,7 @@ async function salvarResultadoPartida(req, res) {
                         throw insertError;
                     }
                 }
-                
+
                 if (partidas.length === 0) {
                     await conexao.rollback();
                     return res.status(500).json({ error: 'Erro ao criar ou buscar partida' });
@@ -5587,13 +5615,13 @@ async function salvarResultadoPartida(req, res) {
             // Se a partida não tem times definidos ainda, precisamos obter do frontend ou criar
             // Por enquanto, vamos assumir que o frontend envia o time vencedor e precisamos descobrir o perdedor
             // Mas como não temos os dois times, vamos precisar ajustar a lógica
-            
+
             // Se a partida não tem time1_id ou time2_id, precisamos buscar do match_id ou do frontend
             // Por enquanto, vamos permitir salvar mesmo sem os dois times definidos
             // O frontend deve enviar ambos os IDs ou precisamos buscar de outra forma
-            
+
             let time_perdedor_id = null;
-            
+
             // Se a partida já tem os dois times definidos, validar
             if (partida.time1_id && partida.time2_id) {
                 if (time_vencedor_id !== partida.time1_id && time_vencedor_id !== partida.time2_id) {
@@ -5607,17 +5635,17 @@ async function salvarResultadoPartida(req, res) {
                 // Mas para não quebrar, vamos tentar buscar do match_id ou deixar null
                 // O frontend deve enviar time1_id e time2_id no body
                 const { time1_id, time2_id } = req.body;
-                
+
                 if (time1_id && time2_id) {
                     // Atualizar a partida com os times
                     await conexao.execute(
                         'UPDATE partidas SET time1_id = ?, time2_id = ? WHERE id = ?',
                         [time1_id, time2_id, partida.id]
                     );
-                    
+
                     // Determinar perdedor
                     time_perdedor_id = time_vencedor_id === time1_id ? time2_id : time1_id;
-                    
+
                     // Atualizar partida local
                     partida.time1_id = time1_id;
                     partida.time2_id = time2_id;
@@ -5631,7 +5659,7 @@ async function salvarResultadoPartida(req, res) {
             // Calcular scores corretos baseado em qual time é time1 e qual é time2
             // Para BO1: vencedor = 1, perdedor = 0
             let finalScoreTime1, finalScoreTime2;
-            
+
             // Se scores foram fornecidos explicitamente, usar eles (para BO3/BO5)
             if (score_time1 !== undefined && score_time2 !== undefined && score_time1 !== null && score_time2 !== null) {
                 finalScoreTime1 = score_time1;
@@ -5641,7 +5669,7 @@ async function salvarResultadoPartida(req, res) {
                 // Usar time1_id da partida (que pode ter sido atualizado acima)
                 const time1Id = partida.time1_id;
                 const time2Id = partida.time2_id;
-                
+
                 if (time1Id && time2Id) {
                     if (time_vencedor_id === time1Id) {
                         // Time 1 venceu
@@ -5673,7 +5701,7 @@ async function salvarResultadoPartida(req, res) {
 
             // Verificar se já havia um resultado anterior (para limpar posições antigas)
             const time_vencedor_anterior = partida.time_vencedor_id;
-            
+
             // Se havia um vencedor anterior, determinar o perdedor anterior
             if (time_vencedor_anterior && partida.time1_id && partida.time2_id) {
                 const perdedor_anterior = time_vencedor_anterior === partida.time1_id ? partida.time2_id : partida.time1_id;
@@ -5686,11 +5714,11 @@ async function salvarResultadoPartida(req, res) {
                         perdedor_anterior: perdedor_anterior,
                         perdedor_novo: time_perdedor_id
                     });
-                    
+
                     // Limpar posições antigas do vencedor anterior (remover da partida de destino)
                     const proximoRoundAntigo = partida.round_num + 1;
                     let proximoMatchIdAntigo = null;
-                    
+
                     if (partida.bracket_type === 'upper') {
                         const matchIndex = parseInt(partida.match_id.split('_')[2]) || 1;
                         const proximoMatchIndex = Math.ceil(matchIndex / 2);
@@ -5700,14 +5728,14 @@ async function salvarResultadoPartida(req, res) {
                         const proximoMatchIndex = Math.ceil(matchIndex / 2);
                         proximoMatchIdAntigo = `lower_${proximoRoundAntigo}_${proximoMatchIndex}`;
                     }
-                    
+
                     // Remover vencedor anterior da partida de destino
                     if (proximoMatchIdAntigo) {
                         const [partidasDestinoAntigo] = await conexao.execute(
                             'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
                             [chaveamento_id, proximoMatchIdAntigo]
                         );
-                        
+
                         if (partidasDestinoAntigo.length > 0) {
                             const partidaDestinoAntigo = partidasDestinoAntigo[0];
                             if (partidaDestinoAntigo.time1_id === time_vencedor_anterior) {
@@ -5724,7 +5752,7 @@ async function salvarResultadoPartida(req, res) {
                             }
                         }
                     }
-                    
+
                     // Limpar posições antigas do perdedor anterior (remover do Lower Bracket se aplicável)
                     if (partida.bracket_type === 'upper' && isDoubleElimination && perdedor_anterior) {
                         // Buscar todas as partidas do Lower Bracket onde o perdedor anterior pode estar
@@ -5732,7 +5760,7 @@ async function salvarResultadoPartida(req, res) {
                             'SELECT * FROM partidas WHERE chaveamento_id = ? AND bracket_type = ? AND (time1_id = ? OR time2_id = ?)',
                             [chaveamento_id, 'lower', perdedor_anterior, perdedor_anterior]
                         );
-                        
+
                         for (const partidaLowerAntigo of partidasLowerAntigo) {
                             if (partidaLowerAntigo.time1_id === perdedor_anterior) {
                                 await conexao.execute(
@@ -5758,7 +5786,7 @@ async function salvarResultadoPartida(req, res) {
                  WHERE id = ?`,
                 [time_vencedor_id, finalScoreTime1, finalScoreTime2, partida.id]
             );
-            
+
             // Buscar a partida atualizada para garantir que temos os dados corretos
             const [partidasAtualizadas] = await conexao.execute(
                 'SELECT * FROM partidas WHERE id = ?',
@@ -5796,12 +5824,12 @@ async function salvarResultadoPartida(req, res) {
             let proximoRound = partida.round_num + 1;
             let proximoMatchId = null;
             let forceDestinoSlot = null;
-            
+
             // Calcular próximo match_id baseado no formato
             if (partida.bracket_type === 'upper') {
                 // No Upper Bracket
                 const quantidadeTimes = chaveamento.quantidade_times;
-                
+
                 if (quantidadeTimes === 20 && partida.round_num === 1 && isDoubleElimination) {
                     // 20 times Double Elimination: Round 1 são os 4 play-ins (T1..T8)
                     // Vencedores alimentam os quatro primeiros cards da Pré-Oitavas (Round 2)
@@ -5859,7 +5887,7 @@ async function salvarResultadoPartida(req, res) {
                     // Vencedores das Oitavas vão para Quartas (Round 3)
                     const matchIndex = parseInt(partida.match_id.split('_')[2]) || 1;
                     proximoRound = 3; // Quartas - Round 3
-                    
+
                     // Match 1 → Quartas Match 1
                     // Match 2 → Quartas Match 1 (junto com Match 1)
                     // Match 3 → Quartas Match 2
@@ -5874,7 +5902,7 @@ async function salvarResultadoPartida(req, res) {
                     } else {
                         proximoMatchIndex = 2; // Match 4 → Quartas Match 2 (junto com Match 3)
                     }
-                    
+
                     proximoMatchId = `upper_${proximoRound}_${proximoMatchIndex}`;
                 } else if (quantidadeTimes === 16 && partida.round_num === 3) {
                     // Round 3 são as Quartas (2 partidas)
@@ -5882,7 +5910,7 @@ async function salvarResultadoPartida(req, res) {
                     const matchIndex = parseInt(partida.match_id.split('_')[2]) || 1;
                     proximoRound = 4; // Semifinais - Round 4
                     proximoMatchIndex = 1; // Semifinais tem apenas 1 partida
-                    
+
                     proximoMatchId = `upper_${proximoRound}_${proximoMatchIndex}`;
                 } else if (quantidadeTimes === 18 && partida.round_num === 1) {
                     // Para 18 times: Round 1 tem 4 partidas (play-in)
@@ -5957,21 +5985,21 @@ async function salvarResultadoPartida(req, res) {
                     // Para 18 times: Semifinais é round 5
                     // Para 20 times: Semifinais é round 5
                     // Para 8+ times (exceto 6, 10, 12, 14, 16, 18, 20): Semifinais é round 3
-                    const isSemifinais = (quantidadeTimes === 6 && partida.round_num === 3) || 
-                                         (quantidadeTimes === 10 && partida.round_num === 4) ||
-                                         (quantidadeTimes === 12 && partida.round_num === 4) ||
-                                         (quantidadeTimes === 14 && partida.round_num === 4) ||
-                                         (quantidadeTimes === 16 && partida.round_num === 4) ||
-                                         (quantidadeTimes === 18 && partida.round_num === 5) ||
-                                         (quantidadeTimes === 20 && partida.round_num === 5) ||
-                                         (quantidadeTimes !== 6 && quantidadeTimes !== 10 && quantidadeTimes !== 12 && quantidadeTimes !== 14 && quantidadeTimes !== 16 && quantidadeTimes !== 18 && quantidadeTimes !== 20 && partida.round_num === 3);
-                    
+                    const isSemifinais = (quantidadeTimes === 6 && partida.round_num === 3) ||
+                        (quantidadeTimes === 10 && partida.round_num === 4) ||
+                        (quantidadeTimes === 12 && partida.round_num === 4) ||
+                        (quantidadeTimes === 14 && partida.round_num === 4) ||
+                        (quantidadeTimes === 16 && partida.round_num === 4) ||
+                        (quantidadeTimes === 18 && partida.round_num === 5) ||
+                        (quantidadeTimes === 20 && partida.round_num === 5) ||
+                        (quantidadeTimes !== 6 && quantidadeTimes !== 10 && quantidadeTimes !== 12 && quantidadeTimes !== 14 && quantidadeTimes !== 16 && quantidadeTimes !== 18 && quantidadeTimes !== 20 && partida.round_num === 3);
+
                     if (isSemifinais && isDoubleElimination) {
                         proximoMatchId = 'grand_final_1';
                     } else {
                         // Caso contrário, avança para próximo round normalmente
                         const matchIndex = parseInt(partida.match_id.split('_')[2]) || 1;
-                        
+
                         // Para 6 times com BYEs: Round 1 tem 2 partidas, Round 2 também tem 2 partidas
                         // Match 1 do Round 1 → Match 1 do Round 2 (time2, pois time1 já é o Time 1 com BYE)
                         // Match 2 do Round 1 → Match 2 do Round 2 (time2, pois time1 já é o Time 2 com BYE)
@@ -6037,13 +6065,13 @@ async function salvarResultadoPartida(req, res) {
                 // IMPORTANTE: Definir quantidadeTimesLower no escopo correto para uso posterior
                 const quantidadeTimesLower = chaveamento.quantidade_times;
                 const isLowerFinal = (quantidadeTimesLower === 6 && partida.round_num === 4) ||
-                                     (quantidadeTimesLower === 10 && partida.round_num === 5) ||
-                                     (quantidadeTimesLower === 12 && partida.round_num === 5) ||
-                                     (quantidadeTimesLower === 14 && partida.round_num === 6) ||
-                                     (quantidadeTimesLower === 16 && partida.round_num === 6) ||
-                                     (quantidadeTimesLower === 18 && partida.round_num === 6) ||
-                                     (quantidadeTimesLower === 20 && partida.round_num === 7) ||
-                                     (quantidadeTimesLower !== 6 && quantidadeTimesLower !== 10 && quantidadeTimesLower !== 12 && quantidadeTimesLower !== 14 && quantidadeTimesLower !== 16 && quantidadeTimesLower !== 18 && quantidadeTimesLower !== 20 && partida.round_num === 4);
+                    (quantidadeTimesLower === 10 && partida.round_num === 5) ||
+                    (quantidadeTimesLower === 12 && partida.round_num === 5) ||
+                    (quantidadeTimesLower === 14 && partida.round_num === 6) ||
+                    (quantidadeTimesLower === 16 && partida.round_num === 6) ||
+                    (quantidadeTimesLower === 18 && partida.round_num === 6) ||
+                    (quantidadeTimesLower === 20 && partida.round_num === 7) ||
+                    (quantidadeTimesLower !== 6 && quantidadeTimesLower !== 10 && quantidadeTimesLower !== 12 && quantidadeTimesLower !== 14 && quantidadeTimesLower !== 16 && quantidadeTimesLower !== 18 && quantidadeTimesLower !== 20 && partida.round_num === 4);
                 if (isLowerFinal && isDoubleElimination) {
                     proximoMatchId = 'grand_final_1';
                 } else {
@@ -6185,7 +6213,7 @@ async function salvarResultadoPartida(req, res) {
                         proximoMatchId = `lower_${proximoRound}_${proximoMatchIndex}`;
                     }
                 }
-                
+
             } else if (partida.bracket_type === 'grand_final') {
                 // Se venceu a Grand Final, é campeão
                 await conexao.execute(
@@ -6217,11 +6245,11 @@ async function salvarResultadoPartida(req, res) {
                 let bracketSize = 1;
                 while (bracketSize < quantidadeTimes) bracketSize *= 2;
                 const totalRounds = Math.log2(bracketSize);
-                
+
                 // Se é o último round do upper bracket E não há próximo match (ou próximo match não existe), é a final
                 const isFinalRound = partida.round_num === totalRounds;
                 const isFinalMatch = !proximoMatchId || (proximoMatchId && !proximoMatchId.startsWith('upper_') && !proximoMatchId.startsWith('grand_final'));
-                
+
                 if (isFinalRound && isFinalMatch) {
                     console.log('[DEBUG Single Elimination Final] Detectada final do Single Elimination:', {
                         match_id,
@@ -6230,7 +6258,7 @@ async function salvarResultadoPartida(req, res) {
                         proximoMatchId,
                         time_vencedor_id
                     });
-                    
+
                     // Atualizar posição do time como campeão
                     await conexao.execute(
                         `UPDATE posicoes_times 
@@ -6254,9 +6282,9 @@ async function salvarResultadoPartida(req, res) {
                          VALUES (?, ?, 'campeao', ?, ?, ?)`,
                         [chaveamento_id, time_vencedor_id, partida.round_num, match_id, partida.id]
                     );
-                    
+
                     console.log('[DEBUG Single Elimination Final] Campeão registrado no banco de dados');
-                    
+
                     // Não atualizar posição do vencedor (já é campeão)
                     proximoMatchId = null;
                 }
@@ -6267,7 +6295,7 @@ async function salvarResultadoPartida(req, res) {
                 // Determinar bracket_type e round_num para a posição
                 let bracketTypePosicao = partida.bracket_type;
                 let roundNumPosicao = proximoRound;
-                
+
                 // IMPORTANTE: Extrair round_num do match_id para Lower Bracket
                 // Exemplo: 'lower_5_1' → round_num = 5
                 if (proximoMatchId.startsWith('lower_')) {
@@ -6276,12 +6304,12 @@ async function salvarResultadoPartida(req, res) {
                         roundNumPosicao = parseInt(matchIdParts[1]) || proximoRound;
                     }
                 }
-                
+
                 if (proximoMatchId.startsWith('grand_final')) {
                     bracketTypePosicao = 'grand_final';
                     roundNumPosicao = 1; // Grand Final sempre é round 1
                 }
-                
+
                 // Verificar se já existe posição para este time
                 const [posicoesExistentes] = await conexao.execute(
                     'SELECT id FROM posicoes_times WHERE chaveamento_id = ? AND time_id = ?',
@@ -6313,13 +6341,13 @@ async function salvarResultadoPartida(req, res) {
                 } else if (partida.bracket_type === 'lower') {
                     tipoMovimentacao = 'avancou_lower';
                 }
-                
+
                 await conexao.execute(
                     `INSERT INTO historico_movimentacoes 
                      (chaveamento_id, time_id, tipo_movimentacao, round_origem, round_destino, match_id_origem, match_id_destino, partida_id)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                     [chaveamento_id, time_vencedor_id, tipoMovimentacao,
-                     partida.round_num, roundNumPosicao, match_id, proximoMatchId, partida.id]
+                        partida.round_num, roundNumPosicao, match_id, proximoMatchId, partida.id]
                 );
 
                 // Atualizar partida de destino com o time vencedor
@@ -6328,7 +6356,7 @@ async function salvarResultadoPartida(req, res) {
                     'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
                     [chaveamento_id, proximoMatchId]
                 );
-                
+
                 // IMPORTANTE: Corrigir round_num de partidas Upper Bracket baseado no match_id
                 // Exemplo: 'upper_3_1' e 'upper_3_2' devem ter round_num = 3 (Semifinais para 16 times)
                 if (partidasDestino.length > 0 && proximoMatchId.startsWith('upper_')) {
@@ -6349,7 +6377,7 @@ async function salvarResultadoPartida(req, res) {
                         }
                     }
                 }
-                
+
                 // IMPORTANTE: Se a partida upper_4_1 já existe mas tem round_num incorreto para 12 times, corrigir
                 if (partidasDestino.length > 0 && proximoMatchId === 'upper_4_1' && chaveamento.quantidade_times === 12) {
                     const partidaExistente = partidasDestino[0];
@@ -6365,7 +6393,7 @@ async function salvarResultadoPartida(req, res) {
                         );
                     }
                 }
-                
+
                 // IMPORTANTE: Corrigir round_num de partidas Lower Bracket baseado no match_id
                 // Exemplo: 'lower_5_1' deve ter round_num = 5, não 4
                 if (partidasDestino.length > 0 && proximoMatchId.startsWith('lower_')) {
@@ -6393,7 +6421,7 @@ async function salvarResultadoPartida(req, res) {
                     let formatoDestino = 'B01';
                     let bracketTypeDestino = partida.bracket_type;
                     let roundNumDestino = proximoRound;
-                    
+
                     // IMPORTANTE: Extrair round_num do match_id para garantir que está correto
                     // Exemplo: 'upper_3_1' → round_num = 3 (Semifinais)
                     // Exemplo: 'lower_5_1' → round_num = 5
@@ -6415,12 +6443,12 @@ async function salvarResultadoPartida(req, res) {
                             }
                         }
                     }
-                    
+
                     // IMPORTANTE: Se proximoMatchId for 'upper_4_1' para 12 times, garantir round_num = 4
                     if (proximoMatchId === 'upper_4_1' && chaveamento.quantidade_times === 12) {
                         roundNumDestino = 4; // Semifinais para 12 times
                     }
-                    
+
                     // IMPORTANTE: Se proximoMatchId for 'grand_final_1', ajustar parâmetros
                     if (proximoMatchId === 'grand_final_1' || proximoMatchId.startsWith('grand_final')) {
                         formatoDestino = 'B03';
@@ -6442,7 +6470,7 @@ async function salvarResultadoPartida(req, res) {
                         'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
                         [chaveamento_id, proximoMatchId]
                     );
-                    
+
                     // IMPORTANTE: Verificar se a partida foi criada com round_num correto
                     if (partidasDestino.length > 0) {
                         const partidaCriada = partidasDestino[0];
@@ -6466,7 +6494,7 @@ async function salvarResultadoPartida(req, res) {
 
                 if (partidasDestino.length > 0) {
                     let partidaDestino = partidasDestino[0];
-                    
+
                     // IMPORTANTE: Garantir que o perdedor NÃO está na partida de destino
                     // Se o perdedor estiver lá, removê-lo primeiro
                     if (partidaDestino.time1_id === time_perdedor_id) {
@@ -6483,7 +6511,7 @@ async function salvarResultadoPartida(req, res) {
                         );
                         partidaDestino.time2_id = null;
                     }
-                    
+
                     // Buscar a partida novamente para garantir que temos os dados atualizados
                     const [partidasDestinoAtualizadas] = await conexao.execute(
                         'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
@@ -6492,7 +6520,7 @@ async function salvarResultadoPartida(req, res) {
                     if (partidasDestinoAtualizadas.length > 0) {
                         partidaDestino = partidasDestinoAtualizadas[0];
                     }
-                    
+
                     // Para 6 e 10 times com BYEs no Round 2: time1 já está ocupado pelo time com BYE
                     // O vencedor do Round 1 deve ir para time2
                     const quantidadeTimes = chaveamento.quantidade_times;
@@ -6500,17 +6528,17 @@ async function salvarResultadoPartida(req, res) {
                     const isRound2WithByes = (
                         ((quantidadeTimes === 6 || quantidadeTimes === 10) && proximoRound === 2 && partida.round_num === 1) ||
                         (quantidadeTimes === 14 && partida.round_num === 1 && proximoRound === 2 &&
-                         (proximoMatchId === 'upper_2_1' || proximoMatchId === 'upper_2_4')) ||
+                            (proximoMatchId === 'upper_2_1' || proximoMatchId === 'upper_2_4')) ||
                         (quantidadeTimes === 18 && partida.round_num === 1 && proximoRound === 2) ||
                         (quantidadeTimes === 20 && partida.round_num === 1 && proximoRound === 2 && isDoubleElimination) ||
                         (quantidadeTimes === 20 && partida.round_num === 1 && proximoRound === 2 && !isDoubleElimination)
                     );
                     // Para 12 times: vencedor do Round 2, Match 3 vai direto para Round 4 (BYE)
                     const isRound4WithBye = quantidadeTimes === 12 && (proximoMatchId === 'upper_4_1' || (proximoRound === 4 && partida.round_num === 2 && matchIndex === 3));
-                    
+
                     // IMPORTANTE: Verificar se há duplicação na partida de destino
                     // Se time1_id === time2_id (e não são null), há duplicação - limpar
-                    if (partidaDestino.time1_id && partidaDestino.time2_id && 
+                    if (partidaDestino.time1_id && partidaDestino.time2_id &&
                         partidaDestino.time1_id === partidaDestino.time2_id) {
                         console.warn('Duplicação detectada na partida de destino! Limpando...', {
                             match_id: proximoMatchId,
@@ -6533,15 +6561,15 @@ async function salvarResultadoPartida(req, res) {
                             partidaDestino = partidasDestinoAtualizadas2[0];
                         }
                     }
-                    
+
                     // IMPORTANTE: Verificar se o vencedor já está na partida de destino antes de adicionar
                     // Se já estiver, não fazer nada (evitar duplicação)
-                    let vencedorJaEstaNaPartida = partidaDestino.time1_id === time_vencedor_id || 
-                                                     partidaDestino.time2_id === time_vencedor_id;
-                    
+                    let vencedorJaEstaNaPartida = partidaDestino.time1_id === time_vencedor_id ||
+                        partidaDestino.time2_id === time_vencedor_id;
+
                     // IMPORTANTE: Definir quantidadeTimesLower no escopo correto para uso em logs
                     const quantidadeTimesLower = chaveamento.quantidade_times;
-                    
+
                     // DEBUG: Log para 18 times, Round 1 → Round 2
                     if (quantidadeTimes === 18 && partida.round_num === 1 && partida.bracket_type === 'upper' && proximoRound === 2) {
                         console.log('[DEBUG 18 Times R1→R2] Estado ANTES de processar:', {
@@ -6555,11 +6583,11 @@ async function salvarResultadoPartida(req, res) {
                             isRound2WithByes
                         });
                     }
-                    
+
                     // IMPORTANTE: Para 18 times, Upper Round 1 → Upper Round 2 (Pré-Oitavas)
                     // Se o vencedor está no time1 (slot errado), movê-lo para time2 ANTES de qualquer outra lógica
                     // CRÍTICO: Preservar o time1 original se existir
-                    if (quantidadeTimes === 18 && partida.round_num === 1 && partida.bracket_type === 'upper' && 
+                    if (quantidadeTimes === 18 && partida.round_num === 1 && partida.bracket_type === 'upper' &&
                         proximoRound === 2 && vencedorJaEstaNaPartida && partidaDestino.time1_id === time_vencedor_id) {
                         console.log('[DEBUG 18 Times R1→R2] Vencedor está no time1 (errado), movendo para time2:', {
                             match_id_destino: proximoMatchId,
@@ -6587,8 +6615,8 @@ async function salvarResultadoPartida(req, res) {
                         if (partidasDestinoAtualizadas.length > 0) {
                             partidaDestino = partidasDestinoAtualizadas[0];
                             // Atualizar vencedorJaEstaNaPartida após mover
-                            vencedorJaEstaNaPartida = partidaDestino.time1_id === time_vencedor_id || 
-                                                       partidaDestino.time2_id === time_vencedor_id;
+                            vencedorJaEstaNaPartida = partidaDestino.time1_id === time_vencedor_id ||
+                                partidaDestino.time2_id === time_vencedor_id;
                             console.log('[DEBUG 18 Times R1→R2] Após mover vencedor:', {
                                 match_id_destino: proximoMatchId,
                                 time1_id_depois: partidaDestino.time1_id,
@@ -6596,7 +6624,7 @@ async function salvarResultadoPartida(req, res) {
                             });
                         }
                     }
-                    
+
                     // IMPORTANTE: Para 18 times, Lower Round 1 → Lower Round 2
                     // Se o vencedor já está na partida mas no slot errado, movê-lo para o slot correto
                     if (quantidadeTimesLower === 18 && partida.round_num === 1 && vencedorJaEstaNaPartida) {
@@ -6637,7 +6665,7 @@ async function salvarResultadoPartida(req, res) {
                             }
                         }
                     }
-                    
+
                     if (!vencedorJaEstaNaPartida) {
                         // Determinar qual slot preencher (time1 ou time2) - APENAS com o vencedor
                         // IMPORTANTE: Garantir que não adicionamos o mesmo time em ambos os slots
@@ -6682,7 +6710,7 @@ async function salvarResultadoPartida(req, res) {
                             }
                             forceDestinoSlot = null;
                         }
-                        
+
                         if (preferenciaAplicada) {
                             // Já inserimos conforme preferência, nada mais a fazer
                         } else if (quantidadeTimesLower === 18 && partida.round_num === 1 && partida.bracket_type === 'lower') {
@@ -6709,7 +6737,7 @@ async function salvarResultadoPartida(req, res) {
                             // IMPORTANTE: Para 18 times, mesmo que time1 esteja vazio, o vencedor do Round 1 deve ir para time2
                             // porque time1 será preenchido pelo seed correspondente
                             // CRÍTICO: NUNCA substituir ou limpar o time1 que já está lá
-                            
+
                             // DEBUG: Log para isRound2WithByes
                             if (quantidadeTimes === 18 && partida.round_num === 1) {
                                 console.log('[DEBUG isRound2WithByes] Entrando no bloco isRound2WithByes:', {
@@ -6721,7 +6749,7 @@ async function salvarResultadoPartida(req, res) {
                                     vencedorJaEstaNaPartida
                                 });
                             }
-                            
+
                             // Se o vencedor já está no time1 (foi inserido incorretamente), movê-lo para time2
                             if (partidaDestino.time1_id === time_vencedor_id) {
                                 console.log('[DEBUG isRound2WithByes] Vencedor está no time1, movendo para time2:', {
@@ -6750,7 +6778,7 @@ async function salvarResultadoPartida(req, res) {
                                         time2_id_depois: partidaDestino.time2_id
                                     });
                                 }
-                            } 
+                            }
                             // Se o vencedor não está na partida ainda, inserir APENAS no time2
                             // CRÍTICO: NUNCA tocar no time1, mesmo que esteja vazio
                             else if (!vencedorJaEstaNaPartida && !partidaDestino.time2_id && partidaDestino.time1_id !== time_vencedor_id) {
@@ -6798,7 +6826,7 @@ async function salvarResultadoPartida(req, res) {
                             // Lógica padrão para outras situações
                             // IMPORTANTE: Se isRound2WithByes for verdadeiro, NUNCA inserir no time1
                             // (mesmo que esteja vazio), porque time1 será preenchido pelo seed
-                            
+
                             // DEBUG: Log para lógica padrão
                             if (quantidadeTimes === 18 && partida.round_num === 1) {
                                 console.log('[DEBUG Lógica Padrão] Entrando no else (lógica padrão):', {
@@ -6811,56 +6839,56 @@ async function salvarResultadoPartida(req, res) {
                                     vencedorJaEstaNaPartida
                                 });
                             }
-                            
-                        let preferenciaAplicada = false;
-                        if (forceDestinoSlot === 'time1' || forceDestinoSlot === 'time2') {
-                            console.log('[DEBUG Force Slot] Preferência aplicada para destino:', {
-                                match_id_destino: proximoMatchId,
-                                forceDestinoSlot,
-                                time1_id_atual: partidaDestino.time1_id,
-                                time2_id_atual: partidaDestino.time2_id
-                            });
-                            if (forceDestinoSlot === 'time1') {
-                                if (!partidaDestino.time1_id && partidaDestino.time2_id !== time_vencedor_id) {
-                                    await conexao.execute(
-                                        'UPDATE partidas SET time1_id = ? WHERE id = ?',
-                                        [time_vencedor_id, partidaDestino.id]
-                                    );
-                                    preferenciaAplicada = true;
-                                    console.log('[DEBUG Force Slot] Vencedor inserido no time1 conforme preferência:', {
-                                        match_id_destino: proximoMatchId,
-                                        time_vencedor_id
-                                    });
-                                } else {
-                                    console.warn('[DEBUG Force Slot] Não foi possível inserir no time1 (ocupado):', {
-                                        match_id_destino: proximoMatchId,
-                                        time_vencedor_id
-                                    });
+
+                            let preferenciaAplicada = false;
+                            if (forceDestinoSlot === 'time1' || forceDestinoSlot === 'time2') {
+                                console.log('[DEBUG Force Slot] Preferência aplicada para destino:', {
+                                    match_id_destino: proximoMatchId,
+                                    forceDestinoSlot,
+                                    time1_id_atual: partidaDestino.time1_id,
+                                    time2_id_atual: partidaDestino.time2_id
+                                });
+                                if (forceDestinoSlot === 'time1') {
+                                    if (!partidaDestino.time1_id && partidaDestino.time2_id !== time_vencedor_id) {
+                                        await conexao.execute(
+                                            'UPDATE partidas SET time1_id = ? WHERE id = ?',
+                                            [time_vencedor_id, partidaDestino.id]
+                                        );
+                                        preferenciaAplicada = true;
+                                        console.log('[DEBUG Force Slot] Vencedor inserido no time1 conforme preferência:', {
+                                            match_id_destino: proximoMatchId,
+                                            time_vencedor_id
+                                        });
+                                    } else {
+                                        console.warn('[DEBUG Force Slot] Não foi possível inserir no time1 (ocupado):', {
+                                            match_id_destino: proximoMatchId,
+                                            time_vencedor_id
+                                        });
+                                    }
+                                } else if (forceDestinoSlot === 'time2') {
+                                    if (!partidaDestino.time2_id && partidaDestino.time1_id !== time_vencedor_id) {
+                                        await conexao.execute(
+                                            'UPDATE partidas SET time2_id = ? WHERE id = ?',
+                                            [time_vencedor_id, partidaDestino.id]
+                                        );
+                                        preferenciaAplicada = true;
+                                        console.log('[DEBUG Force Slot] Vencedor inserido no time2 conforme preferência:', {
+                                            match_id_destino: proximoMatchId,
+                                            time_vencedor_id
+                                        });
+                                    } else {
+                                        console.warn('[DEBUG Force Slot] Não foi possível inserir no time2 (ocupado):', {
+                                            match_id_destino: proximoMatchId,
+                                            time_vencedor_id
+                                        });
+                                    }
                                 }
-                            } else if (forceDestinoSlot === 'time2') {
-                                if (!partidaDestino.time2_id && partidaDestino.time1_id !== time_vencedor_id) {
-                                    await conexao.execute(
-                                        'UPDATE partidas SET time2_id = ? WHERE id = ?',
-                                        [time_vencedor_id, partidaDestino.id]
-                                    );
-                                    preferenciaAplicada = true;
-                                    console.log('[DEBUG Force Slot] Vencedor inserido no time2 conforme preferência:', {
-                                        match_id_destino: proximoMatchId,
-                                        time_vencedor_id
-                                    });
-                                } else {
-                                    console.warn('[DEBUG Force Slot] Não foi possível inserir no time2 (ocupado):', {
-                                        match_id_destino: proximoMatchId,
-                                        time_vencedor_id
-                                    });
-                                }
+                                forceDestinoSlot = null;
                             }
-                            forceDestinoSlot = null;
-                        }
-                        
-                        if (preferenciaAplicada) {
-                            // Já inserimos conforme preferência
-                        } else if (isRound2WithByes) {
+
+                            if (preferenciaAplicada) {
+                                // Já inserimos conforme preferência
+                            } else if (isRound2WithByes) {
                                 console.log('[DEBUG Lógica Padrão] isRound2WithByes é verdadeiro, inserindo APENAS no time2:', {
                                     match_id_destino: proximoMatchId,
                                     time_vencedor_id,
@@ -6920,7 +6948,7 @@ async function salvarResultadoPartida(req, res) {
                                 }
                             }
                         }
-                        
+
                         // IMPORTANTE: Buscar a partida novamente após o UPDATE para ter os dados atualizados
                         const [partidasDestinoAtualizadas] = await conexao.execute(
                             'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
@@ -6929,7 +6957,7 @@ async function salvarResultadoPartida(req, res) {
                         if (partidasDestinoAtualizadas.length > 0) {
                             partidaDestino = partidasDestinoAtualizadas[0];
                         }
-                        
+
                         // Verificar se o vencedor foi realmente inserido na Grand Final
                         if (proximoMatchId === 'grand_final_1') {
                             const [partidaGrandFinalVerificada] = await conexao.execute(
@@ -6947,7 +6975,7 @@ async function salvarResultadoPartida(req, res) {
                                 });
                             }
                         }
-                        
+
                         // Verificar se o vencedor foi realmente adicionado (usando dados atualizados)
                         const [partidaDestinoFinal] = await conexao.execute(
                             'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
@@ -7000,7 +7028,7 @@ async function salvarResultadoPartida(req, res) {
                     } else {
                         // Vencedor já está na partida, mas verificar se está no slot correto
                         // Para 18 times, Round 1 → Round 2: vencedor deve estar no time2, não no time1
-                        if (quantidadeTimes === 18 && partida.round_num === 1 && partida.bracket_type === 'upper' && 
+                        if (quantidadeTimes === 18 && partida.round_num === 1 && partida.bracket_type === 'upper' &&
                             proximoRound === 2 && isRound2WithByes) {
                             if (partidaDestino.time1_id === time_vencedor_id) {
                                 // Vencedor está no time1 (errado) - mover para time2
@@ -7079,10 +7107,10 @@ async function salvarResultadoPartida(req, res) {
                 let lowerRound;
                 let lowerMatchIndex;
                 let lowerMatchId;
-                
+
                 // Extrair o índice da partida atual (ex: upper_1_1 -> matchIndex = 1)
                 const matchIndex = parseInt(partida.match_id.split('_')[2]) || 1;
-                
+
                 // Se perdeu nas Oitavas (Round 1) → vai para Lower Round 1 ou Round 2
                 if (partida.round_num === 1) {
                     // Para 6 times: Round 1 tem 2 partidas, perdedores vão para Lower Round 1
@@ -7090,7 +7118,7 @@ async function salvarResultadoPartida(req, res) {
                     // Para 12 times: Round 1 tem 6 partidas, perdedores vão para Lower Round 1 (3 partidas, metade dos perdedores)
                     // Para 16 times: Round 1 tem 8 partidas, perdedores vão para Lower Round 1
                     const quantidadeTimes = chaveamento.quantidade_times;
-                    
+
                     if (quantidadeTimes === 6 || quantidadeTimes === 10) {
                         // Para 6 e 10 times, Lower Round 1 tem apenas 1 partida
                         lowerRound = 1;
@@ -7128,7 +7156,7 @@ async function salvarResultadoPartida(req, res) {
                         lowerMatchIndex = Math.ceil(matchIndex / 2);
                     }
                     lowerMatchId = `lower_${lowerRound}_${lowerMatchIndex}`;
-                } 
+                }
                 // Se perdeu nas Oitavas/Quartas (Round 2) → vai para Lower Round 2
                 else if (partida.round_num === 2) {
                     const quantidadeTimes = chaveamento.quantidade_times;
@@ -7589,7 +7617,7 @@ async function salvarResultadoPartida(req, res) {
                         round_num: partidasLower[0].round_num
                     } : null
                 });
-                
+
                 // IMPORTANTE: Corrigir round_num de partidas Lower existentes baseado no match_id
                 if (partidasLower.length > 0) {
                     const partidaLowerExistente = partidasLower[0];
@@ -7622,7 +7650,7 @@ async function salvarResultadoPartida(req, res) {
                             quantidadeTimes: chaveamento.quantidade_times
                         });
                     }
-                    
+
                     // IMPORTANTE: Extrair round_num do match_id para garantir que está correto
                     // Exemplo: 'lower_5_1' → round_num = 5
                     const matchIdParts = lowerMatchId.split('_');
@@ -7630,7 +7658,7 @@ async function salvarResultadoPartida(req, res) {
                     if (matchIdParts.length >= 2 && matchIdParts[0] === 'lower') {
                         roundNumFromMatchId = parseInt(matchIdParts[1]) || lowerRound;
                     }
-                    
+
                     // DEBUG específico para lower_3_4 - verificar round_num
                     if (lowerMatchId === 'lower_3_4') {
                         console.log('[DEBUG 18 Times R2→LR3] round_num calculado para lower_3_4:', {
@@ -7640,7 +7668,7 @@ async function salvarResultadoPartida(req, res) {
                             matchIdParts
                         });
                     }
-                    
+
                     // Determinar formato da partida: Final do Lower é B03, outros rounds são B01
                     // Para 10 times: Final do Lower é round 5 (removido Round 5 intermediário)
                     // Para 12 times: Final do Lower é round 5
@@ -7649,13 +7677,13 @@ async function salvarResultadoPartida(req, res) {
                     // Para outras quantidades: Final do Lower é round 4
                     const quantidadeTimes = chaveamento.quantidade_times;
                     const isLowerFinal = (quantidadeTimes === 10 && roundNumFromMatchId === 5) ||
-                                         (quantidadeTimes === 12 && roundNumFromMatchId === 5) ||
-                                         (quantidadeTimes === 14 && roundNumFromMatchId === 6) ||
-                                         (quantidadeTimes === 16 && roundNumFromMatchId === 6) ||
-                                         (quantidadeTimes === 18 && roundNumFromMatchId === 6) ||
-                                         (quantidadeTimes !== 10 && quantidadeTimes !== 12 && quantidadeTimes !== 14 && quantidadeTimes !== 16 && quantidadeTimes !== 18 && roundNumFromMatchId === 4);
+                        (quantidadeTimes === 12 && roundNumFromMatchId === 5) ||
+                        (quantidadeTimes === 14 && roundNumFromMatchId === 6) ||
+                        (quantidadeTimes === 16 && roundNumFromMatchId === 6) ||
+                        (quantidadeTimes === 18 && roundNumFromMatchId === 6) ||
+                        (quantidadeTimes !== 10 && quantidadeTimes !== 12 && quantidadeTimes !== 14 && quantidadeTimes !== 16 && quantidadeTimes !== 18 && roundNumFromMatchId === 4);
                     const formatoPartida = isLowerFinal ? 'B03' : 'B01';
-                    
+
                     // DEBUG específico para lower_3_4 - antes de criar
                     if (lowerMatchId === 'lower_3_4') {
                         console.log('[DEBUG 18 Times R2→LR3] Tentando criar partida lower_3_4:', {
@@ -7665,7 +7693,7 @@ async function salvarResultadoPartida(req, res) {
                             formatoPartida
                         });
                     }
-                    
+
                     await conexao.execute(
                         `INSERT IGNORE INTO partidas (chaveamento_id, match_id, round_num, bracket_type, formato_partida, status)
                          VALUES (?, ?, ?, 'lower', ?, 'agendada')`,
@@ -7677,7 +7705,7 @@ async function salvarResultadoPartida(req, res) {
                         'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
                         [chaveamento_id, lowerMatchId]
                     );
-                    
+
                     // DEBUG específico para lower_3_4 - após criar
                     if (lowerMatchId === 'lower_3_4') {
                         console.log('[DEBUG 18 Times R2→LR3] Partida lower_3_4 criada/buscada:', {
@@ -7687,7 +7715,7 @@ async function salvarResultadoPartida(req, res) {
                             round_num: partidasLower.length > 0 ? partidasLower[0].round_num : null
                         });
                     }
-                    
+
                     // IMPORTANTE: Verificar e corrigir round_num se necessário
                     if (partidasLower.length > 0) {
                         const partidaLower = partidasLower[0];
@@ -7703,7 +7731,7 @@ async function salvarResultadoPartida(req, res) {
                             );
                         }
                     }
-                    
+
                     console.log('Partida do Lower Bracket criada/buscada:', {
                         lowerMatchId,
                         encontrada: partidasLower.length > 0,
@@ -7712,7 +7740,7 @@ async function salvarResultadoPartida(req, res) {
                         time1_id: partidasLower.length > 0 ? partidasLower[0].time1_id : null,
                         time2_id: partidasLower.length > 0 ? partidasLower[0].time2_id : null
                     });
-                    
+
                     // DEBUG específico para lower_3_4
                     if (lowerMatchId === 'lower_3_4') {
                         console.log('[DEBUG 18 Times R2→LR3] Partida lower_3_4 criada/buscada:', {
@@ -7735,7 +7763,7 @@ async function salvarResultadoPartida(req, res) {
 
                 if (partidasLower.length > 0) {
                     let partidaLower = partidasLower[0];
-                    
+
                     // Buscar a partida novamente para garantir que temos os dados atualizados
                     const [partidasLowerAtualizadas] = await conexao.execute(
                         'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
@@ -7744,10 +7772,10 @@ async function salvarResultadoPartida(req, res) {
                     if (partidasLowerAtualizadas.length > 0) {
                         partidaLower = partidasLowerAtualizadas[0];
                     }
-                    
+
                     // IMPORTANTE: Verificar se há duplicação na partida do Lower
                     // Se time1_id === time2_id (e não são null), há duplicação - limpar
-                    if (partidaLower.time1_id && partidaLower.time2_id && 
+                    if (partidaLower.time1_id && partidaLower.time2_id &&
                         partidaLower.time1_id === partidaLower.time2_id) {
                         console.warn('Duplicação detectada na partida do Lower! Limpando...', {
                             match_id: lowerMatchId,
@@ -7770,12 +7798,12 @@ async function salvarResultadoPartida(req, res) {
                             partidaLower = partidasLowerAtualizadas2[0];
                         }
                     }
-                    
+
                     // IMPORTANTE: Verificar se o perdedor já está na partida do Lower antes de adicionar
                     // Se já estiver, não fazer nada (evitar duplicação)
-                    const perdedorJaEstaNaPartida = partidaLower.time1_id === time_perdedor_id || 
-                                                    partidaLower.time2_id === time_perdedor_id;
-                    
+                    const perdedorJaEstaNaPartida = partidaLower.time1_id === time_perdedor_id ||
+                        partidaLower.time2_id === time_perdedor_id;
+
                     console.log('Verificando progressão do perdedor:', {
                         match_id_origem: match_id,
                         lowerMatchId,
@@ -7786,7 +7814,7 @@ async function salvarResultadoPartida(req, res) {
                         round_num: partida.round_num,
                         matchIndex: parseInt(partida.match_id.split('_')[2]) || 1
                     });
-                    
+
                     if (!perdedorJaEstaNaPartida) {
                         // Determinar qual slot preencher baseado no round do Upper
                         // IMPORTANTE: Garantir que não adicionamos o mesmo time em ambos os slots
@@ -7903,7 +7931,7 @@ async function salvarResultadoPartida(req, res) {
                                 lowerMatchIndex,
                                 time_perdedor_id
                             });
-                            
+
                             // DEBUG: Log específico para 18 times, Match 7
                             if (quantidadeTimes === 18 && matchIndex === 7) {
                                 console.log(`[DEBUG 18 Times R2→LR3] Perdedor do Match ${matchIndex} sendo processado:`, {
@@ -7918,7 +7946,7 @@ async function salvarResultadoPartida(req, res) {
                                     partidaLower_time2: partidaLower ? partidaLower.time2_id : null
                                 });
                             }
-                            
+
                             if (quantidadeTimes === 10) {
                                 // Para 10 times: Round 2 são as Oitavas (4 partidas)
                                 // Match 1 → Lower Round 2, Match 1
@@ -7986,7 +8014,7 @@ async function salvarResultadoPartida(req, res) {
                                     esperado_lowerRound_2: matchIndex === 1,
                                     esperado_lowerRound_3: matchIndex === 2
                                 });
-                                
+
                                 if (lowerRound === 2) {
                                     // Perdedor do Match 1 das Quartas vai para Lower Round 2
                                     console.log('Tentando adicionar perdedor das Quartas (Match 1) ao Lower Round 2:', {
@@ -7997,11 +8025,11 @@ async function salvarResultadoPartida(req, res) {
                                         time1_id_atual: partidaLower.time1_id,
                                         time2_id_atual: partidaLower.time2_id
                                     });
-                                    
+
                                     // Verificar se o perdedor já está na partida
-                                    const perdedorJaEstaNaPartida = partidaLower.time1_id === time_perdedor_id || 
-                                                                    partidaLower.time2_id === time_perdedor_id;
-                                    
+                                    const perdedorJaEstaNaPartida = partidaLower.time1_id === time_perdedor_id ||
+                                        partidaLower.time2_id === time_perdedor_id;
+
                                     if (!perdedorJaEstaNaPartida) {
                                         // Adicionar ao primeiro slot disponível (preferir time2, mas pode ser time1 se time2 estiver ocupado)
                                         if (!partidaLower.time2_id && partidaLower.time1_id !== time_perdedor_id) {
@@ -8014,7 +8042,7 @@ async function salvarResultadoPartida(req, res) {
                                                 lowerMatchId,
                                                 time_perdedor_id
                                             });
-                                            
+
                                             // Buscar a partida atualizada para garantir que o frontend veja a mudança
                                             const [partidaAtualizada] = await conexao.execute(
                                                 'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
@@ -8037,7 +8065,7 @@ async function salvarResultadoPartida(req, res) {
                                                 lowerMatchId,
                                                 time_perdedor_id
                                             });
-                                            
+
                                             // Buscar a partida atualizada
                                             const [partidaAtualizada] = await conexao.execute(
                                                 'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
@@ -8572,7 +8600,7 @@ async function salvarResultadoPartida(req, res) {
                                     time1_id_atual: partidaLower.time1_id,
                                     time2_id_atual: partidaLower.time2_id
                                 });
-                                
+
                                 // IMPORTANTE: Garantir que não adicionamos o mesmo time em ambos os slots
                                 if (!partidaLower.time1_id && partidaLower.time2_id !== time_perdedor_id) {
                                     await conexao.execute(
@@ -8710,7 +8738,7 @@ async function salvarResultadoPartida(req, res) {
                                     time1_id_atual: partidaLower.time1_id,
                                     time2_id_atual: partidaLower.time2_id
                                 });
-                                
+
                                 // IMPORTANTE: Garantir que não adicionamos o mesmo time em ambos os slots
                                 if (!partidaLower.time1_id && partidaLower.time2_id !== time_perdedor_id) {
                                     await conexao.execute(
@@ -8881,7 +8909,7 @@ async function salvarResultadoPartida(req, res) {
                 message: 'Resultado salvo e posições atualizadas com sucesso',
                 partida_id: partida.id
             });
-            
+
             if (conexao) await desconectar(conexao);
             return; // Sucesso - sair da função
 
@@ -8894,7 +8922,7 @@ async function salvarResultadoPartida(req, res) {
                     console.error('Erro ao fazer rollback:', rollbackError);
                 }
             }
-            
+
             // Verificar se é erro de duplicação
             if (error.code === 'ER_DUP_ENTRY' || error.message.includes('Duplicate entry')) {
                 console.warn('Tentativa de inserir registro duplicado. Atualizando posição existente:', error.message);
@@ -8919,13 +8947,13 @@ async function salvarResultadoPartida(req, res) {
                     console.error('Erro ao tentar atualizar após duplicação:', updateError);
                 }
             }
-            
+
             console.error('Erro ao salvar resultado (tentativa ' + (attempt + 1) + '):', error);
-            
+
             // Se excedeu tentativas ou erro não é de deadlock, retornar erro
             if (error.code !== 'ER_LOCK_DEADLOCK' || attempt >= maxRetries - 1) {
                 if (conexao) await desconectar(conexao);
-                
+
                 // SEMPRE retornar JSON, mesmo em caso de erro
                 return res.status(500).json({
                     error: 'Erro ao salvar resultado',
@@ -8933,12 +8961,12 @@ async function salvarResultadoPartida(req, res) {
                     code: error.code || 'UNKNOWN_ERROR'
                 });
             }
-            
+
             // Se for deadlock, esperar e tentar novamente
             attempt++;
             const waitTime = Math.min(100 * Math.pow(2, attempt - 1), 400);
             await new Promise(resolve => setTimeout(resolve, waitTime));
-            
+
             if (conexao) await desconectar(conexao);
             continue; // Tentar novamente
         } finally {
@@ -8952,7 +8980,7 @@ async function salvarResultadoPartida(req, res) {
             }
         }
     }
-    
+
     // Se chegou aqui, todas as tentativas falharam
     return res.status(500).json({
         error: 'Erro ao salvar resultado após múltiplas tentativas',
@@ -9018,7 +9046,7 @@ async function resetarChaveamento(req, res) {
     let conexao = null;
     try {
         const { chaveamento_id } = req.params;
-        
+
         if (!chaveamento_id) {
             return res.status(400).json({ error: 'ID do chaveamento é obrigatório' });
         }
@@ -9112,15 +9140,15 @@ async function criarSessaoVetos(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         const token_a = gerarToken();
         const token_b = gerarToken();
         const token_spectator = gerarToken();
-        
+
         const query = `INSERT INTO vetos_sessoes 
             (formato, mapas_selecionados, partida_id, campeonato_id, time_a_id, time_b_id, token_a, token_b, token_spectator, turno_atual, status, time_a_pronto, time_b_pronto, sorteio_realizado) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'time_a', 'configurado', FALSE, FALSE, FALSE)`;
-        
+
         const mapasJson = JSON.stringify(mapas_selecionados);
         const valores = [
             formato,
@@ -9163,18 +9191,18 @@ async function buscarSessaoVetosPorToken(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         const query = `SELECT * FROM vetos_sessoes 
             WHERE token_a = ? OR token_b = ? OR token_spectator = ?`;
-        
+
         const [rows] = await conexao.execute(query, [token, token, token]);
-        
+
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Sessão não encontrada' });
         }
 
         const sessao = rows[0];
-        
+
         // Parse do JSON com tratamento de erro
         let mapasSelecionados = [];
         try {
@@ -9189,7 +9217,7 @@ async function buscarSessaoVetosPorToken(req, res) {
             console.error('Erro ao fazer parse de mapas_selecionados:', parseError);
             mapasSelecionados = [];
         }
-        
+
         // Determinar qual time é baseado no token (ou se é espectador)
         const isSpectator = sessao.token_spectator === token;
         const timeAtual = isSpectator ? null : (sessao.token_a === token ? 'time_a' : 'time_b');
@@ -9250,23 +9278,23 @@ async function salvarAcaoVeto(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Buscar sessão
         const querySessao = `SELECT * FROM vetos_sessoes 
             WHERE token_a = ? OR token_b = ? OR token_spectator = ?`;
         const [sessoes] = await conexao.execute(querySessao, [token, token, token]);
-        
+
         if (sessoes.length === 0) {
             return res.status(404).json({ message: 'Sessão não encontrada' });
         }
 
         const sessao = sessoes[0];
-        
+
         // Verificar se é espectador (não pode fazer ações)
         if (sessao.token_spectator === token) {
             return res.status(403).json({ message: 'Espectadores não podem realizar ações' });
         }
-        
+
         // Verificar se é o turno do time
         const timeAtual = sessao.token_a === token ? 'time_a' : 'time_b';
         if (sessao.turno_atual !== timeAtual) {
@@ -9299,11 +9327,11 @@ async function salvarAcaoVeto(req, res) {
             console.error('Erro ao fazer parse de mapas_selecionados:', error);
             return res.status(500).json({ message: 'Erro ao processar mapas selecionados' });
         }
-        
+
         if (!Array.isArray(mapasSelecionados) || mapasSelecionados.length === 0) {
             return res.status(400).json({ message: 'Lista de mapas selecionados inválida' });
         }
-        
+
         if (!mapasSelecionados.includes(mapa)) {
             return res.status(400).json({ message: 'Mapa não está na lista de selecionados' });
         }
@@ -9312,7 +9340,7 @@ async function salvarAcaoVeto(req, res) {
         const queryAcoes = `SELECT * FROM vetos_acoes 
             WHERE sessao_id = ? AND mapa = ?`;
         const [acoesExistentes] = await conexao.execute(queryAcoes, [sessao.id, mapa]);
-        
+
         if (acoesExistentes.length > 0) {
             return res.status(400).json({ message: 'Este mapa já foi selecionado' });
         }
@@ -9327,7 +9355,7 @@ async function salvarAcaoVeto(req, res) {
         const queryInsert = `INSERT INTO vetos_acoes 
             (sessao_id, mapa, acao, time_id, ordem) 
             VALUES (?, ?, ?, ?, ?)`;
-        
+
         await conexao.execute(queryInsert, [sessao.id, mapa, acao, timeId, ordem]);
 
         // Lógica especial para BO1: após 6 vetos, o último mapa é automaticamente pickado
@@ -9335,27 +9363,27 @@ async function salvarAcaoVeto(req, res) {
             // Buscar todas as ações já realizadas (incluindo a que acabou de ser salva)
             const queryAcoesCompletas = `SELECT mapa, acao FROM vetos_acoes WHERE sessao_id = ? ORDER BY ordem`;
             const [todasAcoes] = await conexao.execute(queryAcoesCompletas, [sessao.id]);
-            
+
             // Encontrar o último mapa restante
             const mapasVetados = todasAcoes
                 .filter(a => a.acao === 'ban')
                 .map(a => a.mapa);
-            
+
             const ultimoMapa = mapasSelecionados.find(m => !mapasVetados.includes(m));
-            
+
             if (ultimoMapa) {
                 // Automaticamente fazer pick do último mapa
                 const queryInsertPick = `INSERT INTO vetos_acoes 
                     (sessao_id, mapa, acao, time_id, ordem) 
                     VALUES (?, ?, ?, ?, ?)`;
                 await conexao.execute(queryInsertPick, [sessao.id, ultimoMapa, 'pick', null, 7]);
-                
+
                 // Finalizar sessão
                 const queryUpdateFinal = `UPDATE vetos_sessoes 
                     SET status = 'finalizado', turno_atual = NULL
                     WHERE id = ?`;
                 await conexao.execute(queryUpdateFinal, [sessao.id]);
-                
+
                 res.status(200).json({
                     message: 'Ação salva com sucesso. Último mapa automaticamente selecionado!',
                     proximo_turno: null,
@@ -9371,26 +9399,26 @@ async function salvarAcaoVeto(req, res) {
             // Buscar todas as ações já realizadas (incluindo a que acabou de ser salva)
             const queryAcoesCompletas = `SELECT mapa, acao FROM vetos_acoes WHERE sessao_id = ? ORDER BY ordem`;
             const [todasAcoes] = await conexao.execute(queryAcoesCompletas, [sessao.id]);
-            
+
             // Encontrar mapas já selecionados (vetados ou pickados)
             const mapasSelecionadosAcoes = todasAcoes.map(a => a.mapa);
-            
+
             // Encontrar o último mapa restante (que não foi nem vetado nem pickado)
             const ultimoMapa = mapasSelecionados.find(m => !mapasSelecionadosAcoes.includes(m));
-            
+
             if (ultimoMapa) {
                 // Automaticamente fazer pick do último mapa como decider
                 const queryInsertPick = `INSERT INTO vetos_acoes 
                     (sessao_id, mapa, acao, time_id, ordem) 
                     VALUES (?, ?, ?, ?, ?)`;
                 await conexao.execute(queryInsertPick, [sessao.id, ultimoMapa, 'pick', null, 7]);
-                
+
                 // Finalizar sessão
                 const queryUpdateFinal = `UPDATE vetos_sessoes 
                     SET status = 'finalizado', turno_atual = NULL
                     WHERE id = ?`;
                 await conexao.execute(queryUpdateFinal, [sessao.id]);
-                
+
                 res.status(200).json({
                     message: 'Ação salva com sucesso. Mapa decider automaticamente selecionado!',
                     proximo_turno: null,
@@ -9407,26 +9435,26 @@ async function salvarAcaoVeto(req, res) {
             // Buscar todas as ações já realizadas (incluindo a que acabou de ser salva)
             const queryAcoesCompletas = `SELECT mapa, acao FROM vetos_acoes WHERE sessao_id = ? ORDER BY ordem`;
             const [todasAcoes] = await conexao.execute(queryAcoesCompletas, [sessao.id]);
-            
+
             // Encontrar mapas já selecionados (vetados ou pickados)
             const mapasSelecionadosAcoes = todasAcoes.map(a => a.mapa);
-            
+
             // Encontrar o último mapa restante (que não foi nem vetado nem pickado)
             const ultimoMapa = mapasSelecionados.find(m => !mapasSelecionadosAcoes.includes(m));
-            
+
             if (ultimoMapa) {
                 // Automaticamente fazer pick do último mapa como decider
                 const queryInsertPick = `INSERT INTO vetos_acoes 
                     (sessao_id, mapa, acao, time_id, ordem) 
                     VALUES (?, ?, ?, ?, ?)`;
                 await conexao.execute(queryInsertPick, [sessao.id, ultimoMapa, 'pick', null, 7]);
-                
+
                 // Finalizar sessão
                 const queryUpdateFinal = `UPDATE vetos_sessoes 
                     SET status = 'finalizado', turno_atual = NULL
                     WHERE id = ?`;
                 await conexao.execute(queryUpdateFinal, [sessao.id]);
-                
+
                 res.status(200).json({
                     message: 'Ação salva com sucesso. Mapa decider automaticamente selecionado!',
                     proximo_turno: null,
@@ -9443,26 +9471,26 @@ async function salvarAcaoVeto(req, res) {
             // Buscar todas as ações já realizadas (incluindo a que acabou de ser salva)
             const queryAcoesCompletas = `SELECT mapa, acao FROM vetos_acoes WHERE sessao_id = ? ORDER BY ordem`;
             const [todasAcoes] = await conexao.execute(queryAcoesCompletas, [sessao.id]);
-            
+
             // Encontrar mapas já selecionados (vetados ou pickados)
             const mapasSelecionadosAcoes = todasAcoes.map(a => a.mapa);
-            
+
             // Encontrar o último mapa restante (que não foi nem vetado nem pickado)
             const ultimoMapa = mapasSelecionados.find(m => !mapasSelecionadosAcoes.includes(m));
-            
+
             if (ultimoMapa) {
                 // Automaticamente fazer pick do último mapa como decider
                 const queryInsertPick = `INSERT INTO vetos_acoes 
                     (sessao_id, mapa, acao, time_id, ordem) 
                     VALUES (?, ?, ?, ?, ?)`;
                 await conexao.execute(queryInsertPick, [sessao.id, ultimoMapa, 'pick', null, 7]);
-                
+
                 // Finalizar sessão
                 const queryUpdateFinal = `UPDATE vetos_sessoes 
                     SET status = 'finalizado', turno_atual = NULL
                     WHERE id = ?`;
                 await conexao.execute(queryUpdateFinal, [sessao.id]);
-                
+
                 res.status(200).json({
                     message: 'Ação salva com sucesso. Mapa decider automaticamente selecionado!',
                     proximo_turno: null,
@@ -9479,7 +9507,7 @@ async function salvarAcaoVeto(req, res) {
         const queryUpdate = `UPDATE vetos_sessoes 
             SET turno_atual = ?, status = 'em_andamento' 
             WHERE id = ?`;
-        
+
         await conexao.execute(queryUpdate, [proximoTurno, sessao.id]);
 
         res.status(200).json({
@@ -9509,50 +9537,50 @@ async function salvarEscolhaLado(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Buscar sessão
         const querySessao = `SELECT * FROM vetos_sessoes 
             WHERE token_a = ? OR token_b = ? OR token_spectator = ?`;
         const [sessoes] = await conexao.execute(querySessao, [token, token, token]);
-        
+
         if (sessoes.length === 0) {
             return res.status(404).json({ message: 'Sessão não encontrada' });
         }
 
         const sessao = sessoes[0];
-        
+
         // Verificar se é espectador (não pode fazer ações)
         if (sessao.token_spectator === token) {
             return res.status(403).json({ message: 'Espectadores não podem realizar ações' });
         }
-        
+
         // Buscar a ação de pick para este mapa
         const queryAcao = `SELECT * FROM vetos_acoes 
             WHERE sessao_id = ? AND mapa = ? AND acao = 'pick'`;
         const [acoes] = await conexao.execute(queryAcao, [sessao.id, mapa]);
-        
+
         if (acoes.length === 0) {
             return res.status(404).json({ message: 'Ação de pick não encontrada para este mapa' });
         }
 
         const acao = acoes[0];
-        
+
         // Verificar se é o outro time (não o que fez o pick)
         const timeAtual = sessao.token_a === token ? sessao.time_a_id : sessao.time_b_id;
         if (acao.time_id === timeAtual) {
             return res.status(403).json({ message: 'Você não pode escolher o lado para o mapa que você pickou' });
         }
-        
+
         // Verificar se já escolheu
         if (acao.lado_inicial) {
             return res.status(400).json({ message: 'Lado já foi escolhido para este mapa' });
         }
-        
+
         // Atualizar ação com o lado escolhido
         const queryUpdate = `UPDATE vetos_acoes 
             SET lado_inicial = ? 
             WHERE id = ?`;
-        
+
         await conexao.execute(queryUpdate, [lado.toUpperCase(), acao.id]);
 
         res.status(200).json({
@@ -9578,11 +9606,11 @@ async function iniciarSessaoVetos(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         const query = `UPDATE vetos_sessoes 
             SET status = 'em_andamento' 
             WHERE id = ?`;
-        
+
         await conexao.execute(query, [sessao_id]);
 
         res.status(200).json({ message: 'Sessão iniciada com sucesso' });
@@ -9605,25 +9633,25 @@ async function registrarCliqueRoleta(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Buscar sessão
         const querySessao = `SELECT * FROM vetos_sessoes 
             WHERE token_a = ? OR token_b = ? OR token_spectator = ?`;
         const [sessoes] = await conexao.execute(querySessao, [token, token, token]);
-        
+
         if (sessoes.length === 0) {
             return res.status(404).json({ message: 'Sessão não encontrada' });
         }
 
         const sessao = sessoes[0];
-        
+
         // Verificar se é espectador (não pode clicar na roleta)
         if (sessao.token_spectator === token) {
             return res.status(403).json({ message: 'Espectadores não podem participar do sorteio' });
         }
-        
+
         const timeAtual = sessao.token_a === token ? 'time_a' : 'time_b';
-        
+
         // Verificar se já clicou
         const campoPronto = timeAtual === 'time_a' ? 'time_a_pronto' : 'time_b_pronto';
         if (sessao[campoPronto]) {
@@ -9631,8 +9659,8 @@ async function registrarCliqueRoleta(req, res) {
             const queryVerificar = `SELECT time_a_pronto, time_b_pronto, sorteio_realizado, turno_atual FROM vetos_sessoes WHERE id = ?`;
             const [resultado] = await conexao.execute(queryVerificar, [sessao.id]);
             const atualizado = resultado[0];
-            
-            return res.status(200).json({ 
+
+            return res.status(200).json({
                 message: 'Você já clicou!',
                 time_a_pronto: atualizado.time_a_pronto,
                 time_b_pronto: atualizado.time_b_pronto,
@@ -9713,7 +9741,7 @@ async function getRankingTimes(req, res) {
 
 async function getRankingTimesHistorico(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const [ranking] = await conexao.execute(
             'SELECT * FROM ranking_times_historico'
@@ -9738,10 +9766,10 @@ async function criarRankingTimes(req, res) {
     }
 
     let conexao;
-    try{
-        
+    try {
+
         const query = `INSERT INTO ranking_times (time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`;
-        await conexao.execute(query, [time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns]);
+        await conexao.execute(query, [time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns]);
 
         res.status(200).json({ message: 'Ranking criado com sucesso' });
     }
@@ -9755,16 +9783,16 @@ async function criarRankingTimes(req, res) {
 
 
 async function criarRankingTimesHistorico(req, res) {
-    const { time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns} = req.body;
+    const { time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns } = req.body;
     if (!time_id || !pontos || !ranking_atual || !trofeus || !total_partidas || !vitorias || !derrotas || !wo || !campeonatos_premier_cup || !campeonatos_liga_prime || !campeonatos_oficiais || !campeonatos_comuns) {
         return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
     }
-    
+
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const query = `INSERT INTO ranking_times_historico (time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`;
-        await conexao.execute(query, [time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns]);
+        await conexao.execute(query, [time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns]);
         res.status(200).json({ message: 'Ranking criado com sucesso' });
     }
     catch (error) {
@@ -9780,30 +9808,30 @@ async function criarRankingTimesHistorico(req, res) {
 
 async function atualizarRankingTimes(req, res) {
     const { time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns } = req.body;
-    
+
     // Apenas time_id é obrigatório
     if (!time_id) {
         return res.status(400).json({ message: 'time_id é obrigatório' });
     }
-    
+
     let conexao;
     try {
         conexao = await conectar();
-        
+
         // Verificar se o registro existe
         const [registroExistente] = await conexao.execute(
             'SELECT * FROM ranking_times_atual WHERE time_id = ?',
             [time_id]
         );
-        
+
         if (registroExistente.length === 0) {
             return res.status(404).json({ message: 'Registro de ranking não encontrado para este time' });
         }
-        
+
         // Construir dinamicamente os campos a serem atualizados
         const updateFields = [];
         const updateValues = [];
-        
+
         if (pontos !== undefined && pontos !== null) {
             updateFields.push('pontos = ?');
             updateValues.push(pontos);
@@ -9848,21 +9876,21 @@ async function atualizarRankingTimes(req, res) {
             updateFields.push('campeonatos_comuns = ?');
             updateValues.push(campeonatos_comuns);
         }
-        
+
         // Se não houver campos para atualizar, retornar erro
         if (updateFields.length === 0) {
             return res.status(400).json({ message: 'Nenhum campo fornecido para atualização' });
         }
-        
+
         // Adicionar time_id no final para o WHERE
         updateValues.push(time_id);
-        
+
         // Executar a atualização
         await conexao.execute(
             `UPDATE ranking_times_atual SET ${updateFields.join(', ')} WHERE time_id = ?`,
             updateValues
         );
-        
+
         res.status(200).json({ message: 'Ranking atualizado com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar ranking:', error);
@@ -9889,7 +9917,7 @@ module.exports = {
     getSolicitacaoById, listarTodasSolicitacoes, buscarTimes, buscarUsuarios, listarSolicitacoesPorTime, aceitarSolicitacaoPorId, rejeitarSolicitacaoPorId, MembroSair, deletarSolicitacao,
     atualizarTransferencia, listarTimes, getplayers, buscarDadosFaceitPlayer, locationMatchesIds, infoMatchId, buscarInfoMatchId, uploadImagemCloudinary, criarTrofeus, buscarImgPosition, createImgPosition, updateImgPosition,
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
-    webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus,getTrofeusTime, deletarTrofeus, atualizarTrofeus,
+    webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico,steamIdFromUrl,statuscs,buscarTimeGame,buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout
 };

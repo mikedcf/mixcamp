@@ -44,8 +44,6 @@ async function verificar_auth() {
         const gerenciarCamp = document.getElementById("gerenciarCamp");
         // Atualiza a UI para o usuário logado
         
-        // document.getElementById("userPerfil").style.display = "flex";
-        // document.getElementById("userAuth").style.display = "none";
         document.getElementById('userAuth').classList.add('hidden');
         document.getElementById('userPerfil').classList.remove('hidden');
 
@@ -67,7 +65,6 @@ async function verificar_auth() {
         }
     }
     else{
-        // document.getElementById("userAuth").style.display = "flex";
         document.getElementById('userAuth').classList.remove('hidden');
     }
 }

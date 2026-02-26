@@ -36,7 +36,7 @@ async function verificar_auth() {
         window.location.href = 'home.html';
     }
     else {
-        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById('userAuth').classList.remove('hidden');
         document.getElementById("registerBtn").style.display = "none";
         document.getElementById("loginBtn").style.background = "linear-gradient(135deg, #ff6b35 0%, #ff4500 100%)";
 

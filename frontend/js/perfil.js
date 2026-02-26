@@ -55,8 +55,8 @@ async function verificar_auth() {
         }
         
 
-        document.getElementById("userPerfil").style.display = "flex";
-        document.getElementById("userAuth").style.display = "none";
+        document.getElementById('userAuth').classList.add('hidden');
+        document.getElementById('userPerfil').classList.remove('hidden');
         document.getElementById("followBtnBanner").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         if (perfil_data && perfil_data.perfilData && perfil_data.perfilData.usuario) {
@@ -78,9 +78,9 @@ async function verificar_auth() {
         }
     }
     else {
-        document.getElementById("userPerfil").style.display = "none";
         document.getElementById("buconfig").style.display = "none";
-        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById('userAuth').classList.remove('hidden');
+        document.getElementById("userPerfil").classList.add("hidden");
         document.getElementById("followBtnBanner").style.display = "none";
 
     }

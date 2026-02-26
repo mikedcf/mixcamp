@@ -215,6 +215,7 @@ async function verificar_auth() {
     }
     else{
         window.location.href = 'login.html';
+        document.getElementById('userAuth').classList.remove('hidden');
     }
 }
 

@@ -63,12 +63,12 @@
         </div>
     
         <div class="search-profile-area">
-            <div class="user-auth" id="userAuth">
+            <div class="user-auth hidden" id="userAuth">
                 <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
                 <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
     
-            <div class="user-perfil" id="userPerfil">
+            <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
                     <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
@@ -324,53 +324,76 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>MIXCAMP</h3>
-                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-discord"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Links Rápidos</h4>
+    <footer>
+        <div class="footer-container">
+            <div class="text-redes">
+                <h3 class="text-redes-title">Redes Sociais</h3>
+                <div class="icons">
                     <ul>
-                        <li><a href="campeonato.html">Campeonato</a></li>
-                        <li><a href="comunidade.html">Comunidade</a></li>
-                        <li><a href="noticias.html">Notícias</a></li>
-                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                        <a href="">
+                            <li>
+                                <img src="../img/instagram.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/youtube.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/twitch.svg" alt="twitch">
+                            </li>
+                        </a>
                     </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Suporte</h4>
-                    <ul>
-                        <li><a href="#">Discord</a></li>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Contato</a></li>
-                        <li><a href="#">Regras</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Parceiros</h4>
-                    <div class="partners">
-                        <img src="../img/faceit.png" alt="FACEIT">
-                        <img src="../img/cs2.png" alt="CS2">
-                    </div>
                 </div>
             </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+    
+    
+            <div class="direitos">
+                <p>Todos os direitos reservados © 2026 MIXCAMP</p>
+            </div>
+    
+    
+            <div class="suporte">
+                <h3 class="suporte-title">Suporte</h3>
+                <ul>
+                    <li>
+                        <a href="">
+                            <img src="../img/discord2.svg" alt="">
+                            <p>Discord</p>
+                            </img>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="">
+                            <img src="../img/faq.svg" alt="">
+                            <p>FAQ</p>
+                            </img>
+                        </a>
+                    </li>
+                </ul>
+    
+    
+                <div class="desenvolvedor">
+                    <h3 class="desenvolvedor-title">Desenvolvedor</h3>
+                    <ul>
+                        <li>
+                            <a href=""><img src="../img/md-logo.svg" alt="">
+                                </img></a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
+    
+    
+        <div class="textoInfinito">
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+        </div>
+    
     </footer>
 
 

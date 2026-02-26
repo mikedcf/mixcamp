@@ -35,11 +35,15 @@ async function verificar_auth() {
 
     if (auth_dados.logado) {
         window.location.href = 'home.html';
+        document.getElementById('userAuth').classList.add('hidden');
+        document.getElementById('userPerfil').classList.remove('hidden');
     }
     else {
-        document.getElementById("userAuth").style.display = "flex";
-        document.getElementById("registerBtn").style.display = "flex";
+        
         document.getElementById("loginBtn").style.display = "none";
+        document.getElementById('userPerfil').classList.add('hidden');
+        document.getElementById('userAuth').classList.remove('hidden');
+        
 
 
     }

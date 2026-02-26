@@ -1,255 +1,677 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIXCAMP - Ranking</title>
-    <link rel="stylesheet" href="../css/ranking.css">
-    <link rel="stylesheet" href="../css/ultils.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MIXCAMP — Ranking Oficial</title>
+    <link rel="stylesheet" href="../css/ranking.css" />
 </head>
 
-<body class="claro">
-    <header class="header">
-        <div class="nav-brand" onclick="window.location.href='home.html'">
-            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
-        </div>
-    
-        <div class="center-content">
-            <nav class="nav" id="navContainer">
-                <ul class="nav-menu">
-                    
-                    <li><a href="campeonato.html">Campeonato</a></li>
-                    <li><a href="comunidade.html">Comunidade</a></li>
-                    <li><a href="noticias.html">Notícias</a></li>
-                    <li><a href="apoiadores.html">Apoiadores</a></li>
-                    <li><a href="sobre.html">Sobre</a></li>
-                </ul>
-            </nav>
-            
-            <div class="search-bar-container" id="searchBarContainer">
-                <input type="text" class="search-input" placeholder="Pesquisar...">
-                <!-- Container de resultados da busca -->
-                <div class="search-results" id="searchResults" style="display: none;">
-                    <!-- Resultados aparecem aqui -->
-                </div>
-            </div>
-        </div>
-    
-        <div class="search-profile-area">
-            <div class="user-auth" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'">Login</button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'">Registrar</button>
-            </div>
-    
-            <div class="user-perfil" id="userPerfil">
-                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
-                    <span class="perfil-nome" id="perfilnome"></span>
-                    <i class="fas fa-chevron-down seta"></i>
-                </button>
-                <div class="menu-opcoes" id="menuOpcoes">
-                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
-                    <div class="menu-separator"></div>
-                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
-                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
-                    <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
-                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
-                </div>
-            </div>
-        
-            <div class="box-lupa">
-                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
-                    🔍
-                </button>
-            </div>
-        </div>
-    </header>
+<body>
+    <!-- SEM HEADER (você vai adicionar depois) -->
 
-    <main class="ranking-main">
-        <!-- Hero Section -->
-        <section class="ranking-hero">
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    <i class="fas fa-trophy"></i>
-                    Ranking Oficial
-                </h1>
-                <p class="hero-subtitle">Os melhores times e players da comunidade</p>
+    <main class="page" role="main">
+        <!-- HERO -->
+        <section class="hero" aria-labelledby="ranking-title">
+            <div class="wrap hero__wrap">
+                <div class="hero__titleBlock">
+                    <h1 id="ranking-title" class="hero__title">Ranking Oficial</h1>
+                    <p class="hero__subtitle">Os melhores times e players da comunidade</p>
+
+                    <div class="hero__controls" role="group" aria-label="Filtros de ranking">
+                        <button class="tab tab--active" type="button" aria-pressed="true">TIMES</button>
+                        <button class="tab" type="button" aria-pressed="false">PLAYERS</button>
+                    </div>
+                </div>
+
+                <form class="search" role="search" aria-label="Buscar no ranking">
+                    <span class="search__icon" aria-hidden="true">⌕</span>
+                    <input class="search__input" type="search" name="q" placeholder="Buscar..." autocomplete="off" />
+                </form>
             </div>
         </section>
 
-        <!-- Tabs Section -->
-        <section class="ranking-tabs">
-            <div class="tabs-container">
-                <button class="tab-btn active" data-tab="teams" onclick="switchTab('teams')">
-                    <i class="fas fa-users"></i>
-                    <span>Ranking de Times</span>
-                </button>
-                <button class="tab-btn" data-tab="players" onclick="switchTab('players')">
-                    <i class="fas fa-user"></i>
-                    <span>Ranking de Players</span>
-                </button>
-            </div>
-        </section>
+        <!-- RANKING LIST -->
+        <section class="ranking" aria-label="Lista de ranking">
+            <div class="wrap">
+                <div class="ranking__panel" role="region" aria-label="Tabela de ranking">
+                    <ol class="rankList">
+                        <!-- TOP 1 -->
+                        <li class="rankItem rankItem--gold">
+                            <div class="rankItem__pos">#1</div>
 
-        <!-- Ranking Content -->
-        <section class="ranking-content">
-            <!-- Teams Ranking -->
-            <div id="teamsRanking" class="ranking-section active">
-                <div class="ranking-header">
-                    <h2><i class="fas fa-crown"></i> Top Times</h2>
-                    <div class="ranking-stats">
-                        <span id="teamsCount">0 times</span>
-                    </div>
-                </div>
-                
-                <div class="ranking-list" id="teamsList">
-                    <div class="loading-spinner">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Carregando ranking...</p>
-                    </div>
-                </div>
-            </div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
 
-            <!-- Players Ranking -->
-            <div id="playersRanking" class="ranking-section">
-                <div class="ranking-header">
-                    <h2><i class="fas fa-star"></i> Top Players</h2>
-                    <div class="ranking-stats">
-                        <span id="playersCount">0 players</span>
-                    </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+
+                            <!-- Modal do Top 1 (aparece no hover) -->
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes do Top 1">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- TOP 2 -->
+                        <li class="rankItem rankItem--silver">
+                            <div class="rankItem__pos">#2</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes do Top 2">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- TOP 3 -->
+                        <li class="rankItem rankItem--bronze">
+                            <div class="rankItem__pos">#3</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes do Top 3">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- 4..8 -->
+                        <li class="rankItem rankItem--normal">
+                            <div class="rankItem__pos rankItem__pos--soft">#4</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 4">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="rankItem rankItem--normal">
+                            <div class="rankItem__pos rankItem__pos--soft">#5</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 5">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="rankItem rankItem--normal">
+                            <div class="rankItem__pos rankItem__pos--soft">#6</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 6">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="rankItem rankItem--normal">
+                            <div class="rankItem__pos rankItem__pos--soft">#7</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 7">
+                                <div class="rankItem__modalHead">
+                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
+                                    <div class="rankItem__modalInfo">
+                                        <p class="rankItem__modalName">USERNAME</p>
+                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    </div>
+                                </div>
+                                <div class="rankItem__modalHistory">
+                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <div class="rankItem__modalDots">
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="rankItem rankItem--normal rankItem--last">
+                            <div class="rankItem__pos rankItem__pos--soft">#8</div>
+                            <div class="rankItem__identity">
+                                <div class="rankItem__avatar" aria-hidden="true"></div>
+                                <div class="rankItem__names">
+                                    <div class="rankItem__name">USERNAME</div>
+                                    <div class="rankItem__tag">TM - Team</div>
+                                </div>
+                            </div>
+                            <dl class="rankItem__stats">
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>matches</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>WIN</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>LOSS</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>EXTRAME</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>Medal</dd>
+                                </div>
+                                <div class="stat">
+                                    <dt>50</dt>
+                                    <dd>PTS</dd>
+                                </div>
+                            </dl>
+                        </li>
+                    </ol>
                 </div>
-                
-                <div class="ranking-list" id="playersList">
-                    <div class="loading-spinner">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Carregando ranking...</p>
-                    </div>
-                </div>
+
+                <nav class="pager" aria-label="Paginação do ranking">
+                    <button class="dot" aria-label="Página 1" aria-current="true"></button>
+                    <button class="dot" aria-label="Página 2"></button>
+                    <button class="dot" aria-label="Página 3"></button>
+                    <button class="dot" aria-label="Página 4"></button>
+                    <button class="dot" aria-label="Página 5"></button>
+                    <button class="dot" aria-label="Página 6"></button>
+                    <button class="dot" aria-label="Página 7"></button>
+                    <button class="dot" aria-label="Página 8"></button>
+                </nav>
             </div>
         </section>
     </main>
-
-     <!-- Modal Criar Time Profissional -->
-     <div class="modal" id="modalCriarTime">
-        <div class="modal-content-profissional">
-            <div class="modal-header-profissional">
-                <div class="header-content">
-                    <div class="header-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="header-text">
-                        <h2>Criar Novo Time</h2>
-                        <p>Preencha as informações para criar seu time</p>
-                    </div>
-                </div>
-                <button class="close-profissional" id="closeModalCriarTime">
-                    <i class="fas fa-times"></i>
-                </button>
+    <!-- Modal do #8 no final do body para ficar sempre na frente (posicionado via JS) -->
+    <div id="modalLastRank" class="rankItem__modal rankItem__modal--floating" role="dialog" aria-label="Detalhes posição 8">
+        <div class="rankItem__modalHead">
+            <div class="rankItem__modalImg" aria-hidden="true"></div>
+            <div class="rankItem__modalInfo">
+                <p class="rankItem__modalName">USERNAME</p>
+                <p class="rankItem__modalTag">TM - Team</p>
             </div>
-            
-            <div class="modal-body-profissional">
-                <form id="formCriarTime" class="form-profissional">
-                    <!-- Seção de Imagens -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-image"></i>
-                            Imagens do Time
-                        </h3>
-                        
-                        <div class="image-upload-grid">
-                            <!-- Logo do Time -->
-                            <div class="image-upload-item">
-                                <div class="upload-area" id="logoUploadArea">
-                                    <div class="upload-content">
-                                        <i class="fas fa-camera"></i>
-                                        <span class="upload-text">Logo do Time</span>
-                                        <span class="upload-specs">Recomendado: 200x200px</span>
-                                    </div>
-                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
-                                    <div class="image-preview" id="logoPreview"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- Banner do Time -->
-                            <div class="image-upload-item">
-                                <div class="upload-area" id="bannerUploadArea">
-                                    <div class="upload-content">
-                                        <i class="fas fa-image"></i>
-                                        <span class="upload-text">Banner do Time</span>
-                                        <span class="upload-specs">Recomendado: 1200x400px</span>
-                                    </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
-                                    <div class="image-preview" id="bannerPreview"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Seção de Informações -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            Informações do Time
-                        </h3>
-                        
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="nomeTime" class="form-label">
-                                    <i class="fas fa-tag"></i>
-                                    Nome do Time
-                                </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
-                                <div class="input-hint">Nome completo do seu time</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="tagTime" class="form-label">
-                                    <i class="fas fa-hashtag"></i>
-                                    Tag do Time
-                                </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
-                                <div class="input-hint">Tag curta para identificação</div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="sobreTime" class="form-label">
-                                <i class="fas fa-align-left"></i>
-                                Sobre o Time
-                            </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
-                            <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Botões de Ação -->
-                    <div class="form-actions-profissional">
-                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
-                            <i class="fas fa-times"></i>
-                            Cancelar
-                        </button>
-                        <button type="submit" class="btn-primary-profissional">
-                            <i class="fas fa-plus"></i>
-                            Criar Time
-                        </button>
-                    </div>
-                </form>
+        </div>
+        <div class="rankItem__modalHistory">
+            <span class="rankItem__modalHistoryLabel">Histórico</span>
+            <div class="rankItem__modalDots">
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
             </div>
         </div>
     </div>
 
-    <div class="notification-container" id="notificationContainer"></div>
 
-    <script src="../js/utils.js"></script>
-    <script src="../js/ranking.js"></script>
+    <footer>
+        <div class="footer-container">
+            <div class="text-redes">
+                <h3 class="text-redes-title">Redes Sociais</h3>
+                <div class="icons">
+                    <ul>
+                        <a href="">
+                            <li>
+                                <img src="../img/instagram.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/youtube.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/twitch.svg" alt="twitch">
+                            </li>
+                        </a>
+                    </ul>
+                </div>
+            </div>
+
+
+            <div class="direitos">
+                <p>Todos os direitos reservados © 2026 MIXCAMP</p>
+            </div>
+
+
+            <div class="suporte">
+                <h3 class="suporte-title">Suporte</h3>
+                <ul>
+                    <li>
+                        <a href="">
+                            <img src="../img/discord2.svg" alt="">
+                                <p>Discord</p>
+                            </img>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="">
+                            <img src="../img/faq.svg" alt="">
+                                <p>FAQ</p>
+                            </img>
+                        </a>
+                    </li>
+                </ul>
+
+
+                <div class="desenvolvedor">
+                    <h3 class="desenvolvedor-title">Desenvolvedor</h3>
+                    <ul>
+                        <li>
+                            <a href=""><img src="../img/md-logo.svg" alt="">
+                            </img></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="textoInfinito">
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+        </div>
+
+    </footer>
+
+
+
+
+
+
+    <script>
+        (function () {
+            // Modal sempre abre abaixo do rankItem (#1–#7: CSS top: 100%; #8: posicionado via JS)
+
+            // #8: modal flutuante no final do body, posicionado sempre abaixo do card
+            var lastItem = document.querySelector('.rankItem--last');
+            var modalLast = document.getElementById('modalLastRank');
+            var hideTimer = null;
+
+            function showModal() {
+                if (!lastItem || !modalLast) return;
+                clearTimeout(hideTimer);
+                document.body.classList.add('body--modal-open');
+                var rect = lastItem.getBoundingClientRect();
+                modalLast.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                modalLast.style.left = (rect.left + window.scrollX) + 'px';
+                modalLast.style.width = rect.width + 'px';
+                modalLast.classList.remove('modal--above');
+                modalLast.classList.add('is-visible');
+                setTimeout(function () {
+                    var m = modalLast.getBoundingClientRect();
+                    if (m.bottom > window.innerHeight) {
+                        window.scrollBy(0, m.bottom - window.innerHeight + 16);
+                    }
+                }, 50);
+            }
+            function hideModal() {
+                if (!modalLast) return;
+                hideTimer = setTimeout(function () {
+                    modalLast.classList.remove('is-visible');
+                    document.body.classList.remove('body--modal-open');
+                }, 80);
+            }
+
+            if (lastItem) {
+                lastItem.addEventListener('mouseenter', showModal);
+                lastItem.addEventListener('mouseleave', hideModal);
+            }
+            if (modalLast) {
+                modalLast.addEventListener('mouseenter', showModal);
+                modalLast.addEventListener('mouseleave', hideModal);
+            }
+        })();
+    </script>
 </body>
-</html>
 
+</html>

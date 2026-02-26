@@ -25,6 +25,7 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     position: relative;
+    overflow-x: hidden;
 }
 
 /* Telas até 1280px: garante scroll vertical */
@@ -793,104 +794,183 @@ body {
     font-weight: bold;
 }
 
-/* Footer */
-.footer {
-    background: rgba(15, 15, 35, 0.95);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 60px 0 20px;
-}
-
-.footer-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
-    margin-bottom: 40px;
-}
-
-.footer-section h3,
-.footer-section h4 {
-    color: #ff6b35;
-    margin-bottom: 20px;
-    font-size: 1.3rem;
-}
-
-.footer-section p {
-    color: #cccccc;
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-
-.footer-section ul {
-    list-style: none;
-}
-
-.footer-section ul li {
-    margin-bottom: 10px;
-}
-
-.footer-section ul li a {
-    color: #cccccc;
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.footer-section ul li a:hover {
-    color: #ff6b35;
-}
-
-.social-links {
+footer {
+    background: url("../img/banner2.png"),linear-gradient(to bottom,rgb(0, 1, 3)20%, rgb(24, 62, 213)60%, rgb(245, 32, 4) );
+    
+    width: 100%;
+    padding: clamp(30px, 5vw, 60px) clamp(20px,6vw, 120px);
     display: flex;
-    gap: 15px;
+    height: 90vh;
+    flex-direction: column;
+    background-size:cover;
+    background-position: start;
+    background-repeat: no-repeat;
+    margin-top: 10%;
 }
 
-.social-links a {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+
+.footer-container{
     display: flex;
+    justify-content: space-between;
+}
+
+.text-redes{
+    display: flex;
+    height: 50%;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
-    text-decoration: none;
-    transition: all 0.3s ease;
+    gap: 1%;
+
 }
 
-.social-links a:hover {
-    background: #ff6b35;
-    transform: translateY(-3px);
+.text-redes-title{
+    font-size: 30px;
+    font-weight: 700;
+    color: #f8f8f8;
 }
 
-.partners {
+.icons ul {
+    list-style: none;
     display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
+    gap: 40px;
+    margin: 0 auto;
+    padding: 0;
+
+
 }
 
-.partners img {
+.icons ul li:hover{
+    transform: scale(1.2);
+    transition: transform 0.3s ease;
+}
+
+.icons ul a li img{
+    width: 40px;
     height: 40px;
-    border-radius: 8px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
 }
 
-.partners img:hover {
-    opacity: 1;
-}
+.suporte{
+    display: flex;
 
-.footer-bottom {
+    width: 10%;
+    flex-direction: column;
     text-align: center;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: #cccccc;
+    align-items: center;
+
+
+}
+
+.suporte ul{
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    justify-content: center;
+    align-items: center;
+
+    a{
+        display: flex;
+        flex-direction: row;
+        text-decoration: none;
+        gap: 20px;
+    }
+
+    a:hover{
+        transform: scale(1.2);
+        transition: transform 0.3s ease;
+    }
+
+
+    li{
+        display: flex;
+        text-decoration: none;
+        flex-direction: row;
+    }
+
+
+    p{
+        font-size: 20px;
+        font-weight: bold;
+        color: #f8f8f8;
+    }
+
+    img{
+        width: 30px;
+        height: 30px;
+    }
 }
 
 
-.faq-link {
-    color: #ff6b35;
+.direitos{
+    display: flex;
+    /* background-color: #22c55e; */
+    width: 40%;
+    justify-content: center;
+
+    p{
+        font-size: 20px;
+        font-weight: bold;
+        color: #f8f8f8;
+        margin-left: 30%;
+        margin-top: 12%;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 8px;
+    }
+}
+
+.desenvolvedor{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+ 
+
+
+    ul{
+        display: flex;
+        
+        margin-right: 20%;
+        margin-top: 0%;
+    }
+
+    ul li a img{
+        width: 80px;
+        height: 80px;
+    }
+}
+
+.textoInfinito{
+    width: max-content;
+    display: flex; 
+    height: 50%;  
+
+    h3{
+        margin-top: 0%;
+    }
 }
 
 
+.animation{
+    color: rgb(191, 191, 191);
+    font-size: 12vw;
+    font-family: "Benguiat", sans-serif;
+    mix-blend-mode: color-dodge;
+    animation: textoInfinito 10s infinite linear;
+    padding-left: 8vw;
+
+}
+
+
+
+
+@keyframes textoInfinito {
+    100% {
+        transform: translateX(-100%);
+    }
+}
 
 
 /* Responsividade (header: mesma do registro, definida em header.css) */

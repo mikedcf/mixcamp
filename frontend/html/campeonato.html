@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,8 +23,7 @@
                     <stop offset="100%" stop-color="#6b6bff" />
                 </linearGradient>
             </defs>
-            <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
-                  class="mixcamp-bg-text">
+            <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" class="mixcamp-bg-text">
                 MIXCAMP
             </text>
         </svg>
@@ -54,11 +54,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -71,7 +71,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -80,14 +80,16 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
-            <div class="user-auth" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            <div class="user-auth hidden" id="userAuth">
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
-    
-            <div class="user-perfil" id="userPerfil">
+
+            <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
                     <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
@@ -95,17 +97,20 @@
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
                     <a href="#"><i class="fas fa-bell"></i> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -169,12 +174,8 @@
                             <i class="fa fa-search"></i>
                             Buscar por título
                         </label>
-                        <input 
-                            type="text" 
-                            id="filtroTitulo" 
-                            class="filter-input" 
-                            placeholder="Digite o nome do campeonato..."
-                        >
+                        <input type="text" id="filtroTitulo" class="filter-input"
+                            placeholder="Digite o nome do campeonato...">
                     </div>
 
                     <div class="filter-group filter-status">
@@ -200,59 +201,81 @@
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>MIXCAMP</h3>
-                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-discord"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Links Rápidos</h4>
+    <footer>
+        <div class="footer-container">
+            <div class="text-redes">
+                <h3 class="text-redes-title">Redes Sociais</h3>
+                <div class="icons">
                     <ul>
-                        <li><a href="campeonato.html">Campeonato</a></li>
-                        <li><a href="comunidade.html">Comunidade</a></li>
-                        <li><a href="noticias.html">Notícias</a></li>
-                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                        <a href="">
+                            <li>
+                                <img src="../img/instagram.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/youtube.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/twitch.svg" alt="twitch">
+                            </li>
+                        </a>
                     </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Suporte</h4>
-                    <ul>
-                        <li><a href="#">Discord</a></li>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Contato</a></li>
-                        <li><a href="#">Regras</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>Parceiros</h4>
-                    <div class="partners">
-                        <img src="../img/faceit.png" alt="FACEIT">
-                        <img src="../img/cs2.png" alt="CS2">
-                    </div>
                 </div>
             </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+
+
+            <div class="direitos">
+                <p>Todos os direitos reservados © 2026 MIXCAMP</p>
+            </div>
+
+
+            <div class="suporte">
+                <h3 class="suporte-title">Suporte</h3>
+                <ul>
+                    <li>
+                        <a href="">
+                            <img src="../img/discord2.svg" alt="">
+                            <p>Discord</p>
+                            </img>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="">
+                            <img src="../img/faq.svg" alt="">
+                            <p>FAQ</p>
+                            </img>
+                        </a>
+                    </li>
+                </ul>
+
+
+                <div class="desenvolvedor">
+                    <h3 class="desenvolvedor-title">Desenvolvedor</h3>
+                    <ul>
+                        <li>
+                            <a href=""><img src="../img/md-logo.svg" alt="">
+                                </img></a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
+
+
+        <div class="textoInfinito">
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+        </div>
+
     </footer>
 
 
-     <!-- Modal Criar Time Profissional -->
-     <div class="modal" id="modalCriarTime">
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
         <div class="modal-content-profissional">
             <div class="modal-header-profissional">
                 <div class="header-content">
@@ -268,7 +291,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -277,7 +300,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -291,7 +314,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -300,54 +323,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -368,7 +392,7 @@
 
     <script src="../js/utils.js"></script>
     <script src="../js/campeonato.js"></script>
-    
-</body>
-</html>
 
+</body>
+
+</html>

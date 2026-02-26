@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
 );
 
 
+ALTER TABLE usuarios
+CHANGE COLUMN posicao posicoes VARCHAR(255) DEFAULT NULL;
+
 -- Tabela para armazenar os links de redes sociais dos usuários
 CREATE TABLE IF NOT EXISTS `redes_sociais` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,

@@ -40,8 +40,8 @@ async function verificar_auth() {
         const menuTimeLink = document.getElementById('menuTimeLink');
         const gerenciarCamp = document.getElementById("gerenciarCamp");
         
-        document.getElementById("userPerfil").style.display = "flex";
-        document.getElementById("userAuth").style.display = "none";
+        document.getElementById('userAuth').classList.add('hidden');
+        document.getElementById('userPerfil').classList.remove('hidden');
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
         menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
@@ -59,7 +59,7 @@ async function verificar_auth() {
         }
     }
     else{
-        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById('userAuth').classList.remove('hidden');
     }
 }
 
@@ -838,6 +838,8 @@ function renderizarCampeonatos(lista) {
         const primeiraParte = tituloParts[0] || campeonato.titulo;
         const restoParte = tituloParts.slice(1).join(' ') || '';
 
+        console.log(campeonato);
+
         
 
         return `
@@ -847,9 +849,9 @@ function renderizarCampeonatos(lista) {
              data-status="${campeonato.status || ''}">
             <!-- Banner Superior -->
             <div class="card-banner">
-                <div class="card-banner-bg"></div>
+                <div class="card-banner-bg"><img src="${campeonato.imagem}" alt="${campeonato.titulo}"></div>
                 <div class="card-banner-content">
-                    <div class="card-logo">MIXCAMP</div>
+                    
                     <div class="card-badges">
                         <span class="card-badge badge-organizador ${campeonato.organizador}">
                             <i class="fa fa-circle-check"></i> ${campeonato.organizador === 'oficial' ? 'Oficial' : 'Comum'}

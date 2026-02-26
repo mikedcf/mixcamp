@@ -35,8 +35,9 @@ async function verificar_auth() {
         const menuTimeLink = document.getElementById('menuTimeLink');
         document.getElementById('notaPagamento').style.display = "none";
 
-        document.getElementById("userPerfil").style.display = "flex";
-        document.getElementById("userAuth").style.display = "none";
+        
+        document.getElementById('userAuth').classList.add('hidden');
+        document.getElementById('userPerfil').classList.remove('hidden');
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
         menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
@@ -57,7 +58,8 @@ async function verificar_auth() {
         document.getElementById('btnPagamento').style.display = 'block';
     }
     else{
-        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById('userAuth').classList.remove('hidden');
+        
     }
 }
 

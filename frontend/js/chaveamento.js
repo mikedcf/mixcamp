@@ -60,6 +60,7 @@ async function verificar_auth() {
     }
     else{
         document.getElementById("userAuth").style.display = "flex";
+        document.getElementById('userAuth').classList.remove('hidden');
         
     }
     

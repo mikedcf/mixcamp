@@ -38,8 +38,8 @@ async function verificar_auth() {
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
         // Atualiza a UI para o usuário logado
-        document.getElementById("userPerfil").style.display = "flex";
-        document.getElementById("userAuth").style.display = "none";
+        document.getElementById('userAuth').classList.add('hidden');
+        document.getElementById('userPerfil').classList.remove('hidden');
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
         menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
@@ -57,7 +57,7 @@ async function verificar_auth() {
         }
     }
     else{
-        document.getElementById("userAuth").style.display = "flex";
+        document.getElementById('userAuth').classList.remove('hidden');
     }
 }
 
