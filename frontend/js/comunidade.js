@@ -787,8 +787,8 @@ function renderTransfers(data = null) {
     if (!viewport || !track) return;
     track.innerHTML = '';
 
-    // Usar dados reais se fornecidos, senão usar mocks
-    const items = data && data.length > 0 ? data : [...mockTransfers];
+    // Usar dados reais se fornecidos, senão array vazio (mensagem "nenhum dado" já tratada abaixo)
+    const items = data && data.length > 0 ? data : [];
     
     // Se não há dados, mostrar mensagem ou ocultar seção
     if (!items || items.length === 0) {
@@ -916,8 +916,8 @@ function renderDepartures(data = null) {
     track.innerHTML = '';
 
     
-    // Usar dados reais se fornecidos, senão usar mocks
-    const items = data && data.length > 0 ? data : [...mockDepartures];
+    // Usar dados reais se fornecidos, senão array vazio (mensagem "nenhum dado" já tratada abaixo)
+    const items = data && data.length > 0 ? data : [];
     
     // Se não há dados, mostrar mensagem ou ocultar seção
     if (!items || items.length === 0) {
