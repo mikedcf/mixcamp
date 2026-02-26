@@ -304,36 +304,41 @@ async function loadData() {
            
             continue;
         }
-        
-        let position = perfil_data.usuario.posicao
-        
-        
-        if (position == null){
+        // console.log(perfil_data.usuario.posicao)
+        for (const posicao of perfil_data.usuario.posicoes){
             
-            position = ['player']; // Posição padrão para players sem posição definida
-        }
-        else{
-            position = position.split(',')
+            let position = posicao
             
+            
+            
+            if (position == null){
+                
+                position = ['player']; // Posição padrão para players sem posição definida
+            }
+            else{
+                position = position.split(',')
+                
+            }
+            
+            
+            let time_nome = player.time_nome;
+            
+            // Normalizar nome do time e definir status (com time / sem time)
+            if (!time_nome) {
+                time_nome = 'Sem time';
+            }
+            const statusPlayer = time_nome === 'Sem time' ? 'without-team' : 'with-team';
+            
+            dadosDoPlayers.push({
+                id: player.id,
+                username: player.username,
+                avatar: player.avatar_url,
+                posicao: position,
+                time: time_nome,
+                status: statusPlayer
+            })
         }
         
-        
-        let time_nome = player.time_nome;
-        
-        // Normalizar nome do time e definir status (com time / sem time)
-        if (!time_nome) {
-            time_nome = 'Sem time';
-        }
-        const statusPlayer = time_nome === 'Sem time' ? 'without-team' : 'with-team';
-        
-        dadosDoPlayers.push({
-            id: player.id,
-            username: player.username,
-            avatar: player.avatar_url,
-            posicao: position,
-            time: time_nome,
-            status: statusPlayer
-        })
         
         
     }
@@ -346,7 +351,7 @@ async function loadData() {
             id: player.id,
             username: player.username,
             avatar: player.avatar,
-            posicao: player.posicoes,
+            posicao: player.posicao,
             time: player.time,
             status: player.status
         })
@@ -372,6 +377,8 @@ async function loadTransfersAndDepartures() {
         // Buscar dados completos das entradas e saídas (com player e team details)
         const entradasCompletas = await buscarDadosCompletosEntradas();
         const saidasCompletas = await buscarDadosCompletosSaidas();
+
+        
         
         // Renderizar com dados completos
         renderTransfers(entradasCompletas);
@@ -433,6 +440,7 @@ async function filterData() {
                 const hasPosition = Array.isArray(item.posicao) ? 
                     item.posicao.some(pos => pos.toLowerCase() === positionLower) : 
                     item.posicao.toLowerCase() === positionLower;
+                    
                
                 matchesFilters = matchesFilters && hasPosition;
             }
@@ -543,6 +551,7 @@ function createBlockItem(item) {
         if (item.posicao && item.posicao.length > 0 && item.posicao[0] !== 'player') {
             posicaoHTML = getPositionBadges(item.posicao);
         } else {
+            
             posicaoHTML = '<span class="result-block-tag">Não selecionada</span>';
         }
 
@@ -572,11 +581,13 @@ function createBlockItem(item) {
 
 async function createCard(item) {
     
+    
     const card = document.createElement('div');
     card.className = 'result-card';
     card.onclick = () => handleItemClick(item);
 
     if (currentMode === 'times') {
+
         card.innerHTML = `
             <div class="result-card-header">
                 <img src="${item.logo}" alt="${item.nome}" class="result-card-avatar">
@@ -599,20 +610,23 @@ async function createCard(item) {
     } else {
         // Gerar badges de posição ou mostrar "não selecionada"
         let posicaoHTML = '';
+        
         if (item.posicao && item.posicao.length > 0 && item.posicao[0] !== 'player') {
+            
             posicaoHTML = getPositionBadges(item.posicao);
+
         } else {
             posicaoHTML = '<span class="tag">Não selecionada</span>';
         }
         
        
-        
         card.innerHTML = `
             <div class="result-card-header">
                 <img src="${item.avatar}" alt="${item.username}" class="result-card-avatar">
                 <div class="result-card-info">
                     <h3>${item.username}</h3>
                     ${posicaoHTML}
+                    
                 </div>
             </div>
             <div class="result-card-details">
@@ -654,9 +668,10 @@ function createListItem(item) {
         if (item.posicao && item.posicao.length > 0 && item.posicao[0] !== 'player') {
             posicaoHTML = getPositionBadges(item.posicao);
         } else {
+            
+            
             posicaoHTML = '<div class="result-list-tag">Não selecionada</div>';
         }
-        
         
         
         listItem.innerHTML = `
