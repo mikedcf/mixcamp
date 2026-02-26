@@ -304,41 +304,39 @@ async function loadData() {
            
             continue;
         }
-        // console.log(perfil_data.usuario.posicao)
-        for (const posicao of perfil_data.usuario.posicoes){
+    
+        let position = perfil_data.usuario.posicoes
+        
+        
+        if (position == null){
             
-            let position = posicao
+            position = ['player']; // Posição padrão para players sem posição definida
+        }
+        else{
+            let posicoesArray = [];
+
+            position = position.join(',')
+            position = `"${position}"`
             
-            
-            
-            if (position == null){
-                
-                position = ['player']; // Posição padrão para players sem posição definida
-            }
-            else{
-                position = position.split(',')
-                
-            }
-            
-            
-            let time_nome = player.time_nome;
-            
-            // Normalizar nome do time e definir status (com time / sem time)
-            if (!time_nome) {
-                time_nome = 'Sem time';
-            }
-            const statusPlayer = time_nome === 'Sem time' ? 'without-team' : 'with-team';
-            
-            dadosDoPlayers.push({
-                id: player.id,
-                username: player.username,
-                avatar: player.avatar_url,
-                posicao: position,
-                time: time_nome,
-                status: statusPlayer
-            })
         }
         
+        
+        let time_nome = player.time_nome;
+        
+        // Normalizar nome do time e definir status (com time / sem time)
+        if (!time_nome) {
+            time_nome = 'Sem time';
+        }
+        const statusPlayer = time_nome === 'Sem time' ? 'without-team' : 'with-team';
+        
+        dadosDoPlayers.push({
+            id: player.id,
+            username: player.username,
+            avatar: player.avatar_url,
+            posicao: position,
+            time: time_nome,
+            status: statusPlayer
+        })
         
         
     }
@@ -347,6 +345,7 @@ async function loadData() {
 
     for(let i = 0; i < dadosDoPlayers.length; i++){
         const player = dadosDoPlayers[i];
+
         mockPlayers.push({
             id: player.id,
             username: player.username,
@@ -615,6 +614,7 @@ async function createCard(item) {
             
             posicaoHTML = getPositionBadges(item.posicao);
 
+            
         } else {
             posicaoHTML = '<span class="tag">Não selecionada</span>';
         }
