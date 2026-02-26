@@ -236,6 +236,7 @@ async function TransferenciaDeDados(){
             if (LiderPerfil && LiderPerfil.usuario) {
                 nickLider = LiderPerfil.usuario.username || LiderPerfil.usuario.nome || 'Sem líder';
             }
+            
         } catch (error) {
             console.error(`Erro ao buscar perfil do líder ${lider_id}:`, error);
         }
@@ -247,7 +248,7 @@ async function TransferenciaDeDados(){
             tag: time.tag,
             logo: time.avatar_time_url,
             membros: quantidadesMembros,
-            posicao: time.posices,
+            posicao: time.posicoes,
             lider: nickLider,
             lider_id: lider_id
         };
@@ -257,7 +258,8 @@ async function TransferenciaDeDados(){
         // Adicionar ao array de times
         todosOsTimes.push(dadosDoTime);
     }
-    
+
+    // console.log(todosOsTimes)
     return todosOsTimes;
 }
 
@@ -338,6 +340,9 @@ async function loadData() {
             status: statusPlayer
         })
         
+
+        
+        
         
     }
     
@@ -345,6 +350,10 @@ async function loadData() {
 
     for(let i = 0; i < dadosDoPlayers.length; i++){
         const player = dadosDoPlayers[i];
+        
+        
+
+        
 
         mockPlayers.push({
             id: player.id,
@@ -822,7 +831,8 @@ function renderTransfers(data = null) {
         card.className = 'transfer-card';
         // Verificar se é dados completos (com player/team objects) ou dados básicos do backend
         const isCompleteData = transfer.player && transfer.team;
-        
+
+        console.log(transfer.player.posicao)
         
         if (isCompleteData) {
             // Dados completos com player e team details
@@ -1773,6 +1783,7 @@ function getPositionBadges(posicoes) {
     if (posicoesArray.length === 1) {
         // 1 posição: badge único centralizado
         const imageUrl = getPositionImageSync(posicoesArray[0]);
+        
         badgesHTML = `<img src="${imageUrl}" alt="${posicoesArray[0]}" class="position-badge position-badge-single">`;
     }
     else if (posicoesArray.length <= 3) {
@@ -1788,6 +1799,7 @@ function getPositionBadges(posicoes) {
         badgesHTML = posicoesPrincipais.map((posicao, index) => {
             
             const imageUrl = getPositionImageSync(posicao);
+            console.log(posicao)
             return `<img src="${imageUrl}" alt="${posicao}" class="position-badge position-badge-stack">`;
         }).join('');
         

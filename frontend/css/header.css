@@ -2020,3 +2020,237 @@ footer {
         transform: translateX(-100%);
     }
 }
+
+/* =================================
+   FOOTER - RESPONSIVIDADE
+   ================================= */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    footer {
+        height: auto;
+        min-height: 60vh;
+        padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 40px);
+        margin-top: 8%;
+        /* Move o banner para a direita na responsividade */
+        background-position: 50% center, 0 0;
+    }
+
+    .footer-container {
+        flex-wrap: wrap;
+        gap: 40px;
+        justify-content: center;
+    }
+
+    .text-redes {
+        width: 100%;
+        height: auto;
+        margin-bottom: 0;
+    }
+
+    .text-redes-title {
+        font-size: clamp(22px, 4vw, 28px);
+        margin-bottom: 5%;
+    }
+
+    .icons ul {
+        gap: 28px;
+    }
+
+    .icons ul a li img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .direitos {
+        width: 100%;
+        order: 3;
+        margin-top: 20px;
+    }
+
+    .direitos p {
+        margin-left: 0;
+        margin-top: 0;
+        font-size: clamp(16px, 2.5vw, 18px);
+        text-align: center;
+    }
+
+    .suporte {
+        width: auto;
+        min-width: 140px;
+    }
+
+    .suporte-title {
+        margin-bottom: 5%;
+    }
+
+    .suporte ul {
+        gap: 20px;
+    }
+
+    .suporte ul p {
+        font-size: clamp(16px, 2.5vw, 18px);
+    }
+
+    .suporte ul img {
+        width: 26px;
+        height: 26px;
+    }
+
+    .desenvolvedor {
+        margin-top: 5%;
+    }
+
+    .desenvolvedor ul li a img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .textoInfinito {
+        width: 100%;
+        overflow: hidden;
+        margin-top: 24px;
+    }
+
+    .animation {
+        font-size: 10vw;
+        padding-left: 6vw;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    footer {
+        min-height: auto;
+        padding: clamp(20px, 5vw, 32px) clamp(12px, 4vw, 24px);
+        margin-top: 6%;
+        background-position: 55% center, 0 0;
+    }
+
+    .footer-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+        text-align: center;
+    }
+
+    .text-redes {
+        order: 1;
+    }
+
+    .text-redes-title {
+        font-size: clamp(20px, 5vw, 26px);
+        margin-bottom: 12px;
+    }
+
+    .icons ul {
+        gap: 24px;
+        justify-content: center;
+    }
+
+    .icons ul a li img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .direitos {
+        order: 3;
+        margin-top: 8px;
+    }
+
+    .direitos p {
+        font-size: clamp(14px, 3.5vw, 16px);
+        line-height: 1.4;
+    }
+
+    .suporte {
+        order: 2;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .suporte-title {
+        font-size: clamp(18px, 4vw, 22px);
+        margin-bottom: 12px;
+    }
+
+    .suporte ul {
+        gap: 16px;
+    }
+
+    .suporte ul p {
+        font-size: clamp(14px, 3.5vw, 16px);
+    }
+
+    .suporte ul img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .desenvolvedor {
+        margin-top: 16px;
+    }
+
+    .desenvolvedor ul li a img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .textoInfinito {
+        margin-top: 20px;
+    }
+
+    .animation {
+        font-size: 9vw;
+        padding-left: 5vw;
+    }
+}
+
+/* Mobile pequeno */
+@media (max-width: 480px) {
+    footer {
+        padding: 20px 16px;
+        margin-top: 5%;
+        background-position: 60% center, 0 0;
+    }
+
+    .footer-container {
+        gap: 24px;
+    }
+
+    .text-redes-title {
+        font-size: 20px;
+    }
+
+    .icons ul {
+        gap: 20px;
+    }
+
+    .icons ul a li img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .direitos p {
+        font-size: 13px;
+    }
+
+    .suporte ul p {
+        font-size: 13px;
+    }
+
+    .suporte ul img {
+        width: 22px;
+        height: 22px;
+    }
+
+    .desenvolvedor ul li a img {
+        width: 44px;
+        height: 44px;
+    }
+
+    .animation {
+        font-size: 8vw;
+        padding-left: 4vw;
+    }
+}
