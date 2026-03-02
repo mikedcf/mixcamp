@@ -19,32 +19,7 @@ const steamApiKey = process.env.APIKEYSTEAM;
 const resend = new Resend(process.env.RESEND_KEY);
 
 
-async function enviar() {
-    try {
-        const response = await resend.emails.send({
-            from: process.env.FROM_TEXT_EMAIL,
-            to: ["mixcamp78@gmail.com"],
-            subject: "teste",
-            html: `<h1>Seu código</h1>`,
-        });
 
-        if (response.error) {
-            console.error("RESEND ERROR:", response.error);
-            return false;
-        }
-
-        console.log("RESEND OK:", response.data);
-        return true;
-    } catch (erro) {
-        console.error("ERRO AO ENVIAR (catch):", erro);
-        return false;
-    }
-}
-
-(async () => {
-    const ok = await enviar();
-    console.log("teste de email:", ok);
-})();
 
 
 async function setupDatabase() {
@@ -53,6 +28,18 @@ async function setupDatabase() {
     console.log("🔄 Iniciando configuração do banco...")
 
     await conexao.execute(`SET FOREIGN_KEY_CHECKS = 0;`)
+
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS notificacoes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        texto TEXT NOT NULL,
+        lida BOOLEAN DEFAULT FALSE,
+        criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+        FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
 
     /*
     =====================================================
@@ -76,7 +63,8 @@ async function setupDatabase() {
         posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT '',
         gerencia ENUM('admin','moderador','gerente','user') DEFAULT 'user',
         organizador ENUM('premium','simples') DEFAULT NULL,
-        cores_perfil VARCHAR(50) DEFAULT '#ffffff80'
+        cores_perfil VARCHAR(50) DEFAULT '#ffffff80',
+        cfg_cs VARCHAR(255)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
@@ -1534,12 +1522,10 @@ async function buscarInfoMatchIdStats(req, res) {
 
 async function steamIdFromUrl(req, res) {
     const url = req.body.url;
-    // Caso seja /profiles/ (já contém o SteamID64)
     if (url.includes("/profiles/")) {
         return url.split("/profiles/")[1].split("/")[0];
     }
 
-    // Caso seja /id/ (precisa resolver usando a API)
     if (url.includes("/id/")) {
         const vanity = url.split("/id/")[1].split("/")[0];
 
@@ -1568,9 +1554,6 @@ async function steamIdFromUrl(req, res) {
 
 
 async function buscarTimeGame(req, res) {
-
-    // const STEAM_ID = "76561198208042323"
-    // 76561198042949697
 
     const STEAM_ID = req.body.STEAMID;
 
@@ -1613,18 +1596,16 @@ async function buscarTimeGame(req, res) {
 }
 
 async function statuscs(req, res) {
-    // const STEAM_ID = req.body.STEAMID;
+
     const STEAM_ID = "76561198208042323";
     const appid = 730;
     console.log(STEAM_ID);
-    console.log('1')
     try {
         const response = await axios.get(
             `https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=${steamApiKey}&steamid=${STEAM_ID}&appid=${appid}`
 
         );
-        // const data = response;
-        console.log('2');
+
 
         res.status(200).json(response.data);
     }
@@ -1646,22 +1627,30 @@ async function uploadImagemCloudinary(req, res) {
         return res.status(400).json({ message: 'Nenhum arquivo foi enviado' });
     }
 
-    // Validação do arquivo
+    // Validação do arquivo por mimetype
     const isImage = file.mimetype.startsWith('image/');
     const isVideo = file.mimetype.startsWith('video/');
 
-    if (!isImage && !isVideo) {
-        return res.status(400).json({ message: 'Por favor, selecione apenas arquivos de imagem ou vídeo.' });
-    }
-
-    // Validação adicional de extensão
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp3', '.mp4', '.mov', '.avi', '.webm'];
+    // Validação adicional de extensão (incluindo pdf e cfg)
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp3', '.mp4', '.mov', '.avi', '.webm', '.pdf', '.cfg'];
     const fileExtension = '.' + file.originalname.split('.').pop().toLowerCase();
-    if (!allowedExtensions.includes(fileExtension)) {
-        return res.status(400).json({ message: 'Formato de arquivo não suportado. Use: JPG, PNG, GIF, WebP, MP4, MOV, AVI ou WebM.' });
+
+    const isDocument = ['.pdf', '.cfg'].includes(fileExtension);
+
+    // Se não for imagem, nem vídeo, nem documento permitido, rejeita
+    if (!isImage && !isVideo && !isDocument) {
+        return res.status(400).json({
+            message: 'Por favor, selecione apenas arquivos de imagem, vídeo ou documentos (.pdf, .cfg).'
+        });
     }
 
-    // Limita o tamanho do arquivo (500MB para vídeos, 5MB para imagens)
+    if (!allowedExtensions.includes(fileExtension)) {
+        return res.status(400).json({
+            message: 'Formato de arquivo não suportado. Use: JPG, PNG, GIF, WebP, MP4, MOV, AVI, WebM, PDF ou CFG.'
+        });
+    }
+
+    // Limita o tamanho do arquivo (500MB para vídeos, 5MB para imagens/documentos)
     const maxSize = isVideo ? 500 * 1024 * 1024 : 5 * 1024 * 1024;
     if (file.size > maxSize) {
         const maxSizeMB = isVideo ? 500 : 5;
@@ -1675,13 +1664,22 @@ async function uploadImagemCloudinary(req, res) {
         contentType: file.mimetype
     });
     formData.append('upload_preset', uploadPreset);
-    formData.append('folder', isVideo ? 'mixcamp_uploads/videos' : 'mixcamp_uploads');
+    formData.append(
+        'folder',
+        isVideo
+            ? 'mixcamp_uploads/videos'
+            : isDocument
+                ? 'mixcamp_uploads/docs'
+                : 'mixcamp_uploads'
+    );
 
     try {
-        // Usar endpoint de vídeo ou imagem dependendo do tipo
+        // Usar endpoint de vídeo, imagem ou raw (documentos) dependendo do tipo
         const uploadEndpoint = isVideo
             ? `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`
-            : `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+            : isDocument
+                ? `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`
+                : `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
         const response = await fetch(uploadEndpoint, {
             method: 'POST',
@@ -1967,6 +1965,134 @@ async function verificarCodigoEmail(req, res) {
         if (conexao) await desconectar(conexao);
     }
 }
+
+
+// ===============================================================================================
+// ==================================== [API RANKING] ================================================
+
+
+// ------- API GET
+async function getNotificacoes(req, res) {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+
+        query = "SELECT * FROM notificacoes";
+        const [dados] = await conexao.execute(query);
+        res.status(200).json({ notificacoes: dados });
+    }
+    catch (error) {
+        console.error('Erro ao buscar notificações:', error);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ------- API POST
+async function criarMsgNotificacao(req, res) {
+    const { usuario_id, texto } = req.body;
+    let conexao;
+
+    try {
+
+        conexao = await conectar();
+
+        query = "INSERT INTO notificacoes (user_id, texto) VALUES (?,?)";
+
+        await conexao.execute(query, [usuario_id, texto]);
+
+        res.status(200).json({ message: 'Notificação criada com sucesso' });
+
+    }
+    catch (error) {
+        console.error('Erro ao criar notificação:', error);
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// ------- API UPDATE
+async function atualizarNotificacao(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { id } = req.params;
+        const { lida, texto } = req.body;
+
+        const fields = [];
+        const values = [];
+
+        // só adiciona se o campo foi enviado
+        if (typeof lida === "boolean") {
+            fields.push("lida = ?");
+            values.push(lida);
+        }
+
+        if (typeof texto === "string") {
+            const t = texto.trim();
+            if (t.length > 0) {
+                fields.push("texto = ?");
+                values.push(t);
+            }
+        }
+
+        if (fields.length === 0) {
+            return res.status(400).json({ error: "Envie pelo menos 'lida' ou 'texto'." });
+        }
+
+        let query = `
+          UPDATE notificacoes
+          SET ${fields.join(", ")}
+          WHERE id = ?
+        `;
+
+        values.push(id);
+
+        const [result] = await conexao.execute(query, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Notificação não encontrada." });
+        }
+
+        return res.status(200).json({ message: 'Notificação atualizada com sucesso' });
+    } catch (err) {
+        console.error('Erro ao atualizar notificação:', err);
+        return res.status(500).json({ message: "Erro interno do servidor" });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// ------- API DELETE
+async function deletarNotificacao(req,res){
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { id } = req.params;
+        const query = "DELETE FROM notificacoes WHERE id = ?";
+        await conexao.execute(query, [id]);
+        return res.status(200).json({ message: 'Notificação deletada com sucesso' });
+    }
+    catch (error){
+        console.error('Erro ao deletar notificação:', error);
+        return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+    
+}
+
+
+
+// ===============================================================================================
+// ==================================== [API autenticaçao] ================================================
+
+// ------- API UPDATE
+// ------- API DELETE
 
 // ===================== [ AUTENTICAÇÃO ] =====================
 
@@ -2283,7 +2409,7 @@ async function register(req, res) {
 
 async function updateConfig(req, res) {
     const userID = req.params.id;
-    const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid } = req.body;
+    const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid, cfg_cs } = req.body;
 
     // Valores válidos para posicoes (incluindo rifle e lurker)
     const valoresValidosPosicoes = ['capitao', 'awp', 'entry', 'support', 'igl', 'sub', 'coach', 'rifle', 'lurker'];
@@ -2345,6 +2471,19 @@ async function updateConfig(req, res) {
             typeof faceitid === 'string' &&
             faceitid.trim() !== '') {
             faceitidValido = true;
+        }
+
+        // cfg_cs: se enviado no body, atualiza (link ou null para limpar); se não enviado, mantém o valor atual
+        let cfgCsEnviado = cfg_cs !== undefined;
+        let valorCfgCs = null;
+        if (cfgCsEnviado) {
+            if (cfg_cs !== null &&
+                cfg_cs !== 'null' &&
+                typeof cfg_cs === 'string' &&
+                cfg_cs.trim() !== '') {
+                valorCfgCs = cfg_cs.trim();
+            }
+            // senão valorCfgCs permanece null (limpa a coluna)
         }
 
         // Monta a query dinamicamente - só atualiza os campos que têm valores válidos
@@ -2409,6 +2548,11 @@ async function updateConfig(req, res) {
         if (faceitidValido) {
             camposUpdate.push('faceitid');
             valoresUpdate.push(faceitid.trim());
+        }
+
+        if (cfgCsEnviado) {
+            camposUpdate.push('cfg_cs');
+            valoresUpdate.push(valorCfgCs);
         }
 
         // Só atualiza a tabela usuarios se houver campos para atualizar
@@ -3163,7 +3307,7 @@ async function atualizarTime(req, res) {
 
         if (noticia) {
             await conexao.execute('DELETE FROM noticias_time WHERE time_id = ?', [id]);
-            await conexao.execute('INSERT INTO noticias_time (time_id, titulo, conteudo) VALUES (?, ?, ?)', [id, noticia[0].titulo, noticia[0].conteudo]);
+            await conexao.execute('INSERT INTO noticias_time (time_id, titulo, conteudo) VALUES (?, ?, ?)', [id, noticia[0].titulo ?? null, noticia[0].conteudo ?? null]);
         }
 
         if (games) {
@@ -9919,5 +10063,5 @@ module.exports = {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, atualizarNotificacao, deletarNotificacao
 };

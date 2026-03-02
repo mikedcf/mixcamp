@@ -79,7 +79,7 @@
                     <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
                     <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
                     <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
@@ -96,14 +96,14 @@
     </header>
 
     <main>
-        <!-- Hero Section -->
+        <!-- 1. Hero -->
         <section class="hero-section">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    <span class="gradient-text">Seja um Apoiador</span>
-                    <br>do MIXCAMP
+                    <span class="gradient-text">Organize seu campeonato</span>
+                    <br>no MIXCAMP
                 </h1>
-                <p class="hero-subtitle">Ajude-nos a construir a maior comunidade de e-sports do Brasil</p>
+                <p class="hero-subtitle">Plataforma completa de CS2: da inscrição ao chaveamento e à premiação. Crie seu evento, gerencie as partidas e deixe a comunidade encontrar você.</p>
                 <div class="hero-stats">
                     <div class="stat-item">
                         <span class="stat-number">10K+</span>
@@ -118,6 +118,11 @@
                         <span class="stat-label">Torneios</span>
                     </div>
                 </div>
+                <div class="hero-ctas">
+                    <a href="gerenciar_campeonato.html" class="cta-btn primary">Criar campeonato</a>
+                    <a href="https://discord.gg/nCnDFagmpe" target="_blank" rel="noopener noreferrer" class="cta-btn secondary">Falar com suporte</a>
+                </div>
+                <p class="hero-aviso-inicio">Para iniciar, é necessário solicitar o suporte do MixCamp.</p>
             </div>
             <div class="hero-image">
                 <div class="floating-cards">
@@ -131,313 +136,258 @@
                     </div>
                     <div class="floating-card card-3">
                         <i class="fa fa-gamepad"></i>
-                        <span>E-Sports</span>
+                        <span>CS2</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Benefícios Section -->
+        <!-- 2. Para organizadores -->
         <section class="beneficios-section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Por que Apoiar o MIXCAMP?</h2>
-                    <p class="section-subtitle">Descubra os benefícios exclusivos para nossos apoiadores</p>
+                    <h2 class="section-title">Para organizadores</h2>
+                    <p class="section-subtitle">Use a infraestrutura do MIXCAMP para criar, divulgar e gerenciar seu campeonato de ponta a ponta.</p>
                 </div>
 
                 <div class="beneficios-grid">
-                    <div class="beneficio-card">
+                    <article class="beneficio-card">
                         <div class="beneficio-icon">
-                            <i class="fa fa-crown"></i>
+                            <i class="fa fa-calendar-plus"></i>
                         </div>
-                        <h3>Status VIP</h3>
-                        <p>Destaque-se na comunidade com badges exclusivos e status especial</p>
+                        <h3>Eventos no site</h3>
+                        <p>Crie seu campeonato como evento. <strong class="beneficio-destaque">Jogadores e times veem e se inscrevem</strong> direto na plataforma.</p>
                         <ul class="beneficio-list">
-                            <li><i class="fa fa-check"></i> Badge dourado no perfil</li>
-                            <li><i class="fa fa-check"></i> Nome destacado em chats</li>
-                            <li><i class="fa fa-check"></i> Acesso prioritário a eventos</li>
+                            <li><i class="fa fa-check"></i> Eventos visíveis para toda a comunidade</li>
+                            <li><i class="fa fa-check"></i> Inscrições centralizadas</li>
+                            <li><i class="fa fa-check"></i> Controle de datas e etapas</li>
                         </ul>
-                    </div>
+                    </article>
 
-                    <div class="beneficio-card">
+                    <article class="beneficio-card">
                         <div class="beneficio-icon">
-                            <i class="fa fa-gift"></i>
+                            <i class="fa fa-sitemap"></i>
                         </div>
-                        <h3>Recompensas Exclusivas</h3>
-                        <p>Ganhe itens especiais e recompensas únicas por apoiar nossa plataforma</p>
+                        <h3>Chaveamento e vetos</h3>
+                        <p><strong class="beneficio-destaque">Três tipos de chave</strong> e sistema de vetos integrado para organizar as partidas do jeito que você precisa.</p>
                         <ul class="beneficio-list">
-                            <li><i class="fa fa-check"></i> Skins exclusivas</li>
-                            <li><i class="fa fa-check"></i> Emotes personalizados</li>
-                            <li><i class="fa fa-check"></i> Descontos em produtos</li>
+                            <li><i class="fa fa-check"></i> 3 formatos de chave disponíveis</li>
+                            <li><i class="fa fa-check"></i> Sistema de vetos</li>
+                            <li><i class="fa fa-check"></i> Da fase de grupos à premiação</li>
                         </ul>
-                    </div>
+                    </article>
 
-                    <div class="beneficio-card">
+                    <article class="beneficio-card">
                         <div class="beneficio-icon">
-                            <i class="fa fa-star"></i>
+                            <i class="fa fa-chart-line"></i>
                         </div>
-                        <h3>Conteúdo Premium</h3>
-                        <p>Acesso antecipado a novos recursos e conteúdo exclusivo</p>
+                        <h3>Painel e dashboard</h3>
+                        <p><strong class="beneficio-destaque">Todos os seus campeonatos</strong> em um lugar, com dashboard e estatísticas para acompanhar o evento.</p>
                         <ul class="beneficio-list">
-                            <li><i class="fa fa-check"></i> Beta testing de features</li>
-                            <li><i class="fa fa-check"></i> Vídeos exclusivos</li>
-                            <li><i class="fa fa-check"></i> Webinars especiais</li>
+                            <li><i class="fa fa-check"></i> Lista de campeonatos criados</li>
+                            <li><i class="fa fa-check"></i> Dashboard com métricas</li>
+                            <li><i class="fa fa-check"></i> Estatísticas por etapa e por time</li>
                         </ul>
-                    </div>
+                    </article>
 
-                    <div class="beneficio-card">
+                    <article class="beneficio-card">
                         <div class="beneficio-icon">
-                            <i class="fa fa-heart"></i>
+                            <i class="fa fa-bullhorn"></i>
                         </div>
-                        <h3>Suporte Direto</h3>
-                        <p>Canal direto com nossa equipe para suporte prioritário</p>
+                        <h3>Divulgação</h3>
+                        <p>Destaque seu campeonato na Home ou na página de Campeonato. <strong class="beneficio-destaque">Venda avulsa</strong> de espaços (ex.: destaque por 7 dias).</p>
                         <ul class="beneficio-list">
-                            <li><i class="fa fa-check"></i> Suporte 24/7</li>
-                            <li><i class="fa fa-check"></i> Atendimento personalizado</li>
-                            <li><i class="fa fa-check"></i> Resolução rápida</li>
+                            <li><i class="fa fa-check"></i> Slider na Home</li>
+                            <li><i class="fa fa-check"></i> Destaques na página Campeonato</li>
+                            <li><i class="fa fa-check"></i> Pacotes e preços configuráveis no painel</li>
                         </ul>
-                    </div>
+                    </article>
+                </div>
+
+                <div class="aviso-inicio-box">
+                    <p class="aviso-inicio-titulo"><i class="fa fa-arrow-right"></i> Como começar</p>
+                    <p>Para criar e gerenciar campeonatos na plataforma, é necessário <strong>solicitar o suporte do MixCamp</strong>. <a href="https://discord.gg/nCnDFagmpe" target="_blank" rel="noopener noreferrer">Entre no Discord</a> para ativar sua conta de organizador e começar.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Planos Section -->
-        <section class="planos-section">
+        <!-- 3. Recursos principais -->
+        <section class="beneficios-section recursos-section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Escolha seu Plano</h2>
-                    <p class="section-subtitle">Planos flexíveis para todos os tipos de apoiadores</p>
+                    <h2 class="section-title">Recursos principais</h2>
+                    <p class="section-subtitle">Tudo que você precisa para rodar um campeonato profissional de CS2.</p>
                 </div>
 
-                <div class="planos-grid">
-                    <!-- Plano Bronze -->
-                    <div class="plano-card bronze">
-                        <div class="plano-header">
-                            <div class="plano-icon">
-                                <i class="fa fa-medal"></i>
-                            </div>
-                            <h3>Bronze</h3>
-                            <div class="plano-preco">
-                                <span class="moeda">R$</span>
-                                <span class="valor">19</span>
-                                <span class="periodo">/mês</span>
-                            </div>
+                <div class="beneficios-grid">
+                    <article class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-project-diagram"></i>
                         </div>
-                        <div class="plano-beneficios">
-                            <ul>
-                                <li><i class="fa fa-check"></i> Badge Bronze no perfil</li>
-                                <li><i class="fa fa-check"></i> 5% de desconto em produtos</li>
-                                <li><i class="fa fa-check"></i> Acesso a conteúdo básico</li>
-                                <li><i class="fa fa-check"></i> Suporte por email</li>
-                                <li><i class="fa fa-check"></i> 1 skin exclusiva por mês</li>
-                            </ul>
-                        </div>
-                        <button class="plano-btn bronze-btn">Seja Bronze</button>
-                    </div>
+                        <h3>Chaveamento</h3>
+                        <p>Três tipos de chave para montar sua tabela. Configuração e regras definidas por você no painel.</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Formatos flexíveis</li>
+                            <li><i class="fa fa-check"></i> Atualização em tempo real</li>
+                        </ul>
+                    </article>
 
-                    <!-- Plano Prata -->
-                    <div class="plano-card prata featured">
-                        <div class="plano-badge">Mais Popular</div>
-                        <div class="plano-header">
-                            <div class="plano-icon">
-                                <i class="fa fa-medal"></i>
-                            </div>
-                            <h3>Prata</h3>
-                            <div class="plano-preco">
-                                <span class="moeda">R$</span>
-                                <span class="valor">39</span>
-                                <span class="periodo">/mês</span>
-                            </div>
+                    <article class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-ban"></i>
                         </div>
-                        <div class="plano-beneficios">
-                            <ul>
-                                <li><i class="fa fa-check"></i> Badge Prata no perfil</li>
-                                <li><i class="fa fa-check"></i> 10% de desconto em produtos</li>
-                                <li><i class="fa fa-check"></i> Acesso a conteúdo premium</li>
-                                <li><i class="fa fa-check"></i> Suporte prioritário</li>
-                                <li><i class="fa fa-check"></i> 3 skins exclusivas por mês</li>
-                                <li><i class="fa fa-check"></i> Emotes personalizados</li>
-                                <li><i class="fa fa-check"></i> Beta testing de features</li>
-                            </ul>
-                        </div>
-                        <button class="plano-btn prata-btn">Seja Prata</button>
-                    </div>
+                        <h3>Sistema de vetos</h3>
+                        <p>Vetos de mapa e lado integrados ao fluxo das partidas. Menos trabalho manual, mais controle.</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Vetos por partida</li>
+                            <li><i class="fa fa-check"></i> Regras configuráveis no painel</li>
+                        </ul>
+                    </article>
 
-                    <!-- Plano Ouro -->
-                    <div class="plano-card ouro">
-                        <div class="plano-header">
-                            <div class="plano-icon">
-                                <i class="fa fa-crown"></i>
-                            </div>
-                            <h3>Ouro</h3>
-                            <div class="plano-preco">
-                                <span class="moeda">R$</span>
-                                <span class="valor">79</span>
-                                <span class="periodo">/mês</span>
-                            </div>
+                    <article class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-pen-fancy"></i>
                         </div>
-                        <div class="plano-beneficios">
-                            <ul>
-                                <li><i class="fa fa-check"></i> Badge Ouro no perfil</li>
-                                <li><i class="fa fa-check"></i> 20% de desconto em produtos</li>
-                                <li><i class="fa fa-check"></i> Acesso total ao conteúdo</li>
-                                <li><i class="fa fa-check"></i> Suporte VIP 24/7</li>
-                                <li><i class="fa fa-check"></i> 5 skins exclusivas por mês</li>
-                                <li><i class="fa fa-check"></i> Emotes e animações exclusivas</li>
-                                <li><i class="fa fa-check"></i> Acesso antecipado a tudo</li>
-                                <li><i class="fa fa-check"></i> Webinars exclusivos</li>
-                            </ul>
+                        <h3>Inscrições</h3>
+                        <p>Times e jogadores se inscrevem na plataforma. Você aprova, lista e gerencia as inscrições no dashboard.</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Inscrições centralizadas</li>
+                            <li><i class="fa fa-check"></i> Limites e prazos configuráveis</li>
+                        </ul>
+                    </article>
+
+                    <article class="beneficio-card">
+                        <div class="beneficio-icon">
+                            <i class="fa fa-tachometer-alt"></i>
                         </div>
-                        <button class="plano-btn ouro-btn">Seja Ouro</button>
-                    </div>
+                        <h3>Dashboard</h3>
+                        <p>Visão geral do campeonato: inscrições, partidas, resultados e estatísticas. Tudo configurável no painel do organizador.</p>
+                        <ul class="beneficio-list">
+                            <li><i class="fa fa-check"></i> Métricas em tempo real</li>
+                            <li><i class="fa fa-check"></i> Dados exportáveis</li>
+                        </ul>
+                    </article>
                 </div>
             </div>
         </section>
 
-        <!-- Depoimentos Section -->
-        <section class="depoimentos-section">
+        <!-- 4. Divulgação e destaques -->
+        <section class="beneficios-section divulgacao-section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">O que nossos Apoiadores Dizem</h2>
-                    <p class="section-subtitle">Histórias reais de quem já faz parte da nossa comunidade</p>
+                    <h2 class="section-title">Divulgação e destaques</h2>
+                    <p class="section-subtitle">Dê visibilidade ao seu campeonato. Venda avulsa de destaque na Home ou na página de Campeonato.</p>
                 </div>
 
-                <div class="depoimentos-grid">
-                    <div class="depoimento-card">
-                        <div class="depoimento-content">
-                            <div class="depoimento-stars">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                            </div>
-                            <p>"Ser apoiador do MIXCAMP mudou minha experiência completamente. As recompensas são incríveis e a comunidade é fantástica!"</p>
-                        </div>
-                        <div class="depoimento-autor">
-                            <img src="../img/mixcamp.png" alt="João Silva" class="autor-avatar">
-                            <div class="autor-info">
-                                <h4>João Silva</h4>
-                                <span>Apoiador Prata</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="depoimento-card">
-                        <div class="depoimento-content">
-                            <div class="depoimento-stars">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                            </div>
-                            <p>"Vale muito a pena! O suporte é excelente e as skins exclusivas são demais. Recomendo para todos os jogadores!"</p>
-                        </div>
-                        <div class="depoimento-autor">
-                            <img src="../img/mixcamp.png" alt="Maria Santos" class="autor-avatar">
-                            <div class="autor-info">
-                                <h4>Maria Santos</h4>
-                                <span>Apoiador Ouro</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="depoimento-card">
-                        <div class="depoimento-content">
-                            <div class="depoimento-stars">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                            </div>
-                            <p>"A melhor decisão que tomei! O conteúdo premium é de alta qualidade e a equipe sempre está disposta a ajudar."</p>
-                        </div>
-                        <div class="depoimento-autor">
-                            <img src="../img/mixcamp.png" alt="Pedro Costa" class="autor-avatar">
-                            <div class="autor-info">
-                                <h4>Pedro Costa</h4>
-                                <span>Apoiador Bronze</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="aviso-destaque divulgacao-box">
+                    <p class="aviso-destaque-titulo"><i class="fa fa-ad"></i> Venda avulsa</p>
+                    <p>Você contrata <strong>destaques por período</strong> (ex.: destaque na Home por 7 dias, ou na página Campeonato por 15 dias). Valores, pacotes e duração são <strong>configuráveis no painel do organizador</strong> e pelo admin.</p>
+                    <ul class="beneficio-list">
+                        <li><i class="fa fa-check"></i> Slider na Home</li>
+                        <li><i class="fa fa-check"></i> Destaque na página Campeonato</li>
+                        <li><i class="fa fa-check"></i> Preços e prazos definidos no painel</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <!-- CTA Section -->
+        <!-- 5. Financeiro transparente -->
+        <section class="beneficios-section financeiro-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Financeiro transparente</h2>
+                    <p class="section-subtitle">Sem mensalidade por enquanto. Cobrança apenas sobre o resultado do campeonato.</p>
+                </div>
+
+                <div class="aviso-pagamento">
+                    <p class="aviso-pagamento-titulo"><i class="fa fa-wallet"></i> Como funciona</p>
+                    <p>Os pagamentos do campeonato são feitos ao MIXCAMP. Ao <strong>encerrar o campeonato</strong>, o valor é distribuído: <strong>premiação aos times</strong>, parte do organizador e, quando aplicável, taxa do MIXCAMP. A <strong>cobrança inicial é apenas % sobre a premiação</strong> ao final do evento. Percentuais e regras de divisão são <strong>configuráveis no painel/admin</strong>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Troféus oficiais MixCamp -->
+        <section class="beneficios-section trofeus-section">
+            <div class="container">
+                <div class="aviso-oficial">
+                    <p class="aviso-oficial-titulo"><i class="fa fa-trophy"></i> Troféus oficiais MixCamp</p>
+                    <p><strong>Somente campeonatos oficiais do MIXCAMP</strong> concedem troféus no perfil dos times e dos jogadores. Campeonatos criados por organizadores <strong>não geram troféus</strong> no perfil.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. FAQ -->
+        <section class="faq-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Perguntas frequentes</h2>
+                    <p class="section-subtitle">Dúvidas sobre pagamento, taxa, suporte e campeonatos oficiais</p>
+                </div>
+
+                <div class="faq-grid">
+                    <article class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Como funciona o pagamento e a premiação?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Os pagamentos são feitos ao MIXCAMP. Ao encerrar o campeonato, o valor é <strong>distribuído aos times</strong> (premiação), ao organizador e, quando aplicável, taxa do MIXCAMP. A cobrança inicial é <strong>apenas % sobre a premiação</strong> no final do evento. Percentuais e regras são configuráveis no painel/admin.</p>
+                        </div>
+                    </article>
+
+                    <article class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Qual a taxa do MIXCAMP?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>A taxa e a forma de cobrança são <strong>configuráveis no painel do organizador e pelo admin</strong>. Por enquanto não há planos mensais; a cobrança é sobre o resultado do campeonato (ex.: % sobre a premiação ao final).</p>
+                        </div>
+                    </article>
+
+                    <article class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Campeonatos de organizadores dão troféu no perfil?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Não.</strong> Apenas <strong>campeonatos oficiais do MIXCAMP</strong> concedem troféus no perfil de times e jogadores. Campeonatos criados por organizadores não geram troféus.</p>
+                        </div>
+                    </article>
+
+                    <article class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>Como falo com o suporte?</h3>
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Use o botão <strong>Falar com suporte</strong> ou <strong>Entrar em contato</strong> nesta página para abrir o <a href="https://discord.gg/nCnDFagmpe" target="_blank" rel="noopener noreferrer">Discord do MixCamp</a>. Para dúvidas sobre valores e configuração de destaque, o suporte pode orientar conforme o que está definido no painel/admin.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. CTA final -->
         <section class="cta-section">
             <div class="container">
                 <div class="cta-content">
-                    <h2>Pronto para se Juntar a Nós?</h2>
-                    <p>Faça parte da maior comunidade de e-sports do Brasil e ajude-nos a crescer ainda mais!</p>
+                    <h2>Pronto para criar seu campeonato?</h2>
+                    <p>Use a infraestrutura do MIXCAMP: inscrição, chaveamento, premiação e divulgação. Pagamentos centralizados e premiação repassada aos times ao encerrar.</p>
                     <div class="cta-buttons">
-                        <button class="cta-btn primary">Seja um Apoiador</button>
-                        <button class="cta-btn secondary">Saiba Mais</button>
+                        <a href="gerenciar_campeonato.html" class="cta-btn primary">Criar campeonato</a>
+                        <a href="https://discord.gg/nCnDFagmpe" target="_blank" rel="noopener noreferrer" class="cta-btn secondary">Entrar em contato</a>
                     </div>
                 </div>
                 <div class="cta-image">
                     <div class="cta-stats">
                         <div class="cta-stat">
-                            <span class="cta-number">1.2K+</span>
-                            <span class="cta-label">Apoiadores Ativos</span>
+                            <span class="cta-number">50+</span>
+                            <span class="cta-label">Torneios na plataforma</span>
                         </div>
                         <div class="cta-stat">
                             <span class="cta-number">R$ 50K+</span>
-                            <span class="cta-label">Em Premiações</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section class="faq-section">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Perguntas Frequentes</h2>
-                    <p class="section-subtitle">Tire suas dúvidas sobre nossos planos de apoio</p>
-                </div>
-
-                <div class="faq-grid">
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFAQ(this)">
-                            <h3>Como funciona o cancelamento?</h3>
-                            <i class="fa fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Você pode cancelar sua assinatura a qualquer momento. O acesso aos benefícios permanece até o final do período pago.</p>
-                        </div>
-                    </div>
-
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFAQ(this)">
-                            <h3>Posso trocar de plano?</h3>
-                            <i class="fa fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças são aplicadas no próximo ciclo de cobrança.</p>
-                        </div>
-                    </div>
-
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFAQ(this)">
-                            <h3>As recompensas são cumulativas?</h3>
-                            <i class="fa fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Sim! Quanto mais tempo você for apoiador, mais recompensas exclusivas você receberá. Temos um sistema de fidelidade especial.</p>
-                        </div>
-                    </div>
-
-                    <div class="faq-item">
-                        <div class="faq-question" onclick="toggleFAQ(this)">
-                            <h3>Há limite de apoiadores?</h3>
-                            <i class="fa fa-chevron-down"></i>
-                        </div>
-                        <div class="faq-answer">
-                            <p>Não há limite! Queremos que o máximo de pessoas possível faça parte da nossa comunidade e ajude-nos a crescer.</p>
+                            <span class="cta-label">Em premiações distribuídas</span>
                         </div>
                     </div>
                 </div>
@@ -480,7 +430,8 @@
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
-                        <a href="">
+                        <a href="https://discord.gg/nCnDFagmpe" target="_blank">
+                            
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -632,6 +583,63 @@
 
     <!-- Notificação apenas mensagem -->
     <div class="notification-container" id="notificationContainer"></div>
+
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 id="confirmModalTitle">Confirmação</h3>
+                <span class="confirm-modal-close" onclick="closeConfirmModal(false)">&times;</span>
+            </div>
+            <div class="confirm-modal-body">
+                <p id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-confirm-ok" onclick="closeConfirmModal(true)">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalNotificacoes" class="modal-notificacoes-overlay" aria-hidden="true">
+        <div class="modal-notificacoes-box">
+            <header class="modal-notificacoes-header">
+                <h2 class="modal-notificacoes-title">Notificações</h2>
+                <button type="button" class="modal-notificacoes-close" id="modalNotificacoesClose" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="modal-notificacoes-tabs">
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
+            </div>
+            <div class="modal-notificacoes-body">
+                <!-- Vista: lista de notificações (preenchida por JS com filtrarNotificacoesUssuario) -->
+                <div class="modal-notificacoes-list" id="modalNotificacoesList">
+                    <!-- itens gerados por renderizarListaNotificacoes() -->
+                </div>
+                <!-- Vista: mensagem expandida (oculta por padrão) -->
+                <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                    <div class="notificacao-detail-content">
+                        <h3 class="notificacao-detail-title" id="notificacaoDetailTitle">Notificação</h3>
+                        <div class="notificacao-detail-meta">
+                            <span class="notificacao-detail-status" id="notificacaoDetailStatus"></span>
+                            <span class="notificacao-detail-hora" id="notificacaoDetailHora"></span>
+                        </div>
+                        <p class="notificacao-detail-message" id="notificacaoDetailMessage"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="../js/utils.js"></script>
     <script src="../js/apoiadores.js"></script>

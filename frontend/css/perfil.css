@@ -5,6 +5,11 @@
 */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
 
+:root {
+    --perfil-font-title: 'Orbitron', sans-serif;
+    --perfil-font-body: 'Rajdhani', sans-serif;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -12,7 +17,7 @@
     text-decoration: none;
     list-style: none;
     color: #ffffff;
-    font-family: "Oswald", sans-serif;
+    font-family: var(--perfil-font-body);
     font-optical-sizing: auto;
     font-weight: bold;
     font-style: normal;
@@ -25,6 +30,7 @@ html {
 }
 
 body {
+    font-family: var(--perfil-font-body);
     background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 50%, #16213e 100%);
     background-attachment: fixed;
     color: #ffffff;
@@ -37,8 +43,16 @@ body {
     padding-top: clamp(75px, 11vh, 105px);
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--perfil-font-title);
+}
+
 /* Header - sempre fixo no topo e centralizado (só anima width = sem balanço) */
-header,
+/* Use apenas .header para não afetar o <header> do modal de notificações (.modal-notificacoes-header) */
+.header,
+.header * {
+    font-family: "Oswald", sans-serif;
+}
 .header {
     position: fixed !important;
     top: 0 !important;
@@ -65,7 +79,6 @@ header,
 }
 
 /* Ao rolar: header ocupa de ponta a ponta (só width muda, centro mantido) */
-header.scrolled,
 .header.scrolled {
     width: 100% !important;
     max-width: none;
@@ -907,13 +920,13 @@ header.scrolled,
     object-fit: contain;
 }
 
-.supporter-icon {
+.apoiador-icon {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.supporter-icon i {
+.apoiador-icon i {
     font-size: 14px;
     color: #FFD700; /* dourado para destacar apoiador */
 }
@@ -5501,6 +5514,30 @@ header.scrolled,
     transform: none;
 }
 
+/* Scrollbar do chat: fundo (track) cinza escuro - !important para sobrescrever padrão */
+.chat-conversations-list::-webkit-scrollbar,
+.chat-messages-list::-webkit-scrollbar {
+    width: 8px;
+}
+.chat-conversations-list::-webkit-scrollbar-track,
+.chat-messages-list::-webkit-scrollbar-track {
+    background: #1a1a24 !important;
+}
+.chat-conversations-list::-webkit-scrollbar-thumb,
+.chat-messages-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 53, 0.4);
+    border-radius: 4px;
+}
+.chat-conversations-list::-webkit-scrollbar-thumb:hover,
+.chat-messages-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 107, 53, 0.6);
+}
+.chat-conversations-list,
+.chat-messages-list {
+    scrollbar-color: rgba(255, 107, 53, 0.4) #1a1a24;
+    scrollbar-width: thin;
+}
+
 .content-tab .tab-count {
     display: inline-flex;
     align-items: center;
@@ -6751,7 +6788,10 @@ header.scrolled,
 }
 
 /* ===== MODAL DE MEDALHAS ===== */
-/* Blur no body quando modal está aberto */
+/* Blur no body quando modal está aberto; html também para evitar scroll duplo */
+html:has(body.modal-open) {
+    overflow: hidden;
+}
 body.modal-open {
     overflow: hidden;
 }

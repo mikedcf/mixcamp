@@ -1,8 +1,51 @@
 /* =================================
+   BASE GLOBAL - Um único scroll em todas as páginas
+   O html não rola; só o body tem scroll vertical. Body com altura fixa (100vh)
+   para o conteúdo poder rolar dentro dele até o final.
+   ================================= */
+html {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    height: 100%;
+}
+body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
+    height: 100vh; /* Altura fixa = viewport; conteúdo rola DENTRO do body até o final */
+    box-sizing: border-box;
+}
+
+/* Scrollbar global: fundo (track) escuro em todas as páginas */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    width: 10px;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+    background: #1a1a24 !important;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 53, 0.45);
+    border-radius: 5px;
+}
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 107, 53, 0.65);
+}
+html,
+body {
+    scrollbar-color: rgba(255, 107, 53, 0.45) #1a1a24;
+    scrollbar-width: thin;
+}
+
+/* =================================
 ========= MODAL PROFISSIONAL =========
 ================================= */
 
-/* Modal base */
+/* Evitar scroll duplo: overlay do modal não deve ter scroll próprio;
+   o scroll fica apenas no .modal-content-profissional (interno). */
 .modal {
     display: none;
     position: fixed;
@@ -13,7 +56,7 @@
     height: 100%;
     background: rgba(15, 15, 15, 0.85);
     backdrop-filter: blur(6px);
-    overflow: auto;
+    overflow: hidden;
     animation: fadeIn 0.3s ease;
 }
 

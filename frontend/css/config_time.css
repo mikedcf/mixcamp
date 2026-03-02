@@ -4,6 +4,14 @@
 ============================================================================
 */
 
+/* Tamanho recomendado ao lado do label (ex: banner) */
+.label-recomendado {
+    font-size: 0.85em;
+    font-weight: normal;
+    opacity: 0.85;
+    color: rgba(255, 255, 255, 0.7);
+}
+
 /* Seção de membros */
 .secao-membros {
     background: rgba(0, 150, 255, 0.05);

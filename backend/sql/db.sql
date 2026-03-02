@@ -31,12 +31,12 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
         'simples'
     ) DEFAULT NULL,
     `cores_perfil` VARCHAR(50) DEFAULT '#ffffff80',
+    `cfg_cs` VARCHAR(255),
     FOREIGN KEY (`time_id`) REFERENCES `times` (`id`)
 );
 
 
-ALTER TABLE usuarios
-CHANGE COLUMN posicao posicoes VARCHAR(255) DEFAULT NULL;
+
 
 -- Tabela para armazenar os links de redes sociais dos usuários
 CREATE TABLE IF NOT EXISTS `redes_sociais` (
@@ -762,4 +762,17 @@ CREATE TABLE IF NOT EXISTS email_verificacao (
 );
 
 CREATE INDEX idx_email ON email_verificacao(email);
-    
+
+
+
+
+
+CREATE TABLE notificacoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    texto TEXT NOT NULL,
+    lida BOOLEAN DEFAULT FALSE,
+    criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);

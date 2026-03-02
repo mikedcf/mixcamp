@@ -109,9 +109,9 @@ async function verificarDadosRegistro(dados){
         if(verifypassword){
             if(verifyusername){
                 listdados.push({username, email, password, confirmPassword});
-                enviarCodigoEmail(email);
+                // enviarCodigoEmail(email);
                 
-                // RegistrarUsuario();
+                RegistrarUsuario();
                 return;
             }
             else{

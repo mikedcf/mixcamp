@@ -206,7 +206,7 @@ async function verificar_auth() {
             // Usar avatar padrão se não houver avatar do usuário
             document.getElementById("ftPerfil").src = "img/user.png";
         }
-        menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
+        menuTimeLink.href = `team.html?id=${perfil_data.usuario.time_id}`;
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }

@@ -11,6 +11,9 @@ let currentProfileIndex = 0;
 let weaponsData = {}; // Armazenar dados de armas
 
 
+
+
+
 // =============================================================
 // ====================== [ autenticação e logout ] ======================
 
@@ -590,7 +593,7 @@ async function atualizarDadosPerfil() {
     filtroMedalhas()
     estatisticasJogador()
     buscarHistoricoTimes()
-    inserirReels(perfilData.destaques);
+    inserirReels(perfilData.destaques, perfilData.usuario.id);
 
 
 }
@@ -863,11 +866,13 @@ async function estatisticasJogador() {
 }
 
 
-async function inserirReels(reels){
+async function inserirReels(reels, idUsuarioDoPerfil){
 
-    document.getElementById('reelsCount').textContent = reels.length;
+    document.getElementById('reelsCount').textContent = (reels && reels.length) ? reels.length : 0;
 
-    if(reels.length == 0){
+    if(!reels || reels.length === 0){
+        const c = document.getElementById('reelsContainer');
+        if (c) c.innerHTML = '';
         return;
     }
 
@@ -878,17 +883,29 @@ async function inserirReels(reels){
 
         const reelItem = document.createElement('div');
         reelItem.className = 'reel-item';
+        const videoUrl = (reel && reel.video_url) ? reel.video_url : reel;
         reelItem.innerHTML = `
-            <button class="reel-delete-btn" onclick="deletarReel(${index}, '${reel.video_url}')" title="Deletar vídeo">
+            <button type="button" class="reel-delete-btn" title="Deletar vídeo" aria-label="Deletar vídeo">
                 <i class="fas fa-trash"></i>
             </button>
             <div class="reel-thumb">
-                <video src="${reel.video_url}" muted preload="metadata" class="reel-video"></video>
+                <video src="${videoUrl}" muted preload="metadata" class="reel-video"></video>
                 <div class="reel-overlay">
                     <i class="fas fa-play"></i>
                 </div>
             </div>
         `;
+
+        const deleteBtn = reelItem.querySelector('.reel-delete-btn');
+        if (deleteBtn && idUsuarioDoPerfil != null) {
+            deleteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                deletarReel(videoUrl, idUsuarioDoPerfil);
+            });
+        } else if (deleteBtn) {
+            deleteBtn.style.display = 'none';
+        }
         
         // Adicionar evento de clique para reproduzir o vídeo
         const video = reelItem.querySelector('.reel-video');
@@ -938,6 +955,29 @@ async function inserirReels(reels){
                 togglePlay(e);
             }
         });
+
+        // Passar o mouse em cima: toca o vídeo (mudo). Tirar o mouse: pausa.
+        function playOnHover() {
+            document.querySelectorAll('.reel-video').forEach(otherVideo => {
+                if (otherVideo !== video && !otherVideo.paused) {
+                    otherVideo.pause();
+                    otherVideo.muted = true;
+                    const otherOverlay = otherVideo.closest('.reel-item')?.querySelector('.reel-overlay');
+                    if (otherOverlay) otherOverlay.style.opacity = '1';
+                }
+            });
+            video.muted = true;
+            video.play().then(() => {
+                overlay.style.opacity = '0';
+            }).catch(() => {});
+        }
+        function pauseOnLeave() {
+            video.pause();
+            overlay.style.opacity = '1';
+            video.muted = true;
+        }
+        reelItem.addEventListener('mouseenter', playOnHover);
+        reelItem.addEventListener('mouseleave', pauseOnLeave);
         
         // Quando o vídeo terminar, mostrar overlay novamente
         video.addEventListener('ended', () => {
@@ -963,10 +1003,16 @@ async function inserirReels(reels){
 }
 
 // ===== DELETAR REEL =====
-async function deletarReel(index, videoUrl) {
-    if (!confirm('Tem certeza que deseja deletar este vídeo?')) {
+async function deletarReel(videoUrl, profileUserId) {
+    // if (!confirm('Tem certeza que deseja deletar este vídeo?')) {
+    //     return;
+    // }
+
+    const confirmado = await showConfirmModal('Tem certeza que deseja deletar este vídeo?');
+    if (!confirmado) {
         return;
     }
+
 
     try {
         const auth_dados = await autenticacao();
@@ -975,9 +1021,15 @@ async function deletarReel(index, videoUrl) {
             return;
         }
 
-        const userId = auth_dados.usuario.id;
-        const perfilData = await buscarDadosPerfil(userId);
-        
+        if (Number(auth_dados.usuario.id) !== Number(profileUserId)) {
+            showNotification('error', 'Você só pode excluir vídeos do seu próprio perfil');
+            return;
+        }
+
+        const userId = profileUserId;
+        const resultado = await buscarDadosPerfil(userId);
+        const perfilData = resultado && resultado.perfilData ? resultado.perfilData : null;
+
         if (!perfilData || !perfilData.destaques) {
             showNotification('error', 'Erro ao carregar dados do perfil');
             return;
@@ -988,6 +1040,9 @@ async function deletarReel(index, videoUrl) {
             return reel.video_url !== videoUrl;
         });
 
+        // Backend espera array de strings (URLs), não array de objetos
+        const urlsDestaques = updatedDestaques.map(d => d.video_url);
+
         // Atualizar no backend
         const response = await fetch(`${API_URL}/configuracoes/${userId}`, {
             method: 'POST',
@@ -996,15 +1051,15 @@ async function deletarReel(index, videoUrl) {
             },
             credentials: 'include',
             body: JSON.stringify({
-                destaques: updatedDestaques
+                destaques: urlsDestaques
             })
         });
 
         if (response.ok) {
             showNotification('success', 'Vídeo deletado com sucesso!');
-            // Recarregar os reels
-            const newPerfilData = await buscarDadosPerfil(userId);
-            inserirReels(newPerfilData.destaques || []);
+            const newResult = await buscarDadosPerfil(userId);
+            const newPerfilData = newResult && newResult.perfilData ? newResult.perfilData : null;
+            inserirReels((newPerfilData && newPerfilData.destaques) ? newPerfilData.destaques : [], userId);
         } else {
             const errorData = await response.json();
             showNotification('error', errorData.message || 'Erro ao deletar vídeo');
@@ -1014,6 +1069,10 @@ async function deletarReel(index, videoUrl) {
         showNotification('error', 'Erro ao deletar vídeo. Tente novamente.');
     }
 }
+
+
+
+
 
 // ===== CRIAR DASHBOARD DE DESEMPENHO COM GRÁFICOS =====
 let winsLossesChartInstance = null;
@@ -1293,80 +1352,34 @@ async function Copiarl_Link_Perfil() {
 
 function presentearPerfil() {
     // Implementar funcionalidade de presentear
-    alert('Funcionalidade de presentear em desenvolvimento!');
+    showNotification('alert', 'Funcionalidade de presentear em desenvolvimento!');
 }
 
 
-function baixarCfg() {
-    // Criar conteúdo da CFG (exemplo - você pode personalizar)
-    const cfgContent = `// Configuração CS2 - MIXCAMP
-    // Gerado automaticamente
+async function baixarCfg() {
 
-    // Sensibilidade
-    sensitivity "2.5"
-    zoom_sensitivity_ratio_mouse "1.0"
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
 
-    // Crosshair
-    cl_crosshair_drawoutline "1"
-    cl_crosshair_dynamic_maxdist_splitratio "0.35"
-    cl_crosshair_dynamic_splitalpha_innermod "1"
-    cl_crosshair_dynamic_splitalpha_outermod "0.5"
-    cl_crosshair_dynamic_splitdist "7"
-    cl_crosshair_friendly_warning "1"
-    cl_crosshair_outlinethickness "1"
-    cl_crosshair_recoil "0"
-    cl_crosshair_sniper_show_normal_inaccuracy "0"
-    cl_crosshair_sniper_width "1"
-    cl_crosshair_t "0"
-    cl_crosshairalpha "255"
-    cl_crosshaircolor "5"
-    cl_crosshaircolor_b "255"
-    cl_crosshaircolor_g "255"
-    cl_crosshaircolor_r "255"
-    cl_crosshairdot "0"
-    cl_crosshairgap "-2"
-    cl_crosshairsize "2"
-    cl_crosshairstyle "4"
-    cl_crosshairthickness "0.5"
-    cl_crosshairusealpha "1"
+    const { perfilData } = await buscarDadosPerfil(userId);
+    const cfg = perfilData.usuario.cfg_cs;
 
-    // Viewmodel
-    viewmodel_fov "68"
-    viewmodel_offset_x "2"
-    viewmodel_offset_y "2"
-    viewmodel_offset_z "-2"
-    viewmodel_presetpos "0"
+    if(!cfg) {
+        showNotification('error', 'Arquivo .cfg não encontrado');
+        return;
+    }
 
-    // Audio
-    snd_musicvolume "0"
-    snd_mixahead "0.05"
-    volume "1.0"
 
-    // Network
-    rate "786432"
-    cl_cmdrate "128"
-    cl_updaterate "128"
-    cl_interp "0"
-    cl_interp_ratio "1"
-    cl_lagcompensation "1"
+    const nomeArquivo = `Mixcamp-${perfilData.usuario.username}.cfg`;
 
-    // Outros
-    fps_max "0"
-    cl_showfps "1"
-    `;
+    const link = document.createElement('a');
+    link.href = `${cfg}?fl_attachment=${nomeArquivo}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-    // Criar blob e fazer download
-    const blob = new Blob([cfgContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mixcamp_config.cfg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    // Feedback visual (opcional)
+    showNotification('success', `Arquivo ${nomeArquivo} baixado com sucesso!`);
+    return;
 }
 
 
@@ -2041,7 +2054,8 @@ function openMedalModal(medalData) {
     modal.classList.add('active');
     modal.style.display = 'flex';
 
-    // Prevenir scroll do body
+    // Prevenir scroll da página (html + body)
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 }
 
@@ -2065,8 +2079,9 @@ function closeMedalModal() {
         }
     }
 
-    // Restaurar scroll do body
-    document.body.style.overflow = 'auto';
+    // Restaurar scroll da página (html + body)
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
 
     // Limpar iframe
     const iframeEl = document.getElementById('medalModalIframe');
@@ -2720,7 +2735,7 @@ async function adicionarVideo() {
             }
             
             // Mostrar notificação de upload em progresso
-            showNotification('info', 'Fazendo upload do vídeo...', 0);
+            showNotification('info', 'Fazendo upload do vídeo... Aguarde!', 1500);
             
             try {
                 // Criar FormData para enviar o arquivo
@@ -3785,6 +3800,7 @@ function toggleMobileMenu() {
         mobileMenu.classList.toggle('active', isOpen);
         overlay.classList.toggle('active', isOpen);
         hamburger.setAttribute('aria-expanded', isOpen);
+        document.documentElement.style.overflow = isOpen ? 'hidden' : '';
         body.style.overflow = isOpen ? 'hidden' : '';
     }
 }

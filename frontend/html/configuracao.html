@@ -79,16 +79,13 @@
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
-                            Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
-                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
-                            id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
@@ -270,6 +267,23 @@
             </div>
         </section>
 
+        <!-- SECTION: Arquivo de Config (.cfg) -->
+        <section class="secao">
+            <h2><i class="fas fa-file-code"></i> Arquivo de Configuração (.cfg)</h2>
+            <p>Envie seu arquivo de configuração do jogo (.cfg) para armazenar no seu perfil.</p>
+
+            <label for="inputCfg"><i class="fas fa-upload"></i> Selecionar arquivo .cfg</label>
+            <div class="input-file">
+                <input type="file" id="inputCfg" accept=".cfg">
+            </div>
+
+            <button type="button" class="btn-upload-cfg" onclick="uploadCfgFile()">
+                <i class="fas fa-cloud-upload-alt"></i> Enviar arquivo .cfg
+            </button>
+
+            <small id="cfgUploadStatus" class="cfg-status-text"></small>
+        </section>
+
 
         <!-- Botão Salvar -->
         <section class="secao-bu salvar">
@@ -280,53 +294,77 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>MIXCAMP</h3>
-                    <p>O melhor campeonato de CS2 da comunidade brasileira.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-discord"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Links Rápidos</h4>
+    <footer>
+        <div class="footer-container">
+            <div class="text-redes">
+                <h3 class="text-redes-title">Redes Sociais</h3>
+                <div class="icons">
                     <ul>
-                        <li><a href="campeonato.html">Campeonato</a></li>
-                        <li><a href="times.html">Times</a></li>
-                        <li><a href="noticias.html">Notícias</a></li>
-                        <li><a href="apoiadores.html">Apoiadores</a></li>
+                        <a href="">
+                            <li>
+                                <img src="../img/instagram.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/youtube.svg" alt="">
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="../img/twitch.svg" alt="twitch">
+                            </li>
+                        </a>
                     </ul>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Suporte</h4>
-                    <ul>
-                        <li><a href="#">Discord</a></li>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Contato</a></li>
-                        <li><a href="#">Regras</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Parceiros</h4>
-                    <div class="partners">
-                        <img src="../img/faceit.png" alt="FACEIT">
-                        <img src="../img/cs2.png" alt="CS2">
-                    </div>
                 </div>
             </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2024 MIXCAMP. Todos os direitos reservados.</p>
+    
+    
+            <div class="direitos">
+                <p>Todos os direitos reservados © 2026 MIXCAMP</p>
+            </div>
+    
+    
+            <div class="suporte">
+                <h3 class="suporte-title">Suporte</h3>
+                <ul>
+                    <li>
+                        <a href="https://discord.gg/nCnDFagmpe" target="_blank">
+                            
+                            <img src="../img/discord2.svg" alt="">
+                            <p>Discord</p>
+                            </img>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="">
+                            <img src="../img/faq.svg" alt="">
+                            <p>FAQ</p>
+                            </img>
+                        </a>
+                    </li>
+                </ul>
+    
+    
+                <div class="desenvolvedor">
+                    <h3 class="desenvolvedor-title">Desenvolvedor</h3>
+                    <ul>
+                        <li>
+                            <a href=""><img src="../img/md-logo.svg" alt="">
+                                </img></a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
+    
+    
+        <div class="textoInfinito">
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+            <h3 class="animation">MIXCAMP</h3>
+        </div>
+    
     </footer>
 
 
@@ -448,6 +486,62 @@
 
     <!-- Notificação apenas mensagem -->
     <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 id="confirmModalTitle">Confirmação</h3>
+                <span class="confirm-modal-close" onclick="closeConfirmModal(false)">&times;</span>
+            </div>
+            <div class="confirm-modal-body">
+                <p id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-confirm-ok" onclick="closeConfirmModal(true)">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalNotificacoes" class="modal-notificacoes-overlay" aria-hidden="true">
+        <div class="modal-notificacoes-box">
+            <header class="modal-notificacoes-header">
+                <h2 class="modal-notificacoes-title">Notificações</h2>
+                <button type="button" class="modal-notificacoes-close" id="modalNotificacoesClose" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="modal-notificacoes-tabs">
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
+            </div>
+            <div class="modal-notificacoes-body">
+                <!-- Vista: lista de notificações (preenchida por JS com filtrarNotificacoesUssuario) -->
+                <div class="modal-notificacoes-list" id="modalNotificacoesList">
+                    <!-- itens gerados por renderizarListaNotificacoes() -->
+                </div>
+                <!-- Vista: mensagem expandida (oculta por padrão) -->
+                <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                    <div class="notificacao-detail-content">
+                        <h3 class="notificacao-detail-title" id="notificacaoDetailTitle">Notificação</h3>
+                        <div class="notificacao-detail-meta">
+                            <span class="notificacao-detail-status" id="notificacaoDetailStatus"></span>
+                            <span class="notificacao-detail-hora" id="notificacaoDetailHora"></span>
+                        </div>
+                        <p class="notificacao-detail-message" id="notificacaoDetailMessage"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     
     <script src="../js/utils.js"></script>

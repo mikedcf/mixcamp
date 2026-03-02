@@ -104,6 +104,11 @@ async function loadPositionImagesCache() {
     }
 }
 
+
+
+
+
+
 // =============================================================
 // ====================== [ autenticação e logout ] ======================
 
@@ -384,7 +389,8 @@ async function abrirModalMedalhaTime(medalha) {
     }
 
     modal.style.display = 'block';
-    // trava o scroll do body enquanto o modal está aberto
+    // trava o scroll da página (html + body evita scroll duplo)
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 }
 
@@ -396,8 +402,9 @@ function closeModal() {
     if (iframe) iframe.src = '';
     if (loadingEl) loadingEl.style.display = 'flex';
     if (modal) modal.style.display = 'none';
-    // restaura o scroll do body
-    document.body.style.overflow = 'auto';
+    // restaura o scroll da página (html + body)
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
 }
 
 
@@ -448,9 +455,7 @@ async function buscarDadosTime() {
     if (auth_dados.logado) {
         
         const userId = auth_dados.usuario.id;
-        if (userId != timeId) {
-            document.getElementById('configTeamBtn').style.display = 'none';
-        }
+        // Visibilidade do botão de configuração é controlada apenas em atualizarBotaoSolicitacao (por isLeader)
     }
 
     try {
@@ -510,8 +515,10 @@ function preencherTimeNaUI(data) {
 
     // redes sociais
     const redesE1 = document.getElementById('redesSociais');
-    if (redesE1) {
-        redesE1.innerHTML = '';
+    const redesLinksContainer = document.getElementById('redesSociaisLinks');
+    const redesContainer = redesLinksContainer || redesE1;
+    if (redesContainer) {
+        redesContainer.innerHTML = '';
         const redesConfig = [
             { campo: 'discord_url', img: '../img/Discord.png', alt: 'Discord' },
             { campo: 'youtube_url', img: '../img/youtube.png', alt: 'YouTube' },
@@ -530,11 +537,13 @@ function preencherTimeNaUI(data) {
             if (url && url.trim() !== '' && url !== 'null' && url !== 'undefined') {
                 const a = document.createElement('a');
                 a.href = url; a.target = '_blank';
+                a.className = 'team2-rede';
+                a.setAttribute('aria-label', rede.alt);
 
                 const img = document.createElement('img');
                 img.src = rede.img; img.alt = rede.alt; img.classList.add('redes');
                 a.appendChild(img);
-                redesE1.appendChild(a);
+                redesContainer.appendChild(a);
             }
         })
         
@@ -559,6 +568,22 @@ function preencherTimeNaUI(data) {
         `;
         slot.onclick = () => abrirModalMedalhaTime(medalha);
     });
+
+    // Layout igual ao perfil: all-empty quando não há troféus, animation-complete nos preenchidos
+    const medalsContainer = document.getElementById('medalsContainer');
+    const medalsSection = document.querySelector('.medals-main-section');
+    if (medalsContainer) {
+        if (conquistas.length === 0) {
+            medalsContainer.classList.add('all-empty');
+            if (medalsSection) medalsSection.classList.add('all-empty-section');
+        } else {
+            medalsContainer.classList.remove('all-empty');
+            if (medalsSection) medalsSection.classList.remove('all-empty-section');
+            medalhasSlots.forEach((slot, i) => {
+                if (i < conquistas.length) slot.classList.add('animation-complete');
+            });
+        }
+    }
 
 
     // jogos
@@ -649,14 +674,16 @@ function preencherTimeNaUI(data) {
             const item = document.createElement('div');
             item.setAttribute('onclick', `abrirPerfilJogador('${m.usuario_id}')`);
             item.className = 'jogador-item';
+            const posicaoImgUrl = getPositionImageSync(m.posicao || '');
+            const liderImgUrl = getPositionImageSync('capitao'); /* ícone de líder/coroa */
             item.innerHTML = `
-            
                 <img src="${m.avatar_url}" alt="${m.username}" class="jogador-avatar" onclick="abrirPerfilJogador('${m.usuario_id}')">
                 <div class="jogador-info" onclick="abrirPerfilJogador('${m.usuario_id}')">
                     <span class="jogador-nome" >${m.username}</span>
-                    <span class="jogador-role">${mapPosicaoEmoji(m.posicao)} ${capitalize(m.posicao)}</span>
-                    ${m.usuario_id == liderTime ? '<span id="liderbadge" class="lider-badge">👑 LÍDER</span>' : ''}
-                    
+                    <div class="jogador-role-container">
+                        <img src="${posicaoImgUrl}" alt="${capitalize(m.posicao)}" class="jogador-role-icon" title="${capitalize(m.posicao)}">
+                        ${m.usuario_id == liderTime ? '<img src="' + liderImgUrl + '" alt="Líder" class="lider-badge-icon" title="Líder">' : ''}
+                    </div>
                 </div>`;
             jogadoresContainer.appendChild(item);
         })
@@ -934,6 +961,7 @@ async function criarTime() {
 function abrirModalCriarTime() {
     const modal = document.getElementById('modalCriarTime');
     modal.style.display = 'block';
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 }
 
@@ -941,7 +969,8 @@ function abrirModalCriarTime() {
 function fecharModalCriarTime() {
     const modal = document.getElementById('modalCriarTime');
     modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
     
     // Limpar formulário
     document.getElementById('formCriarTime').reset();
@@ -1351,7 +1380,7 @@ function mostrarSolicitacoes(solicitacoes) {
                             <span class="position-text">Sub</span>
                             <span class="dropdown-arrow">▼</span>
                         </div>
-                        <div class="dropdown-options" id="options-${solicitacao.id}">
+                        <div class="dropdown-options" id="options-${solicitacao.id}" style="display:none">
                             <div class="dropdown-option" data-value="sub" onclick="selectPosition('${solicitacao.id}', 'sub')">
                                 <img src="${getPositionImageSync('sub')}" alt="Sub" class="position-icon">
                                 <span>Sub</span>
@@ -1405,12 +1434,36 @@ function mostrarSolicitacoes(solicitacoes) {
     }
 
     modal.style.display = 'block';
-    
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    // Fechar todos os dropdowns de posição para não abrir já abertos
+    document.querySelectorAll('.dropdown-options').forEach(opt => {
+        opt.style.display = 'none';
+        opt.style.top = '';
+        opt.style.left = '';
+        opt.style.minWidth = '';
+    });
+    document.querySelectorAll('.dropdown-arrow').forEach(arr => {
+        arr.textContent = '▼';
+    });
+    document.querySelectorAll('.solicitacao-item').forEach(item => {
+        item.classList.remove('dropdown-open');
+    });
+
     // Adicionar event listener para fechar dropdowns ao clicar fora
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-dropdown')) {
             document.querySelectorAll('.dropdown-options').forEach(opt => {
                 opt.style.display = 'none';
+                opt.style.top = '';
+                opt.style.left = '';
+                opt.style.minWidth = '';
+                const dropdownId = opt.id.replace('options-', 'dropdown-');
+                const d = document.getElementById(dropdownId);
+                if (d && opt.parentElement === document.body) {
+                    d.appendChild(opt);
+                }
             });
             document.querySelectorAll('.dropdown-arrow').forEach(arr => {
                 arr.textContent = '▼';
@@ -1426,18 +1479,34 @@ function mostrarSolicitacoes(solicitacoes) {
 function toggleDropdown(solicitacaoId) {
     const options = document.getElementById(`options-${solicitacaoId}`);
     const arrow = document.querySelector(`#dropdown-${solicitacaoId} .dropdown-arrow`);
+    if (!options || !arrow) return;
     const solicitacaoItem = options.closest('.solicitacao-item');
     
     if (options.style.display === 'block') {
         options.style.display = 'none';
+        options.style.top = '';
+        options.style.left = '';
+        options.style.minWidth = '';
         arrow.textContent = '▼';
         if (solicitacaoItem) {
             solicitacaoItem.classList.remove('dropdown-open');
+        }
+        // Devolver opções ao dropdown (se estiver no body)
+        const dropdown = document.getElementById(`dropdown-${solicitacaoId}`);
+        if (dropdown && options.parentElement === document.body) {
+            dropdown.appendChild(options);
         }
     } else {
         // Fechar outros dropdowns abertos
         document.querySelectorAll('.dropdown-options').forEach(opt => {
             opt.style.display = 'none';
+            opt.style.top = '';
+            opt.style.left = '';
+            opt.style.minWidth = '';
+            const d = document.getElementById(opt.id.replace('options-', 'dropdown-'));
+            if (d && opt.parentElement === document.body) {
+                d.appendChild(opt);
+            }
         });
         document.querySelectorAll('.dropdown-arrow').forEach(arr => {
             arr.textContent = '▼';
@@ -1445,7 +1514,20 @@ function toggleDropdown(solicitacaoId) {
         document.querySelectorAll('.solicitacao-item').forEach(item => {
             item.classList.remove('dropdown-open');
         });
-        
+
+        // Posicionar primeiro (antes de mostrar) para aparecer no lugar certo
+        const selected = document.querySelector('#dropdown-' + solicitacaoId + ' .dropdown-selected');
+        if (selected) {
+            const rect = selected.getBoundingClientRect();
+            options.style.top = (rect.bottom + 4) + 'px';
+            options.style.left = rect.left + 'px';
+            options.style.minWidth = Math.max(rect.width, 140) + 'px';
+        }
+
+        // Mostrar no topo da página (evita corte por overflow do modal)
+        if (options.parentElement !== document.body) {
+            document.body.appendChild(options);
+        }
         options.style.display = 'block';
         arrow.textContent = '▲';
         if (solicitacaoItem) {
@@ -1494,11 +1576,17 @@ function selectPosition(solicitacaoId, posicao) {
     
     // Fechar dropdown
     options.style.display = 'none';
+    options.style.top = '';
+    options.style.left = '';
+    options.style.minWidth = '';
     arrow.textContent = '▼';
     if (solicitacaoItem) {
         solicitacaoItem.classList.remove('dropdown-open');
     }
-    
+    if (options.parentElement === document.body) {
+        dropdown.appendChild(options);
+    }
+
     // Armazenar valor selecionado
     dropdown.setAttribute('data-selected', posicao);
 }
@@ -1668,7 +1756,11 @@ async function atualizarBotaoSolicitacao() {
     
     let status = await verificarStatusSolicitacao();
     const joinBtn = document.getElementById('joinTeamBtn');
+    const configBtn = document.getElementById('configTeamBtn');
     if (!joinBtn) return;
+
+    // Esconder config por padrão; será exibido apenas para o líder
+    if (configBtn) configBtn.style.display = 'none';
 
     const params = new URLSearchParams(window.location.search);
     const timeId = Number(params.get('id'));
@@ -1692,17 +1784,14 @@ async function atualizarBotaoSolicitacao() {
 
     // PRIORIDADE: Líder sempre vê o botão de gerenciar solicitações
     if (isLeader) {
-        // Usuário é líder - mostrar botão de gerenciar solicitações (apenas ícone de bandeira)
+        document.getElementById('configTeamBtn').style.display = 'flex';
+        // Botão "Entrar" vira ícone de solicitações para o líder (azul, abre modal)
         joinBtn.innerHTML = '<i class="fas fa-flag"></i>';
         joinBtn.disabled = false;
         joinBtn.style.opacity = '1';
         joinBtn.style.cursor = 'pointer';
         joinBtn.style.display = 'block';
         joinBtn.style.background = 'blue';
-        document.getElementById('configTeamBtn').style.display = 'flex'
-        
-
-        // Remover event listeners anteriores e adicionar o novo
         joinBtn.replaceWith(joinBtn.cloneNode(true));
         const newJoinBtn = document.getElementById('joinTeamBtn');
         newJoinBtn.onclick = abrirModalSolicitacoesLider;
@@ -1711,8 +1800,8 @@ async function atualizarBotaoSolicitacao() {
 
     // Se não é líder mas é membro - ocultar botão
     if (isMember) {
+        document.getElementById('configTeamBtn').style.display = 'none';
         // Usuário já é membro do time - ocultar botão
-        document.getElementById('configTeamBtn').style.display = 'none'
         joinBtn.style.display = 'block';
         joinBtn.style.background = 'red';
         joinBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
@@ -1963,6 +2052,9 @@ function fecharModalSolicitacoes() {
     if (modal) {
         modal.style.display = 'none';
     }
+    // Restaurar scroll da página (html + body)
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
 }
 
 

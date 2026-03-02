@@ -123,6 +123,8 @@ let corSombra_antigo = '';
 let posicaoAntiga = '';
 let linkSteamAntigo = '';
 let linkFaceitAntigo = '';
+let cfg_antigo = '';
+let cfg = '';
 
 // =============================================================
 // ====================== [ autenticação e logout ] ======================
@@ -649,6 +651,13 @@ async function salvarConfiguracoes() {
             posicoesParaEnviar = posicaoAntiga;
         }
     }
+
+
+    if(cfg == ''){
+        cfg = cfg_antigo;
+    } else {
+        cfg = cfg;
+    }
     
     const dados = {
         username,
@@ -659,7 +668,8 @@ async function salvarConfiguracoes() {
         avatar: avatarUrl || avatar_antigo, // mantém avatar atual se não trocar
         banner: bannerUrl || banner_antigo,
         cores_perfil: corSombra || corSombra_antigo,
-        posicoes: posicoesParaEnviar || []
+        posicoes: posicoesParaEnviar || [],
+        cfg_cs: cfg
     };
 
     // Só inclui steamid no payload se tiver valor válido
@@ -1071,6 +1081,98 @@ async function uploadImagemCloudinary(file) {
         
     }
 }
+
+// =============================================================
+// ====================== [ upload arquivo .cfg ] ======================
+
+async function uploadCfgFile() {
+    const bntSalvar = document.getElementById('salvar-config')
+    bntSalvar.disabled = true;
+    try {
+        const inputCfg = document.getElementById('inputCfg');
+        const statusEl = document.getElementById('cfgUploadStatus');
+
+        if (!inputCfg) {
+            console.error('Input de arquivo .cfg não encontrado.');
+            return;
+        }
+
+        const file = inputCfg.files && inputCfg.files[0];
+
+        if (!file) {
+            showNotification('error', 'Nenhum arquivo .cfg selecionado.');
+            if (statusEl) statusEl.textContent = 'Nenhum arquivo selecionado.';
+            statusEl.style.color = 'yellow';
+            return;
+        }
+
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        if (fileExtension !== '.cfg') {
+            showNotification('error', 'Apenas arquivos com extensão .cfg são permitidos.');
+            if (statusEl) statusEl.textContent = 'Formato inválido. Selecione um arquivo .cfg.';
+            statusEl.style.color = 'yellow';
+            return;
+        }
+
+        // Limite de 5MB (alinhado com backend para arquivos não-vídeo)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('error', 'O arquivo .cfg deve ter menos de 5MB.');
+            if (statusEl) statusEl.textContent = 'Tamanho máximo permitido: 5MB.';
+            statusEl.style.color = 'yellow';
+            return;
+        }
+
+        if (statusEl) statusEl.textContent = 'Enviando arquivo .cfg...';
+
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/cloudinary/upload`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            let errorMessage = 'Erro ao enviar arquivo .cfg.';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // ignore parse error
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        showNotification('success', 'Arquivo .cfg enviado com sucesso!');
+
+        if (statusEl) {
+            statusEl.textContent = 'Upload concluído com sucesso! Clique em salvar para atualizar o perfil.';
+            statusEl.style.color = 'green';
+        }
+
+        console.log('URL do arquivo .cfg no Cloudinary:', data.secure_url);
+        cfg = data.secure_url;
+        bntSalvar.disabled = false;
+        return data.secure_url;
+    } catch (error) {
+        console.error('Erro no upload do arquivo .cfg:', error);
+        showNotification('error', error.message || 'Erro ao enviar arquivo .cfg.');
+        const statusEl = document.getElementById('cfgUploadStatus');
+        if (statusEl) {
+            statusEl.textContent = 'Erro ao enviar arquivo .cfg.';
+            statusEl.style.color = 'red';
+            
+        }
+        bntSalvar.disabled = false;
+        return null;
+    }
+}
+
+
+
 
 
 // =============================================================

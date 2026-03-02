@@ -23,12 +23,13 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, rgb(0, 0, 0) 100%);
     background-color: #b3b3b3;
     color: #ffffff;
     line-height: 1.6;
     min-height: 100vh;
     position: relative;
+    padding-top: clamp(80px, 12vh, 120px);
 }
 
 /* Telas até 1280px: garante scroll vertical */
@@ -229,6 +230,34 @@ body {
     color: rgba(255, 255, 255, 0.7);
     margin-top: 5px;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 32px;
+}
+
+.hero-ctas .cta-btn {
+    margin: 0;
+}
+
+.hero-aviso-inicio {
+    margin-top: 20px;
+    font-size: 1em;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+}
+
+.hero-aviso-inicio::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 1em;
+    background: #ff6b35;
+    margin-right: 8px;
+    vertical-align: middle;
 }
 
 @keyframes countUp {
@@ -453,6 +482,120 @@ body {
     font-size: 0.9em;
 }
 
+.beneficio-destaque {
+    color: #ff8c42;
+    font-weight: 700;
+}
+
+/* Avisos importantes (troféus e pagamento) */
+.aviso-oficial,
+.aviso-pagamento {
+    margin-top: 50px;
+    padding: 24px 28px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 107, 53, 0.35);
+    background: rgba(255, 107, 53, 0.08);
+    text-align: left;
+}
+
+.aviso-oficial-titulo,
+.aviso-pagamento-titulo {
+    font-size: 1.25em;
+    color: #ff6b35;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aviso-oficial p:not(.aviso-oficial-titulo),
+.aviso-pagamento p:not(.aviso-pagamento-titulo) {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 1.05em;
+    line-height: 1.65;
+    margin: 0;
+}
+
+.aviso-oficial strong,
+.aviso-pagamento strong {
+    color: #ff8c42;
+}
+
+.aviso-pagamento {
+    margin-top: 20px;
+}
+
+/* Como começar - solicitar suporte MixCamp */
+.aviso-inicio-box {
+    margin-top: 40px;
+    padding: 24px 28px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 107, 53, 0.4);
+    background: rgba(255, 107, 53, 0.12);
+    text-align: left;
+}
+
+.aviso-inicio-titulo {
+    font-size: 1.2em;
+    color: #ff6b35;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aviso-inicio-box p:not(.aviso-inicio-titulo) {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.05em;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.aviso-inicio-box strong {
+    color: #ff8c42;
+}
+
+.aviso-inicio-box a,
+.faq-answer a {
+    color: #ff8c42;
+    text-decoration: underline;
+}
+
+.aviso-inicio-box a:hover,
+.faq-answer a:hover {
+    color: #ff6b35;
+}
+
+/* Box divulgação e destaques (venda avulsa) */
+.aviso-destaque.divulgacao-box {
+    margin-top: 0;
+    padding: 24px 28px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 107, 53, 0.35);
+    background: rgba(255, 107, 53, 0.08);
+    text-align: left;
+}
+
+.aviso-destaque-titulo {
+    font-size: 1.25em;
+    color: #ff6b35;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aviso-destaque.divulgacao-box p:not(.aviso-destaque-titulo) {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 1.05em;
+    line-height: 1.65;
+    margin: 0 0 16px;
+}
+
+.aviso-destaque.divulgacao-box .beneficio-list {
+    margin-bottom: 0;
+}
+
 /* Planos Section */
 .planos-section {
     padding: 100px 0;
@@ -465,6 +608,13 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 30px;
     margin-top: 60px;
+}
+
+.planos-grid-dois {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .plano-card {
@@ -523,6 +673,21 @@ body {
     font-size: 1.8em;
     color: #ffffff;
     border-radius: 50%;
+}
+
+.plano-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.simples .plano-icon {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+}
+
+.premium .plano-icon {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
 }
 
 .bronze .plano-icon {
@@ -604,6 +769,16 @@ body {
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+.simples-btn {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    color: #ffffff;
+}
+
+.premium-btn {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    color: #ffffff;
 }
 
 .bronze-btn {
@@ -867,7 +1042,7 @@ body {
 }
 
 .faq-item.active .faq-answer {
-    max-height: 200px;
+    max-height: 400px;
 }
 
 .faq-answer p {
@@ -911,6 +1086,10 @@ body {
     .depoimentos-grid {
         grid-template-columns: 1fr;
         gap: 20px;
+    }
+
+    .planos-grid-dois {
+        grid-template-columns: 1fr;
     }
 
     .plano-card.featured {

@@ -80,7 +80,7 @@
                     <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
                     <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#"><i class="fas fa-bell"></i> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
                     <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
@@ -233,7 +233,8 @@
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
-                        <a href="">
+                        <a href="https://discord.gg/nCnDFagmpe" target="_blank">
+                            
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -269,6 +270,42 @@
         </div>
     
     </footer>
+
+
+    <div id="modalNotificacoes" class="modal-notificacoes-overlay" aria-hidden="true">
+        <div class="modal-notificacoes-box">
+            <header class="modal-notificacoes-header">
+                <h2 class="modal-notificacoes-title">Notificações</h2>
+                <button type="button" class="modal-notificacoes-close" id="modalNotificacoesClose" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            <div class="modal-notificacoes-tabs">
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
+            </div>
+            <div class="modal-notificacoes-body">
+                <!-- Vista: lista de notificações (preenchida por JS com filtrarNotificacoesUssuario) -->
+                <div class="modal-notificacoes-list" id="modalNotificacoesList">
+                    <!-- itens gerados por renderizarListaNotificacoes() -->
+                </div>
+                <!-- Vista: mensagem expandida (oculta por padrão) -->
+                <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                    <div class="notificacao-detail-content">
+                        <h3 class="notificacao-detail-title" id="notificacaoDetailTitle">Notificação</h3>
+                        <div class="notificacao-detail-meta">
+                            <span class="notificacao-detail-status" id="notificacaoDetailStatus"></span>
+                            <span class="notificacao-detail-hora" id="notificacaoDetailHora"></span>
+                        </div>
+                        <p class="notificacao-detail-message" id="notificacaoDetailMessage"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal de Confirmação -->
     <div id="confirmModal" class="confirm-modal">

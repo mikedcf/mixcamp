@@ -553,6 +553,32 @@
     color: #ff6b35;
 }
 
+.menu-notification-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.menu-notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    /* display: inline-flex; */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    background: #ff6b35;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
 .menu-separator {
     height: 1px;
     background: linear-gradient(90deg,
@@ -2253,4 +2279,242 @@ footer {
         font-size: 8vw;
         padding-left: 4vw;
     }
+}
+
+/* ============================================================================
+   MODAL DE NOTIFICAÇÕES
+   Localize esta seção pelo comentário acima ou por: .modal-notificacoes-overlay
+   Contém: overlay, caixa do modal, abas (Lidas/Não lidas), lista de itens,
+   vista de detalhe da mensagem e botão voltar.
+   ============================================================================ */
+.modal-notificacoes-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.modal-notificacoes-overlay[aria-hidden="false"] {
+    display: flex;
+}
+.modal-notificacoes-box {
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    background: linear-gradient(160deg, rgba(20, 20, 35, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 107, 53, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal-notificacoes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+.modal-notificacoes-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+}
+.modal-notificacoes-close {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+.modal-notificacoes-close:hover {
+    background: rgba(255, 107, 53, 0.3);
+    color: #fff;
+}
+.modal-notificacoes-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+.tab-notif {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+}
+.tab-notif:hover {
+    color: #ccc;
+}
+.tab-notif.tab-notif-active {
+    color: #ff6b35;
+}
+.tab-notif.tab-notif-active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: #ff6b35;
+    border-radius: 2px 2px 0 0;
+}
+.modal-notificacoes-body {
+    flex: 1;
+    min-height: 280px;
+    overflow: hidden;
+    position: relative;
+}
+.modal-notificacoes-list {
+    height: 100%;
+    min-height: 180px;
+    overflow-y: auto;
+    padding: 12px;
+    display: block;
+}
+.notificacoes-vazio {
+    text-align: center;
+    padding: 32px 16px;
+    color: #888;
+    font-size: 14px;
+    margin: 0;
+}
+.notificacoes-vazio i {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 12px;
+    opacity: 0.6;
+}
+.notificacao-item {
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.notificacao-item:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.25);
+}
+.notificacao-preview {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #e0e0e0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.notificacao-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.notificacao-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+.notificacao-status.notificacao-lida {
+    background: rgba(0, 200, 100, 0.2);
+    color: #6ee7a0;
+}
+.notificacao-status.notificacao-nao-lida {
+    background: rgba(255, 107, 53, 0.25);
+    color: #ff9f7a;
+}
+.notificacao-hora {
+    font-size: 12px;
+    color: #888;
+}
+.modal-notificacoes-detail {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(20, 20, 35, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%);
+    padding: 16px 20px;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+}
+.modal-notificacoes-detail:not([hidden]) {
+    display: flex;
+}
+.modal-notificacoes-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    margin-bottom: 12px;
+    border: none;
+    background: transparent;
+    color: #ff6b35;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    align-self: flex-start;
+}
+.modal-notificacoes-back:hover {
+    opacity: 0.85;
+}
+.notificacao-detail-content {
+    flex: 1;
+}
+.notificacao-detail-title {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+.notificacao-detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.notificacao-detail-status,
+.notificacao-detail-hora {
+    font-size: 13px;
+    color: #888;
+}
+.notificacao-detail-status.notificacao-lida {
+    color: #6ee7a0;
+}
+.notificacao-detail-status.notificacao-nao-lida {
+    color: #ff9f7a;
+}
+.notificacao-detail-message {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e0e0e0;
+    white-space: pre-wrap;
 }

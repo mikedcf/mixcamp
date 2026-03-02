@@ -920,7 +920,7 @@ async function formatarData(dataISO) {
 // =================================
 // ========= DADOS CARD CAMPEONATOS =========
 
-let notify = true;
+let notifyinscricao = true;
 
 async function verificarInscricaoTime(){
 
@@ -940,9 +940,9 @@ async function verificarInscricaoTime(){
         for(const inscricao of dadosTimeInscritos.inscricoes){
             if(inscricao.time_id == timeId){
                 if(inscricao.inscricao_id == cardId){
-                    if(notify){
+                    if(notifyinscricaoy){
                         showNotification('success', 'Seu time já está inscrito neste campeonato', 3000);
-                        notify = false;
+                        notifyinscricao = false;
                         desabilitarbotao()
                         
                     }

@@ -832,7 +832,7 @@ function renderTransfers(data = null) {
         // Verificar se é dados completos (com player/team objects) ou dados básicos do backend
         const isCompleteData = transfer.player && transfer.team;
 
-        console.log(transfer.player.posicao)
+        
         
         if (isCompleteData) {
             // Dados completos com player e team details

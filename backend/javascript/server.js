@@ -15,7 +15,8 @@ const {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato,     getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout,
+    getNotificacoes, criarMsgNotificacao, atualizarNotificacao, deletarNotificacao
 } = require('./controller');
 require('dotenv').config();
 
@@ -79,10 +80,16 @@ const upload = multer({
         fileSize: 500 * 1024 * 1024 // 500MB para vídeos
     },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+        const permitido =
+            file.mimetype.startsWith('image/') ||
+            file.mimetype.startsWith('video/') ||
+            file.mimetype === 'application/pdf' ||
+            file.mimetype === 'text/plain' ||
+            file.mimetype === 'application/octet-stream';
+        if (permitido) {
             cb(null, true);
         } else {
-            cb(new Error('Apenas arquivos de imagem ou vídeo são permitidos!'), false);
+            cb(new Error('Apenas arquivos de imagem, vídeo, PDF ou CFG são permitidos!'), false);
         }
     }
 });
@@ -168,6 +175,15 @@ app.post(process.env.ROUTE_VETOS_ROLETA_CLIQUE, registrarCliqueRoleta);
 
 app.post(process.env.ROUTE_EMAIL_CODIGO, enviarCodigoEmail);
 app.post(process.env.ROUTE_EMAIL_VERYCODE, verificarCodigoEmail);
+
+
+
+// ===============================================================================================
+// ==================================== [API MERCADOPAGO] =============================================
+app.get(process.env.ROUTE_NOTIFICACOES, getNotificacoes);
+app.post(process.env.ROUTE_NOTIFICACOES_CRIAR, criarMsgNotificacao);
+app.put(process.env.ROUTE_NOTIFICACOES_ATUALIZAR, atualizarNotificacao);
+app.delete(process.env.ROUTE_NOTIFICACOES_DELETAR, deletarNotificacao);
 
 // ===============================================================================================
 // ==================================== [API DE BUSCA] ================================================

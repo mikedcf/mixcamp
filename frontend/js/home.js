@@ -791,3 +791,280 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarMaisNoticias();
 });
 
+// ========== MODAL DE NOTIFICAÇÕES (apenas home.html) ==========
+
+/** Retorna o array de notificações do usuário logado: [{ id, user_id, texto, lida (boolean), criada_em (formatada) }, ...] */
+async function filtrarNotificacoesUssuario() {
+    const dataDados = [];
+    const auth_dados = await autenticacao();
+    if (!auth_dados || !auth_dados.logado) return dataDados;
+    const userId = Number(auth_dados.usuario.id);
+    var notificacoes = [];
+    try {
+        notificacoes = await buscarNotificacoes();
+    } catch (e) {
+        console.error('Erro buscarNotificacoes:', e);
+        return dataDados;
+    }
+    if (!Array.isArray(notificacoes)) notificacoes = [];
+    for (const notificao of notificacoes) {
+        if (Number(notificao.user_id) === userId) {
+            var criadaEm = notificao.criada_em;
+            try {
+                criadaEm = typeof formatarDataBR === 'function' ? await formatarDataBR(notificao.criada_em) : (notificao.criada_em || '');
+            } catch (err) {
+                criadaEm = notificao.criada_em || '';
+            }
+            dataDados.push({
+                id: notificao.id,
+                user_id: notificao.user_id,
+                texto: notificao.texto || '',
+                lida: notificao.lida === 1 || notificao.lida === true,
+                criada_em: criadaEm
+            });
+        }
+    }
+    return dataDados;
+}
+
+
+function normalizarNotificacoes(arr) {
+    // console.log(arr);
+    if (!Array.isArray(arr)) return [];
+    return arr.map(async function (n) {
+        // console.log(n);
+        return {
+            id: n.id,
+            user_id: n.user_id,
+            texto: n.texto || '',
+            lida: n.lida === 1,
+            criada_em: await formatarDataBR(n.criada_em)
+        };
+    });
+}
+
+/** Monta a lista do modal com o array de notificações [{ id, texto, lida, criada_em }, ...]. */
+function renderizarListaNotificacoes(notificacoes) {
+    const listView = document.getElementById('modalNotificacoesList');
+    if (!listView) return;
+    listView.style.display = 'block';
+    const maxPreview = 55;
+    if (!notificacoes || !Array.isArray(notificacoes) || notificacoes.length === 0) {
+        listView.innerHTML = '<p class="notificacoes-vazio"><i class="fas fa-bell-slash"></i> Nenhuma notificação</p>';
+        return;
+    }
+    var texto = notificacoes.map(function (n) {
+        var txt = (n && n.texto) ? String(n.texto) : '';
+        var preview = txt.length > maxPreview ? txt.slice(0, maxPreview) + '...' : txt;
+        var lida = n.lida === true || n.lida === 1;
+        var statusClass = lida ? 'notificacao-lida' : 'notificacao-nao-lida';
+        var statusText = lida ? 'Lida' : 'Não lida';
+        var msgEscaped = txt.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var previewEscaped = preview.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var dataEscaped = (n.criada_em != null ? String(n.criada_em) : '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return (
+            '<div class="notificacao-item" data-id="' + (n.id != null ? n.id : '') + '" data-lida="' + lida + '" data-mensagem="' + msgEscaped + '">' +
+                '<p class="notificacao-preview">' + previewEscaped + '</p>' +
+                '<div class="notificacao-meta">' +
+                    '<span class="notificacao-status ' + statusClass + '">' + statusText + '</span>' +
+                    '<span class="notificacao-hora">' + dataEscaped + '</span>' +
+                '</div>' +
+            '</div>'
+        );
+    }).join('');
+    listView.innerHTML = texto;
+}
+
+/** Abre o modal de notificações (fecha o menu do perfil, busca dados, monta a lista e aplica o filtro da aba). */
+function abrirModalNotificacoes() {
+    const modal = document.getElementById('modalNotificacoes');
+    if (!modal) return;
+    const menuOpcoes = document.getElementById('menuOpcoes');
+    if (menuOpcoes) menuOpcoes.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    var detailView = document.getElementById('modalNotificacoesDetail');
+    if (detailView) {
+        detailView.setAttribute('hidden', '');
+        detailView.style.display = 'none';
+    }
+
+    var tabLidas = document.getElementById('tabNotifLidas');
+    var tabNaoLidas = document.getElementById('tabNotifNaoLidas');
+    if (tabLidas && tabNaoLidas) {
+        tabLidas.classList.remove('tab-notif-active');
+        tabNaoLidas.classList.add('tab-notif-active');
+    }
+
+    const listView = document.getElementById('modalNotificacoesList');
+    if (listView) {
+        listView.style.display = 'block';
+        listView.innerHTML = '<p class="notificacoes-vazio"><i class="fas fa-spinner fa-spin"></i> Carregando...</p>';
+    }
+
+    filtrarNotificacoesUssuario().then(function(notificacoes) {
+        renderizarListaNotificacoes(notificacoes || []);
+        aplicarFiltroTabNotificacoes();
+    }).catch(function(e) {
+        console.error('Erro ao carregar notificações:', e);
+        renderizarListaNotificacoes([]);
+        aplicarFiltroTabNotificacoes();
+    });
+}
+
+/** Fecha o modal de notificações (ao clicar no X ou fora do modal). Volta à vista da lista e restaura o scroll. */
+function fecharModalNotificacoes() {
+    const modal = document.getElementById('modalNotificacoes');
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    mostrarListaNotificacoes();
+}
+
+function mostrarListaNotificacoes() {
+    const listView = document.getElementById('modalNotificacoesList');
+    const detailView = document.getElementById('modalNotificacoesDetail');
+    if (listView) listView.style.display = 'block';
+    if (detailView) {
+        detailView.setAttribute('hidden', '');
+        detailView.style.display = 'none';
+    }
+}
+
+function mostrarDetalheNotificacao(item) {
+    const listView = document.getElementById('modalNotificacoesList');
+    const detailView = document.getElementById('modalNotificacoesDetail');
+    const detailTitle = document.getElementById('notificacaoDetailTitle');
+    const detailStatus = document.getElementById('notificacaoDetailStatus');
+    const detailHora = document.getElementById('notificacaoDetailHora');
+    const detailMessage = document.getElementById('notificacaoDetailMessage');
+
+    const mensagem = item.getAttribute('data-mensagem') || '';
+    const hora = item.querySelector('.notificacao-hora');
+    const lida = item.getAttribute('data-lida') === 'true';
+    const notifId = item.getAttribute('data-id');
+
+    if (listView) listView.style.display = 'none';
+    if (detailView) {
+        detailView.removeAttribute('hidden');
+        detailView.style.display = 'flex';
+    }
+    if (detailTitle) detailTitle.textContent = 'Notificação';
+    if (detailMessage) detailMessage.textContent = mensagem;
+    if (detailHora) detailHora.textContent = hora ? hora.textContent : '';
+    if (detailStatus) {
+        detailStatus.textContent = lida ? 'Lida' : 'Não lida';
+        detailStatus.className = 'notificacao-detail-status ' + (lida ? 'notificacao-lida' : 'notificacao-nao-lida');
+    }
+
+    if (!lida && notifId && typeof atualizarNotificacaoLida === 'function') {
+        atualizarNotificacaoLida(notifId).then(function(ok) {
+            if (ok) {
+                item.setAttribute('data-lida', 'true');
+                var statusSpan = item.querySelector('.notificacao-status');
+                if (statusSpan) {
+                    statusSpan.textContent = 'Lida';
+                    statusSpan.className = 'notificacao-status notificacao-lida';
+                }
+                detailStatus.textContent = 'Lida';
+                detailStatus.className = 'notificacao-detail-status notificacao-lida';
+            }
+        }).catch(function(e) { console.error('Erro ao marcar notificação como lida:', e); });
+    }
+}
+
+function aplicarFiltroTabNotificacoes() {
+    const modal = document.getElementById('modalNotificacoes');
+    if (!modal) return;
+    const listView = document.getElementById('modalNotificacoesList');
+    const activeTab = document.querySelector('.tab-notif.tab-notif-active');
+    const tab = activeTab ? activeTab.getAttribute('data-tab') : 'lidas';
+    const lidas = tab === 'lidas';
+    const itens = modal.querySelectorAll('.notificacao-item');
+    var visiveis = 0;
+    itens.forEach(function(el) {
+        const itemLida = el.getAttribute('data-lida') === 'true';
+        const mostrar = itemLida === lidas;
+        el.style.display = mostrar ? '' : 'none';
+        if (mostrar) visiveis++;
+    });
+    var placeholder = listView ? listView.querySelector('.notificacoes-filtro-vazio') : null;
+    if (itens.length > 0 && visiveis === 0) {
+        if (!placeholder) {
+            placeholder = document.createElement('p');
+            placeholder.className = 'notificacoes-vazio notificacoes-filtro-vazio';
+            if (listView) listView.appendChild(placeholder);
+        }
+        placeholder.textContent = lidas ? 'Nenhuma notificação lida' : 'Nenhuma notificação não lida';
+        placeholder.style.display = '';
+    } else if (placeholder) {
+        placeholder.style.display = 'none';
+    }
+}
+
+function initModalNotificacoes() {
+    const modal = document.getElementById('modalNotificacoes');
+    const linkNotif = document.getElementById('menuNotificacoesLink');
+    const btnClose = document.getElementById('modalNotificacoesClose');
+    const listView = document.getElementById('modalNotificacoesList');
+    const detailView = document.getElementById('modalNotificacoesDetail');
+    const btnBack = document.getElementById('modalNotificacoesBack');
+    const tabLidas = document.getElementById('tabNotifLidas');
+    const tabNaoLidas = document.getElementById('tabNotifNaoLidas');
+
+    if (!modal || !linkNotif) return;
+
+    linkNotif.addEventListener('click', function(e) {
+        e.preventDefault();
+        abrirModalNotificacoes();
+    });
+
+    if (btnClose) btnClose.addEventListener('click', fecharModalNotificacoes);
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) fecharModalNotificacoes();
+    });
+
+    if (btnBack) btnBack.addEventListener('click', mostrarListaNotificacoes);
+
+    if (tabLidas) {
+        tabLidas.addEventListener('click', function() {
+            tabNaoLidas.classList.remove('tab-notif-active');
+            tabLidas.classList.add('tab-notif-active');
+            aplicarFiltroTabNotificacoes();
+        });
+    }
+    if (tabNaoLidas) {
+        tabNaoLidas.addEventListener('click', function() {
+            tabLidas.classList.remove('tab-notif-active');
+            tabNaoLidas.classList.add('tab-notif-active');
+            aplicarFiltroTabNotificacoes();
+        });
+    }
+
+    if (listView) {
+        listView.addEventListener('click', function(e) {
+            const item = e.target.closest('.notificacao-item');
+            if (item) mostrarDetalheNotificacao(item);
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
+            if (detailView && !detailView.hidden) {
+                mostrarListaNotificacoes();
+            } else {
+                fecharModalNotificacoes();
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initModalNotificacoes();
+});
+
+
+
+
