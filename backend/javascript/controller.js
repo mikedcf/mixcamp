@@ -10276,19 +10276,45 @@ async function criarPromoverBanner(req, res){
             }
         }
 
+        // Helper para formatar datas em formato compatível com DATETIME do MySQL
+        const pad = (n) => String(n).padStart(2, '0');
+        const formatDateTimeMySQL = (date) => {
+            const d = new Date(date);
+            if (Number.isNaN(d.getTime())) return null;
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        };
+
         // Calcular data_encerramento = hoje + 7 dias
         const now = new Date();
         const enc = new Date(now);
         enc.setDate(enc.getDate() + 7);
-        const pad = (n) => String(n).padStart(2, '0');
-        const data_encerramento = `${enc.getFullYear()}-${pad(enc.getMonth() + 1)}-${pad(enc.getDate())} ${pad(enc.getHours())}:${pad(enc.getMinutes())}:${pad(enc.getSeconds())}`;
+        const data_encerramento = formatDateTimeMySQL(enc);
+
+        // Normalizar data_inicio enviada pelo frontend (ISO, datetime-local, etc.)
+        let finalDataInicio = null;
+        if (data_inicio) {
+            finalDataInicio = formatDateTimeMySQL(data_inicio);
+        }
+        // Se ainda não conseguir, tenta reaproveitar previsao_data_inicio do campeonato
+        if (!finalDataInicio) {
+            const [rowsDataInicio] = await conexao.execute(
+                'SELECT previsao_data_inicio FROM inscricoes_campeonato WHERE id = ?',
+                [evento_id]
+            );
+            if (rowsDataInicio && rowsDataInicio.length > 0 && rowsDataInicio[0].previsao_data_inicio) {
+                finalDataInicio = rowsDataInicio[0].previsao_data_inicio;
+            } else {
+                // Fallback extremo: usa "agora" apenas para não quebrar a inserção
+                finalDataInicio = formatDateTimeMySQL(now);
+            }
+        }
 
         await conexao.execute(
             'INSERT INTO promover_eventos (evento_id, titulo, data_inicio, premiacao, valor_inscricao, qnt_times, chave, game, plataforma, banner_img, banner_local, plano_assinado, data_encerramento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 evento_id,
                 titulo,
-                data_inicio,
+                finalDataInicio,
                 premiacao,
                 valor_inscricao,
                 qnt_times,
