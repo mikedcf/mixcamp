@@ -469,11 +469,12 @@ async function setupDatabase() {
         chave VARCHAR(100) NOT NULL,
         game VARCHAR(100) NOT NULL,
         plataforma VARCHAR(100) NOT NULL,
+        banner_img VARCHAR(255) NOT NULL,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data_encerramento DATETIME NOT NULL,
         banner_local ENUM('home','campeonato','ambos') NOT NULL,
         plano_assinado ENUM('basico','premium','maximo') NOT NULL,
-        
-        FOREIGN KEY (evento_id) REFERENCES inscricoes_campeonato(id) ON DELETE CASCADE
+        status_promover_evento ENUM('disponivel','encerrado') NOT NULL DEFAULT 'disponivel'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
@@ -820,6 +821,10 @@ async function setupDatabase() {
 
         `ALTER TABLE partidas ADD CONSTRAINT fk_partida_chave
          FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos(id)
+         ON DELETE CASCADE;`,
+
+        `ALTER TABLE promover_eventos ADD CONSTRAINT fk_promover_eventos_campeonato
+         FOREIGN KEY (evento_id) REFERENCES inscricoes_campeonato(id)
          ON DELETE CASCADE;`,
 
         `ALTER TABLE resultados_partidas ADD CONSTRAINT fk_resultados_partida

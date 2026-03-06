@@ -1593,88 +1593,448 @@ body {
 ========================[RESPONSIVE]========================================
 ============================================================================ 
 */
+/* Tablet e desktop pequeno */
 @media (max-width: 1200px) {
     .admin-container {
         flex-direction: column;
         gap: 1rem;
+        padding: 1rem;
+        width: 100%;
     }
     
     .admin-sidebar {
         width: 100%;
         position: static;
+        top: auto;
+        padding: 1rem 0;
+    }
+    
+    .sidebar-nav {
+        padding: 0 0.5rem;
     }
     
     .nav-list {
         flex-direction: row;
+        flex-wrap: wrap;
         overflow-x: auto;
-        gap: 1rem;
+        overflow-y: hidden;
+        gap: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
     }
     
     .nav-item {
-        min-width: 150px;
-    }
-}
-
-@media (max-width: 768px) {
-    .admin-container {
-        padding: 1rem;
+        min-width: 140px;
+        flex-shrink: 0;
     }
     
-    .admin-main {
-        padding: 2rem;
-        margin: 0.5rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .table-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-    }
-    
-    .search-box input {
-        width: 100%;
-    }
-    
-    .data-table {
+    .nav-link {
+        padding: 0.75rem 1rem;
         font-size: 0.9rem;
     }
     
-    .data-table th,
-    .data-table td {
-        padding: 0.75rem 0.5rem;
+    .nav-link span {
+        white-space: nowrap;
+    }
+    
+    .admin-main {
+        margin: 0;
+        min-width: 0;
     }
 }
 
-@media (max-width: 480px) {
+/* Tablet portrait e mobile grande */
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 0.75rem 1rem;
+    }
+    
     .header-content {
-        flex-direction: column;
-        gap: 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .logo-section {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .logo-section h1 {
+        font-size: 1.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+    
+    .admin-logo {
+        height: 40px;
+        width: 40px;
+        flex-shrink: 0;
     }
     
     .user-info {
-        width: 100%;
-        justify-content: center;
+        padding: 0.4rem 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .user-details {
+        display: none;
+    }
+    
+    .user-avatar, .avatar-img {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .admin-container {
+        padding: 0.75rem;
+        min-height: calc(100vh - 65px);
+    }
+    
+    .admin-main {
+        padding: 1.25rem;
+        margin: 0;
+        border-radius: 12px;
+        min-height: 60vh;
     }
     
     .section-header {
         flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
+        gap: 0.75rem;
+        align-items: flex-start;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.5rem;
     }
     
     .section-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    
+    .section-actions .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-content h3 {
+        font-size: 2rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .dashboard-card {
+        padding: 1.25rem;
+    }
+    
+    .dashboard-card h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    
+    .table-container {
+        border-radius: 12px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+        padding: 1rem;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+    
+    .search-box input {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    .filter-options select {
+        width: 100%;
+    }
+    
+    .data-table {
+        font-size: 0.85rem;
+        min-width: 700px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 0.6rem 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    
+    .action-btn {
+        min-width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+    
+    .table-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .table-image {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .news-tabs {
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+        padding: 0.4rem;
+    }
+    
+    .tab-btn {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        min-width: fit-content;
+    }
+    
+    .campeonatos-dashboard {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .campeonatos-dashboard .dashboard-card {
+        padding: 1rem;
+    }
+    
+    .campeonatos-dashboard canvas {
+        max-height: 220px;
+    }
+    
+    .camp-lucro-resumo {
+        font-size: 0.8rem;
+    }
+    
+    .organizador-card {
+        padding: 1rem;
+    }
+    
+    .organizador-header {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .notificacao-enviar-card {
+        padding: 1.25rem;
+        max-width: 100%;
+    }
+    
+    .notificacao-enviar-form .form-actions .btn {
+        width: 100%;
         justify-content: center;
     }
-
+    
+    /* Modais */
+    .detalhe-campeonato-modal {
+        padding: 1rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+    
+    .detalhe-campeonato-content {
+        max-height: 85vh;
+        border-radius: 12px;
+    }
+    
+    .detalhe-campeonato-header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .detalhe-campeonato-imagem {
+        width: 100%;
+        max-width: 200px;
+        height: auto;
+        aspect-ratio: 16/10;
+    }
+    
+    .detalhe-campeonato-body {
+        padding: 1rem;
+    }
+    
+    .detalhe-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+    
     .detalhe-lucro-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .detalhe-links {
+        flex-direction: column;
+    }
+    
+    .detalhe-links .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .form-modal-content .form-modal-header,
+    .form-modal-body {
+        padding: 1rem;
+    }
+    
+    .form-modal-body .form-row {
+        flex-direction: column;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-modal-body .form-group {
+        min-width: 100%;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-modal-body .form-actions {
+        flex-direction: column;
+        margin-top: 1rem;
+    }
+    
+    .form-modal-body .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+        padding: 1.25rem;
+    }
+    
+    .edit-gerencia-modal .modal-actions {
+        flex-direction: column;
+    }
+    
+    .edit-gerencia-modal .btn {
+        width: 100%;
+    }
+    
+    .notification-container {
+        left: 0.5rem;
+        right: 0.5rem;
+        top: 0.5rem;
+        min-width: 0;
+    }
+    
+    .notification {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+/* Mobile pequeno */
+@media (max-width: 480px) {
+    .admin-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .logo-section h1 {
+        font-size: 1.1rem;
+        max-width: 140px;
+    }
+    
+    .admin-logo {
+        height: 36px;
+        width: 36px;
+    }
+    
+    .nav-list {
+        gap: 0.35rem;
+    }
+    
+    .nav-item {
+        min-width: 120px;
+    }
+    
+    .nav-link {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .nav-link i {
+        font-size: 1rem;
+    }
+    
+    .admin-main {
+        padding: 1rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.35rem;
+    }
+    
+    .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .detalhe-campeonato-close {
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 36px;
+        height: 36px;
+    }
+    
+    .detalhe-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-table {
+        min-width: 600px;
+    }
+}
+
+/* Mobile muito pequeno */
+@media (max-width: 360px) {
+    .logo-section h1 {
+        display: none;
+    }
+    
+    .nav-item {
+        min-width: 100px;
+    }
+    
+    .nav-link span {
+        font-size: 0.75rem;
     }
 }
