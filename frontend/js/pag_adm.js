@@ -16,9 +16,22 @@ const API_URL = 'http://localhost:3000/api/v1';
 const appState = {
     currentSection: 'dashboard',
     usuarios: [],
+    times: [],
+    medalhas: [],
+    trofeus: [],
+    noticias: {
+        destaque: [],
+        site: [],
+        campeonato: []
+    },
+    campeonatos: [],
     totalUsuarios: 0,
     isLoading: false
 };
+
+// Instâncias de gráficos (usados na seção Campeonatos)
+let chartCampTipos = null;
+let chartCampLucro = null;
 
 // ===============================================================================================
 // ==================================== [INICIALIZAÇÃO] ==========================================
@@ -136,6 +149,12 @@ async function loadSectionData(section) {
             case 'noticias':
                 await loadNoticias();
                 break;
+            case 'campeonatos':
+                await loadCampeonatos();
+                break;
+            case 'notificacoes-enviar':
+                await loadNotificacoesEnviar();
+                break;
             default:
                 console.log(`Seção ${section} não implementada ainda`);
         }
@@ -156,23 +175,59 @@ async function loadSectionData(section) {
 async function loadDashboardData() {
     try {
         console.log('📊 Carregando dados do dashboard...');
-        
-        // Carregar estatísticas dos usuários
-        const statsResponse = await fetch(`${API_URL}/admin/usuarios/estatisticas`);
-        if (!statsResponse.ok) {
-            throw new Error(`Erro HTTP: ${statsResponse.status}`);
-        }
-        
+        showLoading();
+
+        const [statsResponse, timesResponse, medalhasResponse, trofeusResponse] = await Promise.all([
+            fetch(`${API_URL}/admin/usuarios/estatisticas`),
+            fetch(`${API_URL}/times/list`),
+            fetch(`${API_URL}/admin/medalhas`),
+            fetch(`${API_URL}/trofeus`)
+        ]);
+
+        if (!statsResponse.ok) throw new Error(`Erro HTTP stats: ${statsResponse.status}`);
+
         const stats = await statsResponse.json();
-        
+
+        let totalTimes = 0;
+        let totalMedalhas = 0;
+        let totalTrofeus = 0;
+
+        if (timesResponse.ok) {
+            const timesData = await timesResponse.json();
+            if (Array.isArray(timesData.dados)) {
+                totalTimes = timesData.dados.length;
+            }
+        }
+
+        if (medalhasResponse.ok) {
+            const medalData = await medalhasResponse.json();
+            if (Array.isArray(medalData.medalhas)) {
+                totalMedalhas = medalData.medalhas.length;
+            }
+        }
+
+        if (trofeusResponse.ok) {
+            const trofeuData = await trofeusResponse.json();
+            if (Array.isArray(trofeuData.trofeus)) {
+                totalTrofeus = trofeuData.trofeus.length;
+            }
+        }
+
         // Atualizar elementos do dashboard
-        updateDashboardStats(stats);
-        
+        updateDashboardStats({
+            ...stats,
+            totalTimes,
+            totalMedalhas,
+            totalTrofeus
+        });
+
         console.log('✅ Dashboard carregado com sucesso');
-        
+
     } catch (error) {
         console.error('❌ Erro ao carregar dashboard:', error);
         showNotification('Erro ao carregar dados do dashboard', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -187,26 +242,77 @@ function updateDashboardStats(stats) {
         totalUsuariosElement.textContent = stats.totalUsuarios || 0;
     }
     
-    // Atualizar outras estatísticas (quando implementadas)
+    // Atualizar outras estatísticas
     const totalTimesElement = document.getElementById('totalTimes');
     if (totalTimesElement) {
-        totalTimesElement.textContent = '0'; // Implementar quando tiver endpoint
+        totalTimesElement.textContent = stats.totalTimes != null ? stats.totalTimes : 0;
     }
     
     const totalMedalhasElement = document.getElementById('totalMedalhas');
     if (totalMedalhasElement) {
-        totalMedalhasElement.textContent = '0'; // Implementar quando tiver endpoint
+        totalMedalhasElement.textContent = stats.totalMedalhas != null ? stats.totalMedalhas : 0;
     }
     
     const totalTrofeusElement = document.getElementById('totalTrofeus');
     if (totalTrofeusElement) {
-        totalTrofeusElement.textContent = '0'; // Implementar quando tiver endpoint
+        totalTrofeusElement.textContent = stats.totalTrofeus != null ? stats.totalTrofeus : 0;
     }
     
-    // Atualizar estatísticas por gerência
+    // Helpers para quick stats e atividade recente
+    const porGerencia = Array.isArray(stats.porGerencia) ? stats.porGerencia : [];
+    const porTime = Array.isArray(stats.porTime) ? stats.porTime : [];
+
+    const getGer = (gerencia) => {
+        const row = porGerencia.find(g => g.gerencia === gerencia);
+        return row ? row.total : 0;
+    };
+
+    const getTimeStat = (status) => {
+        const row = porTime.find(t => t.status === status);
+        return row ? row.total : 0;
+    };
+
+    const totalAdmins = getGer('admin');
+    const totalModeradores = getGer('moderador');
+    const comTime = getTimeStat('com_time');
+    const semTime = getTimeStat('sem_time');
+    const totalUsuarios = stats.totalUsuarios || 0;
+
+    // Quick stats
+    const bindQuick = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+
+    bindQuick('qsAdmins', totalAdmins);
+    bindQuick('qsModeradores', totalModeradores);
+    bindQuick('qsComTime', comTime);
+    bindQuick('qsSemTime', semTime);
+
+    // Atividade recente
+    const activityList = document.getElementById('activityList');
+    if (activityList) {
+        activityList.innerHTML = `
+            <div class="activity-item">
+                <i class="fas fa-user-plus"></i>
+                <span>Total de usuários cadastrados: <strong>${totalUsuarios}</strong></span>
+                <small>Distribuídos entre todos os níveis de gerência</small>
+            </div>
+            <div class="activity-item">
+                <i class="fas fa-user-shield"></i>
+                <span>Admins: <strong>${totalAdmins}</strong> • Moderadores: <strong>${totalModeradores}</strong></span>
+                <small>Baseado nas permissões atuais dos usuários</small>
+            </div>
+            <div class="activity-item">
+                <i class="fas fa-users"></i>
+                <span>Usuários com time: <strong>${comTime}</strong> • Sem time: <strong>${semTime}</strong></span>
+                <small>Visão geral de engajamento em times</small>
+            </div>
+        `;
+    }
+
+    // Logs auxiliares
     updateGerenciaStats(stats.porGerencia);
-    
-    // Atualizar estatísticas por time
     updateTimeStats(stats.porTime);
 }
 
@@ -525,8 +631,17 @@ function setupSearch() {
             
             if (section === 'usuarios') {
                 filterUsuarios(searchTerm);
+            } else if (section === 'times') {
+                filterTimes(searchTerm);
+            } else if (section === 'medalhas') {
+                filterMedalhas(searchTerm);
+            } else if (section === 'trofeus') {
+                filterTrofeus(searchTerm);
+            } else if (section === 'noticias') {
+                filterNoticias(searchTerm);
+            } else if (section === 'campeonatos') {
+                filterCampeonatos(searchTerm);
             }
-            // Implementar filtros para outras seções quando necessário
         });
     });
 }
@@ -546,6 +661,46 @@ function filterUsuarios(searchTerm) {
     );
     
     displayUsuarios(filteredUsuarios);
+}
+
+function filterTimes(searchTerm) {
+    if (!appState.times || appState.times.length === 0) return;
+    const filtered = appState.times.filter(time =>
+        (time.nome || '').toLowerCase().includes(searchTerm) ||
+        (time.tag || '').toLowerCase().includes(searchTerm) ||
+        (time.id && time.id.toString().includes(searchTerm))
+    );
+    displayTimes(filtered);
+}
+
+function filterMedalhas(searchTerm) {
+    if (!appState.medalhas || appState.medalhas.length === 0) return;
+    const filtered = appState.medalhas.filter(m =>
+        (m.nome || '').toLowerCase().includes(searchTerm) ||
+        (m.descricao || '').toLowerCase().includes(searchTerm) ||
+        (m.edicao_campeonato || '').toLowerCase().includes(searchTerm)
+    );
+    displayMedalhas(filtered);
+}
+
+function filterTrofeus(searchTerm) {
+    if (!appState.trofeus || appState.trofeus.length === 0) return;
+    const filtered = appState.trofeus.filter(t =>
+        (t.nome || '').toLowerCase().includes(searchTerm) ||
+        (t.descricao || '').toLowerCase().includes(searchTerm) ||
+        (t.categoria || '').toLowerCase().includes(searchTerm)
+    );
+    displayTrofeus(filtered);
+}
+
+function filterNoticias(searchTerm) {
+    const tbody = document.getElementById('noticiasTableBody');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
 }
 
 // ===============================================================================================
@@ -636,26 +791,1272 @@ function logout() {
 // ==================================== [FUNÇÕES PLACEHOLDER] ====================================
 // ===============================================================================================
 
-// Estas funções serão implementadas nas próximas etapas
+// ----- Modal Nova Medalha (funcional)
+function abrirModalMedalha() {
+    const modal = document.getElementById('modalNovaMedalha');
+    if (modal) { document.getElementById('formNovaMedalha').reset(); modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); }
+}
+function fecharModalNovaMedalha() {
+    const modal = document.getElementById('modalNovaMedalha');
+    if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); }
+}
+async function salvarNovaMedalha(e) {
+    e.preventDefault();
+    const form = document.getElementById('formNovaMedalha');
+    const fd = new FormData(form);
+    const editId = document.getElementById('modalNovaMedalha').dataset.editId;
+    const dados = {
+        nome: fd.get('nome'),
+        descricao: fd.get('descricao'),
+        imagem_url_campeao: fd.get('imagem_url_campeao') || '',
+        imagem_url_segundo: fd.get('imagem_url_segundo') || '',
+        iframe_url_campeao: fd.get('iframe_url_campeao') || '',
+        iframe_url_segundo: fd.get('iframe_url_segundo') || '',
+        edicao_campeonato: fd.get('edicao_campeonato')
+    };
+    if (!dados.nome || !dados.descricao || !dados.imagem_url_campeao || !dados.imagem_url_segundo || !dados.edicao_campeonato) {
+        showNotification('Preencha todos os campos obrigatórios.', 'error'); return;
+    }
+    showLoading();
+    try {
+        let url = `${API_URL}/medalhas/criar`;
+        let method = 'POST';
+        if (editId) {
+            url = `${API_URL}/medalhas/atualizar/dados/${editId}`;
+            method = 'PUT';
+        }
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(dados) });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || (editId ? 'Medalha atualizada!' : 'Medalha criada!'), 'success');
+            delete document.getElementById('modalNovaMedalha').dataset.editId;
+            fecharModalNovaMedalha();
+            loadMedalhas();
+        } else {
+            showNotification(json.message || 'Erro ao salvar medalha', 'error');
+        }
+    } catch (err) { console.error(err); showNotification('Erro ao criar medalha', 'error'); }
+    finally { hideLoading(); }
+}
 
+// ----- Modal Novo Troféu (funcional)
+function abrirModalTrofeu() {
+    const modal = document.getElementById('modalNovoTrofeu');
+    if (modal) { document.getElementById('formNovoTrofeu').reset(); modal.classList.add('active'); modal.setAttribute('aria-hidden', 'false'); }
+}
+function fecharModalNovoTrofeu() {
+    const modal = document.getElementById('modalNovoTrofeu');
+    if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); }
+}
+async function salvarNovoTrofeu(e) {
+    e.preventDefault();
+    const form = document.getElementById('formNovoTrofeu');
+    const fd = new FormData(form);
+    const editId = document.getElementById('modalNovoTrofeu').dataset.editId;
+    const dados = {
+        nome: fd.get('nome'),
+        descricao: fd.get('descricao'),
+        imagem_url: fd.get('imagem_url'),
+        iframe_url: fd.get('iframe_url'),
+        edicao_campeonato: fd.get('edicao_campeonato'),
+        categoria: fd.get('categoria')
+    };
+    if (!dados.nome || !dados.descricao || !dados.imagem_url || !dados.iframe_url || !dados.edicao_campeonato || !dados.categoria) {
+        showNotification('Preencha todos os campos obrigatórios.', 'error'); return;
+    }
+    showLoading();
+    try {
+        let url = `${API_URL}/trofeus/criar`;
+        let method = 'POST';
+        if (editId) {
+            url = `${API_URL}/trofeus/atualizar/${editId}`;
+            method = 'PUT';
+        }
+        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(dados) });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || (editId ? 'Troféu atualizado!' : 'Troféu criado!'), 'success');
+            delete document.getElementById('modalNovoTrofeu').dataset.editId;
+            fecharModalNovoTrofeu();
+            loadTrofeus();
+        } else {
+            showNotification(json.message || 'Erro ao salvar troféu', 'error');
+        }
+    } catch (err) { console.error(err); showNotification('Erro ao criar troféu', 'error'); }
+    finally { hideLoading(); }
+}
+
+// ----- Modal Nova Notícia (funcional)
+function abrirModalNoticia() {
+    const modal = document.getElementById('modalNovaNoticia');
+    if (modal) {
+        document.getElementById('formNovaNoticia').reset();
+        document.getElementById('noticiaGroupCategoria').style.display = 'none';
+        document.getElementById('noticiaGroupVersao').style.display = 'none';
+        document.getElementById('noticiaGroupDestaque').style.display = 'none';
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+}
+function fecharModalNovaNoticia() {
+    const modal = document.getElementById('modalNovaNoticia');
+    if (modal) { modal.classList.remove('active'); modal.setAttribute('aria-hidden', 'true'); }
+}
+function toggleNoticiaCampos() {
+    const tipo = document.getElementById('noticiaTipo').value;
+    document.getElementById('noticiaGroupCategoria').style.display = tipo === 'site' ? 'block' : 'none';
+    document.getElementById('noticiaGroupVersao').style.display = tipo === 'site' ? 'block' : 'none';
+    document.getElementById('noticiaGroupDestaque').style.display = tipo === 'campeonato' ? 'block' : 'none';
+}
+async function salvarNovaNoticia(e) {
+    e.preventDefault();
+    const tipo = document.getElementById('noticiaTipo').value;
+    const titulo = document.getElementById('noticiaTitulo').value.trim();
+    const texto = document.getElementById('noticiaTexto').value.trim();
+    const autor = document.getElementById('noticiaAutor').value.trim();
+    const imagem_url = document.getElementById('noticiaImagem').value.trim() || null;
+    if (!titulo || !texto || !autor) { showNotification('Preencha título, texto e autor.', 'error'); return; }
+    const editId = document.getElementById('modalNovaNoticia').dataset.editId;
+    showLoading();
+    try {
+        let url, body;
+        if (tipo === 'destaque') {
+            url = editId ? `${API_URL}/noticias/destaques/atualizar` : `${API_URL}/noticias/destaques/criar`;
+            body = JSON.stringify({
+                id: editId || undefined,
+                tipo: 'destaque',
+                titulo,
+                subtitulo: document.getElementById('noticiaSubtitulo').value.trim(),
+                texto,
+                autor,
+                imagem_url
+            });
+        } else if (tipo === 'site') {
+            url = editId ? `${API_URL}/noticias/site/atualizar` : `${API_URL}/noticias/site/criar`;
+            body = JSON.stringify({
+                id: editId || undefined,
+                tipo: 'atualizacao',
+                categoria: document.getElementById('noticiaCategoria').value.trim() || 'atualizacao',
+                titulo,
+                subtitulo: document.getElementById('noticiaSubtitulo').value.trim(),
+                conteudo: texto,
+                autor,
+                versao: document.getElementById('noticiaVersao').value.trim() || '1.0',
+                imagem_url
+            });
+        } else {
+            url = editId ? `${API_URL}/noticias/campeonato/atualizar` : `${API_URL}/noticias/campeonato/criar`;
+            body = JSON.stringify({
+                id: editId || undefined,
+                tipo: 'campeonato',
+                destaque: document.getElementById('noticiaDestaque').value.trim() || 'nao',
+                titulo,
+                texto,
+                autor,
+                imagem_url
+            });
+        }
+        const res = await fetch(url, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || (editId ? 'Notícia atualizada!' : 'Notícia criada!'), 'success');
+            delete document.getElementById('modalNovaNoticia').dataset.editId;
+            fecharModalNovaNoticia();
+            loadNoticias(tipo === 'destaque' ? 'destaque' : (tipo === 'campeonato' ? 'campeonato' : 'atualizacao'));
+        } else {
+            showNotification(json.message || 'Erro ao salvar notícia', 'error');
+        }
+    } catch (err) { console.error(err); showNotification('Erro ao criar notícia', 'error'); }
+    finally { hideLoading(); }
+}
+
+// ===== Ações Notícias =====
+async function editarNoticia(id, tipoLista) {
+    if (!id) {
+        showNotification('Notícia inválida para edição.', 'error');
+        return;
+    }
+    // Buscar novamente a lista do tipo correto para garantir dados atualizados
+    let tipo = tipoLista || 'destaque';
+    let url;
+    if (tipo === 'destaque') url = `${API_URL}/noticias/destaques`;
+    else if (tipo === 'campeonato') url = `${API_URL}/noticias/campeonato`;
+    else url = `${API_URL}/noticias/site`;
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const noticias = Array.isArray(data.noticias) ? data.noticias : [];
+        const n = noticias.find(x => x.id === id || x.ID === id);
+        if (!n) {
+            showNotification('Notícia não encontrada.', 'error');
+            return;
+        }
+
+        abrirModalNoticia();
+        document.getElementById('modalNovaNoticia').dataset.editId = n.id || n.ID;
+
+        if (tipo === 'destaque') {
+            document.getElementById('noticiaTipo').value = 'destaque';
+            toggleNoticiaCampos();
+            document.getElementById('noticiaTitulo').value = n.titulo || '';
+            document.getElementById('noticiaSubtitulo').value = n.subtitulo || '';
+            document.getElementById('noticiaTexto').value = n.texto || '';
+            document.getElementById('noticiaAutor').value = n.autor || '';
+            document.getElementById('noticiaImagem').value = n.imagem_url || '';
+        } else if (tipo === 'campeonato') {
+            document.getElementById('noticiaTipo').value = 'campeonato';
+            toggleNoticiaCampos();
+            document.getElementById('noticiaTitulo').value = n.titulo || '';
+            document.getElementById('noticiaTexto').value = n.texto || '';
+            document.getElementById('noticiaAutor').value = n.autor || '';
+            document.getElementById('noticiaImagem').value = n.imagem_url || '';
+            document.getElementById('noticiaDestaque').value = n.destaque || '';
+        } else {
+            document.getElementById('noticiaTipo').value = 'site';
+            toggleNoticiaCampos();
+            document.getElementById('noticiaTitulo').value = n.titulo || '';
+            document.getElementById('noticiaSubtitulo').value = n.subtitulo || '';
+            document.getElementById('noticiaTexto').value = n.conteudo || '';
+            document.getElementById('noticiaAutor').value = n.autor || '';
+            document.getElementById('noticiaImagem').value = n.imagem_url || '';
+            document.getElementById('noticiaCategoria').value = n.categoria || '';
+            document.getElementById('noticiaVersao').value = n.versao || '';
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao carregar notícia para edição.', 'error');
+    }
+}
+
+async function excluirNoticia(id, tipoLista) {
+    if (!id) {
+        showNotification('Notícia inválida para exclusão.', 'error');
+        return;
+    }
+    const confirmou = await showConfirmModal('Tem certeza que deseja excluir esta notícia?', 'Confirmar exclusão');
+    if (!confirmou) return;
+
+    let tipo = tipoLista || 'destaque';
+    let url;
+    if (tipo === 'destaque') url = `${API_URL}/noticias/destaques/deletar`;
+    else if (tipo === 'campeonato') url = `${API_URL}/noticias/campeonato/deletar`;
+    else url = `${API_URL}/noticias/site/deletar`;
+
+    showLoading();
+    try {
+        const res = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || 'Notícia excluída com sucesso.', 'success');
+            loadNoticias(tipo);
+        } else {
+            showNotification(json.message || 'Erro ao excluir notícia.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao excluir notícia.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Bind dos formulários (executado ao carregar)
+(function bindAdmModals() {
+    const formMedalha = document.getElementById('formNovaMedalha');
+    if (formMedalha) formMedalha.addEventListener('submit', salvarNovaMedalha);
+    const formTrofeu = document.getElementById('formNovoTrofeu');
+    if (formTrofeu) formTrofeu.addEventListener('submit', salvarNovoTrofeu);
+    const formNoticia = document.getElementById('formNovaNoticia');
+    if (formNoticia) { formNoticia.addEventListener('submit', salvarNovaNoticia); }
+    const noticiaTipo = document.getElementById('noticiaTipo');
+    if (noticiaTipo) noticiaTipo.addEventListener('change', toggleNoticiaCampos);
+})();
+
+// ===============================================================================================
 async function loadTimes() {
-    console.log('⏳ Carregando times... (não implementado ainda)');
-    showNotification('Seção de times será implementada em breve', 'info');
+    try {
+        console.log('🏆 Carregando times...');
+        showLoading();
+
+        const response = await fetch(`${API_URL}/times/list`);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const { dados, dadosMembros } = data;
+
+        const membrosPorTime = {};
+        if (Array.isArray(dadosMembros)) {
+            dadosMembros.forEach(m => {
+                if (!membrosPorTime[m.time_id]) membrosPorTime[m.time_id] = 0;
+                membrosPorTime[m.time_id]++;
+            });
+        }
+
+        const timesView = (dados || []).map(t => ({
+            id: t.id,
+            nome: t.nome,
+            tag: t.tag,
+            avatar: t.avatar_time_url,
+            lider_id: t.lider_id,
+            lider_nome: t.lider_nome,
+            data_criacao: t.data_criacao,
+            membros: membrosPorTime[t.id] || 0
+        }));
+
+        appState.times = timesView;
+        displayTimes(timesView);
+
+        console.log(`✅ ${timesView.length} times carregados com sucesso`);
+    } catch (error) {
+        console.error('❌ Erro ao carregar times:', error);
+        showNotification('Erro ao carregar lista de times', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayTimes(times) {
+    const tbody = document.getElementById('timesTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!times || times.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    Nenhum time encontrado
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    times.forEach(time => {
+        const tr = document.createElement('tr');
+        const dataCriacao = time.data_criacao ? new Date(time.data_criacao).toLocaleDateString('pt-BR') : '-';
+
+        tr.innerHTML = `
+            <td>
+                <img src="${time.avatar || '../img/mixcamp.png'}"
+                     alt="Avatar Time"
+                     class="table-avatar"
+                     onerror="this.src='../img/mixcamp.png'">
+            </td>
+            <td>
+                <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                    <strong>${time.nome || '-'}</strong>
+                    <small style="color:rgba(255,255,255,0.6);">ID: ${time.id}</small>
+                </div>
+            </td>
+            <td>${time.tag || '-'}</td>
+            <td>
+                <div style="display:flex;flex-direction:column;gap:0.25rem;">
+                    <span>${time.lider_nome || '-'}</span>
+                    ${time.lider_id ? `<small style="color:rgba(255,255,255,0.6);">ID: ${time.lider_id}</small>` : ''}
+                </div>
+            </td>
+            <td>
+                <span>${time.membros || 0} membros</span>
+            </td>
+            <td>${dataCriacao}</td>
+            <td style="text-align:center;">
+                <button class="btn btn-small btn-edit" title="Ver detalhes" onclick="/* TODO: abrir modal detalhes do time */">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
 }
 
 async function loadMedalhas() {
-    console.log('⏳ Carregando medalhas... (não implementado ainda)');
-    showNotification('Seção de medalhas será implementada em breve', 'info');
+    try {
+        console.log('🏅 Carregando medalhas...');
+        showLoading();
+
+        const response = await fetch(`${API_URL}/admin/medalhas`);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const medalhas = Array.isArray(data.medalhas) ? data.medalhas : [];
+
+        appState.medalhas = medalhas;
+        displayMedalhas(medalhas);
+
+        console.log(`✅ ${medalhas.length} medalhas carregadas com sucesso`);
+    } catch (error) {
+        console.error('❌ Erro ao carregar medalhas:', error);
+        showNotification('Erro ao carregar lista de medalhas', 'error');
+    } finally {
+        hideLoading();
+    }
 }
 
+function displayMedalhas(medalhas) {
+    const tbody = document.getElementById('medalhasTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!medalhas || medalhas.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-medal" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    Nenhuma medalha encontrada
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    medalhas.forEach(m => {
+        const tr = document.createElement('tr');
+        const dataCriacao = m.data_criacao ? new Date(m.data_criacao).toLocaleDateString('pt-BR') : '-';
+
+        tr.innerHTML = `
+            <td>
+                <img src="${m.imagem_url_campeao || '../img/mixcamp.png'}"
+                     alt="Medalha"
+                     class="table-avatar"
+                     onerror="this.src='../img/mixcamp.png'">
+            </td>
+            <td>${m.nome || '-'}</td>
+            <td>${truncateText(m.descricao || '', 60)}</td>
+            <td>${m.edicao_campeonato || '-'}</td>
+            <td>-</td>
+            <td>${dataCriacao}</td>
+            <td style="text-align:center;">
+                <button class="btn btn-small btn-edit" title="Editar" onclick="editarMedalha(${m.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-small btn-delete" title="Excluir" onclick="excluirMedalha(${m.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ===== Ações Medalhas =====
+async function editarMedalha(id) {
+    const medalha = (appState.medalhas || []).find(m => m.id === id);
+    if (!medalha) {
+        showNotification('Medalha não encontrada.', 'error');
+        return;
+    }
+    abrirModalMedalha();
+    document.getElementById('medalhaNome').value = medalha.nome || '';
+    document.getElementById('medalhaDescricao').value = medalha.descricao || '';
+    document.getElementById('medalhaImgCampeao').value = medalha.imagem_url_campeao || '';
+    document.getElementById('medalhaImgSegundo').value = medalha.imagem_url_segundo || '';
+    document.getElementById('medalhaIframeCampeao').value = medalha.iframe_url_campeao || '';
+    document.getElementById('medalhaIframeSegundo').value = medalha.iframe_url_segundo || '';
+    document.getElementById('medalhaEdicao').value = medalha.edicao_campeonato || '';
+    document.getElementById('modalNovaMedalha').dataset.editId = id;
+}
+
+async function excluirMedalha(id) {
+    const confirmou = await showConfirmModal('Tem certeza que deseja excluir esta medalha?', 'Confirmar exclusão');
+    if (!confirmou) return;
+    showLoading();
+    try {
+        const res = await fetch(`${API_URL}/medalhas/deletar/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || 'Medalha excluída com sucesso.', 'success');
+            loadMedalhas();
+        } else {
+            showNotification(json.message || 'Erro ao excluir medalha.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao excluir medalha.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===============================================================================================
+// ==================================== [CAMPEONATOS / ORGANIZADORES] ===========================
+// ===============================================================================================
+
 async function loadTrofeus() {
-    console.log('⏳ Carregando troféus... (não implementado ainda)');
-    showNotification('Seção de troféus será implementada em breve', 'info');
+    try {
+        console.log('🏆 Carregando troféus...');
+        showLoading();
+
+        const response = await fetch(`${API_URL}/trofeus`);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const trofeus = Array.isArray(data.trofeus) ? data.trofeus : [];
+
+        appState.trofeus = trofeus;
+        displayTrofeus(trofeus);
+
+        console.log(`✅ ${trofeus.length} troféus carregados com sucesso`);
+    } catch (error) {
+        console.error('❌ Erro ao carregar troféus:', error);
+        showNotification('Erro ao carregar lista de troféus', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayTrofeus(trofeus) {
+    const tbody = document.getElementById('trofeusTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!trofeus || trofeus.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-trophy" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    Nenhum troféu encontrado
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    trofeus.forEach(t => {
+        const tr = document.createElement('tr');
+        const dataCriacao = t.data_criacao ? new Date(t.data_criacao).toLocaleDateString('pt-BR') : '-';
+
+        tr.innerHTML = `
+            <td>
+                <img src="${t.imagem_url || '../img/mixcamp.png'}"
+                     alt="Troféu"
+                     class="table-avatar"
+                     onerror="this.src='../img/mixcamp.png'">
+            </td>
+            <td>${t.nome || '-'}</td>
+            <td>-</td>
+            <td>${truncateText(t.descricao || '', 60)}</td>
+            <td>${t.categoria || '-'}</td>
+            <td>${t.edicao_campeonato || '-'}</td>
+            <td>${dataCriacao}</td>
+            <td style="text-align:center;">
+                <button class="btn btn-small btn-edit" title="Editar" onclick="editarTrofeu(${t.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-small btn-delete" title="Excluir" onclick="excluirTrofeu(${t.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ===== Ações Troféus =====
+async function editarTrofeu(id) {
+    const trofeu = (appState.trofeus || []).find(t => t.id === id);
+    if (!trofeu) {
+        showNotification('Troféu não encontrado.', 'error');
+        return;
+    }
+    abrirModalTrofeu();
+    document.getElementById('trofeuNome').value = trofeu.nome || '';
+    document.getElementById('trofeuDescricao').value = trofeu.descricao || '';
+    document.getElementById('trofeuImagem').value = trofeu.imagem_url || '';
+    document.getElementById('trofeuIframe').value = trofeu.iframe_url || '';
+    document.getElementById('trofeuEdicao').value = trofeu.edicao_campeonato || '';
+    document.getElementById('trofeuCategoria').value = trofeu.categoria || '';
+    document.getElementById('modalNovoTrofeu').dataset.editId = id;
+}
+
+async function excluirTrofeu(id) {
+    const confirmou = await showConfirmModal('Tem certeza que deseja excluir este troféu?', 'Confirmar exclusão');
+    if (!confirmou) return;
+    showLoading();
+    try {
+        const res = await fetch(`${API_URL}/trofeus/deletar/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || 'Troféu excluído com sucesso.', 'success');
+            loadTrofeus();
+        } else {
+            showNotification(json.message || 'Erro ao excluir troféu.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao excluir troféu.', 'error');
+    } finally {
+        hideLoading();
+    }
 }
 
 async function loadNoticias(tipo = null) {
-    console.log('⏳ Carregando notícias... (não implementado ainda)');
-    showNotification('Seção de notícias será implementada em breve', 'info');
+    try {
+        console.log('📰 Carregando notícias...', tipo || 'todas');
+        showLoading();
+
+        let url;
+        if (tipo === 'destaque' || !tipo) {
+            url = `${API_URL}/noticias/destaques`;
+        } else if (tipo === 'campeonato') {
+            url = `${API_URL}/noticias/campeonato`;
+        } else {
+            // 'atualizacao' e 'cs2' usam noticias_site (podemos filtrar depois se quiser)
+            url = `${API_URL}/noticias/site`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const noticias = Array.isArray(data.noticias) ? data.noticias : [];
+
+        if (tipo) {
+            appState.noticias[tipo] = noticias;
+        }
+
+        displayNoticias(noticias, tipo);
+
+        console.log(`✅ ${noticias.length} notícias carregadas (${tipo || 'geral'})`);
+    } catch (error) {
+        console.error('❌ Erro ao carregar notícias:', error);
+        showNotification('Erro ao carregar notícias', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayNoticias(noticias, tipo) {
+    const tbody = document.getElementById('noticiasTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!noticias || noticias.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-newspaper" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    Nenhuma notícia encontrada
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    noticias.forEach(n => {
+        const tr = document.createElement('tr');
+        const dataPublicacao = n.data ? new Date(n.data).toLocaleDateString('pt-BR') : '-';
+
+        // Definir tipo/label baseado na origem
+        let tipoTexto = 'Site';
+        let statusTexto = '-';
+        if (tipo === 'destaque') {
+            tipoTexto = 'Destaque';
+            statusTexto = n.destaque || n.tipo || 'destaque';
+        } else if (tipo === 'campeonato') {
+            tipoTexto = 'Campeonato';
+            statusTexto = n.destaque || '-';
+        } else {
+            tipoTexto = n.categoria || n.tipo || 'Site';
+            statusTexto = n.tipo || '-';
+        }
+
+        tr.innerHTML = `
+            <td>
+                <img src="${n.imagem_url || '../img/mixcamp.png'}"
+                     alt="Notícia"
+                     class="table-avatar"
+                     onerror="this.src='../img/mixcamp.png'">
+            </td>
+            <td>${n.titulo || '-'}</td>
+            <td>${tipoTexto}</td>
+            <td>${statusTexto}</td>
+            <td>${dataPublicacao}</td>
+            <td style="text-align:center;">
+                <button class="btn btn-small btn-edit" title="Editar" onclick="editarNoticia(${n.id || n.ID || 'null'}, '${tipo || ''}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-small btn-delete" title="Excluir" onclick="excluirNoticia(${n.id || n.ID || 'null'}, '${tipo || ''}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ===============================================================================================
+// ==================================== [CAMPEONATOS / ORGANIZADORES] ===========================
+// ===============================================================================================
+
+async function loadCampeonatos() {
+    try {
+        console.log('🏆 Carregando campeonatos e organizadores...');
+        showLoading();
+
+        const response = await fetch(`${API_URL}/inscricoes/campeonato`);
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const inscricoes = Array.isArray(data.inscricoes) ? data.inscricoes : [];
+
+        // Calcular resumo para os gráficos (tipos e lucro dos comuns)
+        atualizarResumoCampeonatos(inscricoes);
+
+        const porOrganizador = {};
+        inscricoes.forEach(ic => {
+            const idOrg = ic.id_organizador || 0;
+            const nomeOrg = ic.organizador_nome || 'Sem organizador';
+            if (!porOrganizador[idOrg]) {
+                porOrganizador[idOrg] = {
+                    id: idOrg,
+                    nome: nomeOrg,
+                    avatar: ic.organizador_avatar || null,
+                    campeonatos: []
+                };
+            }
+            porOrganizador[idOrg].campeonatos.push(ic);
+        });
+
+        appState.campeonatosPorId = {};
+        inscricoes.forEach(ic => { appState.campeonatosPorId[ic.id] = ic; });
+
+        const organizadores = Object.values(porOrganizador);
+        appState.campeonatos = organizadores;
+        displayCampeonatos(organizadores);
+
+        console.log(`✅ ${organizadores.length} organizadores e ${inscricoes.length} campeonatos carregados`);
+    } catch (error) {
+        console.error('❌ Erro ao carregar campeonatos:', error);
+        showNotification('Erro ao carregar campeonatos e organizadores', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Calcula e atualiza o resumo de campeonatos por tipo
+ * e o lucro do Mixcamp para campeonatos comuns (taxa 8%).
+ */
+function atualizarResumoCampeonatos(inscricoes) {
+    const TAXA_MIXCAMP = 0.08;
+    let totalOficial = 0;
+    let totalComum = 0;
+    let receitaComum = 0;
+
+    (inscricoes || []).forEach(c => {
+        const tipo = (c.tipo || 'comum').toLowerCase();
+        const qnt = parseInt(c.qnt_times, 10) || 0;
+        const preco = Number(c.preco_inscricao) || 0;
+        const receita = qnt * preco;
+
+        if (tipo === 'oficial') {
+            totalOficial++;
+        } else {
+            totalComum++;
+            receitaComum += receita;
+        }
+    });
+
+    const lucroComum = receitaComum * TAXA_MIXCAMP;
+
+    // Atualizar resumo textual
+    const fmtMoney = (v) => {
+        return 'R$ ' + (Number(v) || 0).toFixed(2).replace('.', ',');
+    };
+    const bindText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    bindText('campResumoQtdComum', String(totalComum));
+    bindText('campResumoReceitaComum', fmtMoney(receitaComum));
+    bindText('campResumoLucroComum', fmtMoney(lucroComum));
+
+    // Atualizar gráficos (pizza e coluna)
+    atualizarGraficosCampeonatos({
+        totalOficial,
+        totalComum,
+        receitaComum,
+        lucroComum
+    });
+}
+
+/**
+ * Cria/atualiza os gráficos de pizza (distribuição por tipo)
+ * e coluna (receita x lucro de campeonatos comuns).
+ */
+function atualizarGraficosCampeonatos(resumo) {
+    const { totalOficial, totalComum, receitaComum, lucroComum } = resumo;
+
+    // Gráfico de pizza - quantidade por tipo
+    const ctxTipos = document.getElementById('chartCampTipos');
+    if (ctxTipos && typeof Chart !== 'undefined') {
+        if (chartCampTipos) chartCampTipos.destroy();
+        chartCampTipos = new Chart(ctxTipos, {
+            type: 'pie',
+            data: {
+                labels: ['Comum', 'Oficial'],
+                datasets: [{
+                    data: [totalComum, totalOficial],
+                    backgroundColor: ['#f56e08', '#7c3aed'],
+                    borderColor: ['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.4)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de coluna - receita x lucro (somente comuns)
+    const ctxLucro = document.getElementById('chartCampLucro');
+    if (ctxLucro && typeof Chart !== 'undefined') {
+        if (chartCampLucro) chartCampLucro.destroy();
+        chartCampLucro = new Chart(ctxLucro, {
+            type: 'bar',
+            data: {
+                labels: ['Receita total (comuns)', 'Lucro Mixcamp (8%)'],
+                datasets: [{
+                    label: 'R$',
+                    data: [receitaComum, lucroComum],
+                    backgroundColor: ['rgba(245, 110, 8, 0.7)', 'rgba(34, 197, 94, 0.7)'],
+                    borderColor: ['#f56e08', '#22c55e'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function displayCampeonatos(organizadores) {
+    const container = document.getElementById('campeonatosOrganizadoresList');
+    if (!container) return;
+
+    if (!organizadores || organizadores.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-trophy"></i>
+                <p>Nenhum organizador ou campeonato encontrado</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = organizadores.map(org => {
+        const campeonatosList = (org.campeonatos || []).map(c => {
+            const tipoClass = (c.tipo || 'comum').toLowerCase().replace(/\s/g, '');
+            return `<li class="campeonato-item tipo-${tipoClass}" data-campeonato-id="${c.id}" role="button" tabindex="0" title="Clique para ver detalhes">
+                <span class="campeonato-titulo">${(c.titulo || 'Sem título')}</span>
+                <span class="campeonato-meta">Status: ${(c.status || '-')} | Edição: ${(c.edicao_campeonato || '-')} | Vagas: ${c.qnt_times != null ? c.qnt_times : '-'}</span>
+            </li>`;
+        }).join('');
+
+        return `
+            <div class="organizador-card" data-organizador-id="${org.id}">
+                <div class="organizador-header">
+                    <img src="${org.avatar || '../img/legalize.png'}" alt="Avatar" class="organizador-avatar" onerror="this.src='../img/legalize.png'">
+                    <div class="organizador-info">
+                        <h4>${org.nome || 'Sem nome'}</h4>
+                        <small>ID: ${org.id} • ${(org.campeonatos || []).length} campeonato(s)</small>
+                    </div>
+                </div>
+                <ul class="campeonatos-list">${campeonatosList}</ul>
+            </div>
+        `;
+    }).join('');
+
+    container.querySelectorAll('.campeonato-item').forEach(el => {
+        el.addEventListener('click', function() {
+            const id = parseInt(this.getAttribute('data-campeonato-id'), 10);
+            if (!isNaN(id)) abrirModalDetalheCampeonato(id);
+        });
+        el.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+}
+
+function filterCampeonatos(searchTerm) {
+    if (!appState.campeonatos || appState.campeonatos.length === 0) return;
+    const term = (searchTerm || '').toLowerCase().trim();
+    if (!term) {
+        displayCampeonatos(appState.campeonatos);
+        return;
+    }
+    const filtered = appState.campeonatos.filter(org => {
+        const nomeMatch = (org.nome || '').toLowerCase().includes(term);
+        const campeonatosMatch = (org.campeonatos || []).some(c =>
+            (c.titulo || '').toLowerCase().includes(term) ||
+            (c.edicao_campeonato || '').toLowerCase().includes(term) ||
+            (c.status || '').toLowerCase().includes(term)
+        );
+        return nomeMatch || campeonatosMatch;
+    });
+    displayCampeonatos(filtered);
+}
+
+// ===============================================================================================
+// Modal de detalhes do campeonato
+// ===============================================================================================
+function abrirModalDetalheCampeonato(id) {
+    const c = appState.campeonatosPorId && appState.campeonatosPorId[id];
+    if (!c) {
+        showNotification('Campeonato não encontrado', 'error');
+        return;
+    }
+    const modal = document.getElementById('modalDetalheCampeonato');
+    if (!modal) return;
+
+    const fmt = (v) => (v != null && v !== '') ? v : '-';
+    const fmtData = (v) => {
+        if (!v) return '-';
+        try { return new Date(v).toLocaleString('pt-BR'); } catch (e) { return v; }
+    };
+    const fmtMoney = (v) => {
+        if (v == null || v === '') return '-';
+        return 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+    };
+
+    const organizadorNome = c.organizador_nome || 'Sem organizador';
+    const organizadorAvatar = c.organizador_avatar || '../img/legalize.png';
+
+    document.getElementById('detalheCampeonatoImagem').src = c.imagem_url || '../img/mixcamp.png';
+    document.getElementById('detalheCampeonatoImagem').onerror = function() { this.src = '../img/mixcamp.png'; };
+    document.getElementById('detalheCampeonatoTitulo').textContent = c.titulo || 'Sem título';
+    document.getElementById('detalheCampeonatoStatus').textContent = fmt(c.status);
+    document.getElementById('detalheCampeonatoStatus').className = 'detalhe-badge status-' + (String(c.status || '').replace(/\s/g, '').toLowerCase() || 'disponivel');
+    document.getElementById('detalheCampeonatoEdicao').textContent = fmt(c.edicao_campeonato);
+    document.getElementById('detalheCampeonatoTipo').textContent = fmt(c.tipo);
+    const tipoEl = document.getElementById('detalheCampeonatoTipo');
+    if (tipoEl) {
+        const tipoNorm = (c.tipo || 'comum').toLowerCase().replace(/\s/g, '');
+        tipoEl.className = 'detalhe-tipo detalhe-tipo-' + tipoNorm;
+    }
+    document.getElementById('detalheCampeonatoMixcamp').textContent = fmt(c.mixcamp);
+    document.getElementById('detalheCampeonatoPlataforma').textContent = fmt(c.plataforma);
+    document.getElementById('detalheCampeonatoGame').textContent = fmt(c.game);
+    document.getElementById('detalheCampeonatoNivel').textContent = fmt(c.nivel);
+    document.getElementById('detalheCampeonatoFormato').textContent = fmt(c.formato);
+    document.getElementById('detalheCampeonatoVagas').textContent = fmt(c.qnt_times);
+    document.getElementById('detalheCampeonatoPreco').textContent = fmtMoney(c.preco_inscricao);
+    document.getElementById('detalheCampeonatoPremiacao').textContent = fmtMoney(c.premiacao);
+    document.getElementById('detalheCampeonatoDataInicio').textContent = fmtData(c.previsao_data_inicio);
+    document.getElementById('detalheCampeonatoChave').textContent = fmt(c.chave);
+    document.getElementById('detalheCampeonatoDescricao').textContent = fmt(c.descricao);
+    document.getElementById('detalheCampeonatoRegras').textContent = fmt(c.regras);
+
+    // Lucro Mixcamp: taxa de 8% sobre o valor total das inscrições (qnt_times * preco_inscricao)
+    const TAXA_MIXCAMP = 0.08;
+    const qntTimes = parseInt(c.qnt_times, 10) || 0;
+    const precoInscricao = Number(c.preco_inscricao) || 0;
+    const receitaTotalInscricoes = qntTimes * precoInscricao;
+    const lucroMixcamp = receitaTotalInscricoes * TAXA_MIXCAMP;
+    document.getElementById('detalheCampeonatoReceitaTotal').textContent = fmtMoney(receitaTotalInscricoes);
+    document.getElementById('detalheCampeonatoLucroMixcamp').textContent = fmtMoney(lucroMixcamp);
+
+    document.getElementById('detalheCampeonatoOrganizadorNome').textContent = organizadorNome;
+    document.getElementById('detalheCampeonatoOrganizadorAvatar').src = organizadorAvatar;
+    document.getElementById('detalheCampeonatoOrganizadorAvatar').onerror = function() { this.src = '../img/legalize.png'; };
+    document.getElementById('detalheCampeonatoLinkHub').href = c.link_hub || '#';
+    document.getElementById('detalheCampeonatoLinkHub').textContent = c.link_hub ? 'Abrir Hub' : '-';
+    document.getElementById('detalheCampeonatoLinkConvite').href = c.link_convite || '#';
+    document.getElementById('detalheCampeonatoLinkConvite').textContent = c.link_convite ? 'Link Convite' : '-';
+    const linkWhats = document.getElementById('detalheCampeonatoLinkWhatsapp');
+    if (c.link_whatsapp) {
+        linkWhats.href = c.link_whatsapp.startsWith('http') ? c.link_whatsapp : 'https://wa.me/' + c.link_whatsapp.replace(/\D/g, '');
+        linkWhats.textContent = 'WhatsApp';
+        linkWhats.style.display = '';
+    } else {
+        linkWhats.href = '#';
+        linkWhats.style.display = 'none';
+    }
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function fecharModalDetalheCampeonato() {
+    const modal = document.getElementById('modalDetalheCampeonato');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+// ===============================================================================================
+// ==================================== [CRIAR CAMPEONATO ADM - OFICIAL] ========================
+// ===============================================================================================
+
+async function getAdminUser() {
+    try {
+        const response = await fetch(`${API_URL}/dashboard`, { credentials: 'include' });
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data && data.logado ? data : null;
+    } catch (e) {
+        console.error('Erro ao obter usuário:', e);
+        return null;
+    }
+}
+
+function abrirModalCriarCampeonatoAdm() {
+    getAdminUser().then(auth => {
+        if (!auth || !auth.logado || !auth.usuario) {
+            showNotification('Faça login para criar campeonato', 'error');
+            return;
+        }
+        if (auth.usuario.gerencia !== 'admin') {
+            showNotification('Apenas administradores podem criar campeonatos oficiais.', 'error');
+            return;
+        }
+        const modal = document.getElementById('modalCriarCampeonatoAdm');
+        if (!modal) return;
+        document.getElementById('formCriarCampeonatoAdm').reset();
+        const dataInicio = document.getElementById('admCampDataInicio');
+        if (dataInicio) {
+            const d = new Date();
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            dataInicio.value = d.toISOString().slice(0, 16);
+        }
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+    });
+}
+
+function fecharModalCriarCampeonatoAdm() {
+    const modal = document.getElementById('modalCriarCampeonatoAdm');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+async function salvarCampeonatoAdm(e) {
+    e.preventDefault();
+    const auth = await getAdminUser();
+    if (!auth || !auth.logado || !auth.usuario) {
+        showNotification('Sessão inválida. Faça login novamente.', 'error');
+        return;
+    }
+    if (auth.usuario.gerencia !== 'admin') {
+        showNotification('Apenas administradores podem criar campeonatos oficiais.', 'error');
+        return;
+    }
+    const form = document.getElementById('formCriarCampeonatoAdm');
+    const fd = new FormData(form);
+    const previsao = fd.get('previsao_data_inicio');
+    const dados = {
+        tipo: 'oficial',
+        mixcamp: 'mixcamp',
+        titulo: fd.get('titulo'),
+        descricao: fd.get('descricao'),
+        preco_inscricao: parseFloat(fd.get('preco_inscricao')) || 0,
+        premiacao: parseFloat(fd.get('premiacao')) || 0,
+        imagem_url: fd.get('imagem_url') || null,
+        trofeu_id: null,
+        medalha_id: null,
+        chave: fd.get('chave') || 'Single Elimination (todos BO3)',
+        edicao_campeonato: fd.get('edicao_campeonato') || null,
+        plataforma: 'FACEIT',
+        game: 'CS2',
+        nivel: '1-10',
+        formato: '5v5',
+        qnt_times: fd.get('qnt_times') || '16',
+        regras: fd.get('regras'),
+        id_organizador: auth.usuario.id,
+        status: fd.get('status') || 'disponivel',
+        previsao_data_inicio: previsao ? new Date(previsao).toISOString().slice(0, 19).replace('T', ' ') : null,
+        link_hub: fd.get('link_hub'),
+        link_convite: fd.get('link_convite'),
+        link_whatsapp: fd.get('link_whatsapp') || null
+    };
+    if (!dados.titulo || !dados.descricao || !dados.regras || !dados.link_hub || !dados.link_convite) {
+        showNotification('Preencha todos os campos obrigatórios.', 'error');
+        return;
+    }
+    showLoading();
+    try {
+        const response = await fetch(`${API_URL}/inscricoes/campeonato`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(dados)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok) {
+            showNotification(result.message || 'Campeonato criado com sucesso!', 'success');
+            fecharModalCriarCampeonatoAdm();
+            loadCampeonatos();
+        } else {
+            showNotification(result.message || 'Erro ao criar campeonato', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao criar campeonato', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Configurar submit do form ao carregar a página
+(function initFormCriarCampeonatoAdm() {
+    const form = document.getElementById('formCriarCampeonatoAdm');
+    if (form) form.addEventListener('submit', salvarCampeonatoAdm);
+})();
+
+// ===============================================================================================
+// ==================================== [ENVIAR NOTIFICAÇÃO] =====================================
+// ===============================================================================================
+
+async function loadNotificacoesEnviar() {
+    const selectUsuario = document.getElementById('notifUsuarioId');
+    const groupUsuarioId = document.getElementById('groupUsuarioId');
+    const selectDestinatario = document.getElementById('notifDestinatario');
+
+    if (selectDestinatario) {
+        selectDestinatario.addEventListener('change', function() {
+            if (groupUsuarioId) {
+                groupUsuarioId.style.display = this.value === 'usuario' ? 'block' : 'none';
+            }
+        });
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/admin/usuarios`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const usuarios = Array.isArray(data.usuarios) ? data.usuarios : [];
+
+        if (selectUsuario) {
+            selectUsuario.innerHTML = '<option value="">Selecione um usuário</option>' +
+                usuarios.map(u => `<option value="${u.id}">${u.username} (ID: ${u.id})</option>`).join('');
+        }
+    } catch (e) {
+        console.error('Erro ao carregar usuários para notificação:', e);
+        if (selectUsuario) selectUsuario.innerHTML = '<option value="">Erro ao carregar usuários</option>';
+    }
+
+    const form = document.getElementById('formEnviarNotificacao');
+    if (form) {
+        form.onsubmit = null;
+        form.addEventListener('submit', enviarNotificacaoSubmit);
+    }
+}
+
+async function enviarNotificacaoSubmit(e) {
+    e.preventDefault();
+    const destinatario = document.getElementById('notifDestinatario')?.value;
+    const usuarioId = document.getElementById('notifUsuarioId')?.value;
+    const texto = document.getElementById('notifTexto')?.value?.trim();
+    if (!texto) {
+        showNotification('Digite a mensagem da notificação', 'error');
+        return;
+    }
+    showLoading();
+    try {
+        if (destinatario === 'todos') {
+            const response = await fetch(`${API_URL}/notificacoes/enviar-todos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ texto })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) {
+                showNotification(data.message || 'Notificação enviada para todos com sucesso', 'success');
+                document.getElementById('notifTexto').value = '';
+            } else {
+                showNotification(data.message || 'Erro ao enviar notificação', 'error');
+            }
+        } else {
+            if (!usuarioId) {
+                showNotification('Selecione um usuário', 'error');
+                hideLoading();
+                return;
+            }
+            const response = await fetch(`${API_URL}/notificacoes/criar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ usuario_id: parseInt(usuarioId, 10), texto })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (response.ok) {
+                showNotification(data.message || 'Notificação enviada com sucesso', 'success');
+                document.getElementById('notifTexto').value = '';
+            } else {
+                showNotification(data.message || 'Erro ao enviar notificação', 'error');
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao enviar notificação', 'error');
+    } finally {
+        hideLoading();
+    }
 }
 
 // ===============================================================================================

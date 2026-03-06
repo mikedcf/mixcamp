@@ -4483,15 +4483,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .event-badge.tipo-oficial {
-    background: rgba(255, 107, 53, 0.3);
-    color: #ff6b35;
-    border-color: rgba(255, 107, 53, 0.5);
+    background: rgba(124, 58, 237, 0.35);
+    color: #a78bfa;
+    border-color: rgba(124, 58, 237, 0.6);
 }
 
 .event-badge.tipo-comum {
-    background: rgba(100, 181, 246, 0.3);
-    color: #64b5f6;
-    border-color: rgba(100, 181, 246, 0.5);
+    background: rgba(245, 110, 8, 0.3);
+    color: #f56e08;
+    border-color: rgba(245, 110, 8, 0.5);
 }
 
 .event-badge.nivel {
@@ -7604,4 +7604,180 @@ img, video, iframe, embed, object {
 [class*="grid"], [class*="flex"] {
     max-width: 100%;
     box-sizing: border-box;
+}
+
+/* ===== MINI MODAL DE CUPOM / PRESENTEAR ===== */
+.gift-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2100;
+}
+
+.gift-modal-overlay.active {
+    display: flex;
+}
+
+.gift-modal {
+    position: relative;
+    background: radial-gradient(circle at top, #1f2937 0%, #020617 60%);
+    border-radius: 18px;
+    padding: 20px 22px 18px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(148, 163, 184, 0.2);
+    border: 1px solid rgba(249, 115, 22, 0.6);
+    color: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.gift-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gift-modal-header i {
+    color: #f97316;
+    font-size: 20px;
+}
+
+.gift-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.gift-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.gift-modal-body p {
+    margin: 0;
+    color: #9ca3af;
+}
+
+.gift-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gift-input-group label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+}
+
+.gift-input-group input {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    padding: 8px 10px;
+    color: #e5e7eb;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.gift-input-group input::placeholder {
+    color: #6b7280;
+}
+
+.gift-input-group input:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.6);
+    background: rgba(15, 23, 42, 1);
+}
+
+.gift-submit-btn {
+    margin-top: 4px;
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 9px 14px;
+    background: linear-gradient(135deg, #f97316, #fbbf24);
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(248, 113, 22, 0.45);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.gift-submit-btn i {
+    font-size: 14px;
+}
+
+.gift-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(248, 113, 22, 0.55);
+    filter: brightness(1.02);
+}
+
+.gift-submit-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 16px rgba(248, 113, 22, 0.4);
+}
+
+.gift-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    background: rgba(15, 23, 42, 0.9);
+    color: #9ca3af;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.gift-modal-close:hover {
+    background: rgba(30, 64, 175, 0.95);
+    color: #e5e7eb;
+    border-color: rgba(59, 130, 246, 0.9);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.6);
+    transform: translateY(-1px);
+}
+
+.gift-modal-close:active {
+    transform: scale(0.96);
+    box-shadow: 0 3px 10px rgba(17, 24, 39, 0.9);
+}
+
+@media (max-width: 480px) {
+    .gift-modal {
+        margin: 0 18px;
+        padding: 18px 18px 16px;
+    }
+
+    .gift-modal-header h3 {
+        font-size: 16px;
+    }
 }

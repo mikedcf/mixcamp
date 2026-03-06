@@ -177,15 +177,18 @@ async function btnPagamento(){
         const dados = await buscarDadosPerfil(logado.usuario.id);
         if(lider){
             const timeId = dados.perfilData.usuario.time_id
-
-            
             const dadosMembros = await topullMembersTime(timeId)
+            
 
-            if(dadosMembros == 5){
+
+
+            if(dadosMembros.length >= 0){
                 for(const membro of dadosMembros){
                     idsMembros.push(membro.usuario_id)
                 }
                 const linksVerify = await verificarLinksAuth(idsMembros);
+                await PagamentoFree() // TODO: REMOVER em breve para testes
+                return;
                 if (linksVerify.res == true){
                     for(const card of cards.inscricoes){
                         if(card.id == cardId){
@@ -482,8 +485,49 @@ async function PagamentoFree(){
 
     const logado = await autenticacao();
     const userId = logado.usuario.id;
+    const dadosCard = await getCardDados();
 
-    
+    // console.log(dadosCard);
+
+    let titulo = '';
+    let premiacao = '';
+    let plataforma = '';
+    let link_convite = '';
+    let link_whatsapp = '';
+    let previsao_data_inicio = '';
+    let chave = '';
+    let game = '';
+    let nivel = '';
+
+    for (const card of dadosCard.inscricoes){
+        // console.log(card.id);
+        if(card.id == cardId){
+            console.log(card);
+            titulo = card.titulo;
+            premiacao = card.premiacao;
+            plataforma = card.plataforma;
+            link_convite = card.link_convite;
+            link_whatsapp = card.link_whatsapp;
+            previsao_data_inicio = await formatarData(card.previsao_data_inicio);
+            chave = card.chave;
+            game = card.game;
+            nivel = card.nivel;
+        }
+    }
+
+    const msg = ` 
+    Você foi inscrito no campeonato ${titulo} com sucesso!
+    A previsão de inicio do campeonato é em ${previsao_data_inicio} com o chave ${chave} e nivel ${nivel}.
+    Será utilizada a plataforma ${plataforma} e o game ${game}.
+    O premio do campeonato é de R$${premiacao}.
+
+    Acesse a HUB aonde o campeonato vai ocorrer: ${link_convite}
+    Entre no grupo do campeonato: ${link_whatsapp}
+
+    Obrigado por participar do campeonato ${titulo}!
+    `
+
+    console.log(msg);
 
     const dadosUsuario = await buscarDadosPerfil(userId);
     const timeId = dadosUsuario.perfilData.usuario.time_id;
@@ -502,7 +546,12 @@ async function PagamentoFree(){
         });
 
         const result = await response.json();
-        showNotification('success', 'Pagamento realizado com sucesso!');
+        showNotification('success', 'Inscrição realizada com sucesso!');
+        for (const membro of idsMembros){
+            
+            EnviarNotificacao(membro, msg);
+        }
+
         
         return true;
     }
@@ -683,7 +732,7 @@ async function verificarStatusAprovado() {
             return
         }
         const timeId = dados_user.perfilData.usuario.time_id;
-        console.log('verificarStatusAprovado', timeId);
+        
         
         if(!pagamento.inscricoes.length == 0){
            
@@ -940,7 +989,7 @@ async function verificarInscricaoTime(){
         for(const inscricao of dadosTimeInscritos.inscricoes){
             if(inscricao.time_id == timeId){
                 if(inscricao.inscricao_id == cardId){
-                    if(notifyinscricaoy){
+                    if(notifyinscricao){
                         showNotification('success', 'Seu time já está inscrito neste campeonato', 3000);
                         notifyinscricao = false;
                         desabilitarbotao()
@@ -953,7 +1002,7 @@ async function verificarInscricaoTime(){
 }
 
 function desabilitarbotao(){
-    if(notify == false){
+    if(notifyinscricao == false){
         document.getElementById('btnPagamento').style.display = 'none';
 
     }

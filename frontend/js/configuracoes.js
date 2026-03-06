@@ -663,7 +663,8 @@ async function salvarConfiguracoes() {
         username,
         sobre,
         redes,
-        destaques: [], // Array vazio - destaques removidos da interface
+        // NÃO enviar "destaques" aqui: evita apagar vídeos existentes quando o usuário
+        // apenas atualiza outras configurações. Destaques são gerenciados pela tela de perfil.
         posicoes_jogo: posicoesJogo, // Adicionar posições de jogo
         avatar: avatarUrl || avatar_antigo, // mantém avatar atual se não trocar
         banner: bannerUrl || banner_antigo,

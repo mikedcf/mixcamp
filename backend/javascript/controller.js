@@ -4,7 +4,7 @@ const FormData = require('form-data');
 const crypto = require('crypto');
 const axios = require("axios");
 const { Resend } = require("resend")
-// const fetch = require('node-fetch');
+const cron = require('node-cron'); // tempo
 const { conectar, desconectar } = require('./db');
 const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
 
@@ -456,6 +456,27 @@ async function setupDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
+
+    await conexao.execute(`
+        CREATE TABLE IF NOT EXISTS promover_eventos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        evento_id INT NOT NULL,
+        titulo VARCHAR(255) NOT NULL,
+        data_inicio DATETIME NOT NULL,
+        premiacao DECIMAL(10, 2) NOT NULL,
+        valor_inscricao DECIMAL(10, 2) NOT NULL,
+        qnt_times INT NOT NULL,
+        chave VARCHAR(100) NOT NULL,
+        game VARCHAR(100) NOT NULL,
+        plataforma VARCHAR(100) NOT NULL,
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        banner_local ENUM('home','campeonato','ambos') NOT NULL,
+        plano_assinado ENUM('basico','premium','maximo') NOT NULL,
+        
+        FOREIGN KEY (evento_id) REFERENCES inscricoes_campeonato(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
+
     /*
     =====================================================
     8️⃣ CHAVEAMENTO
@@ -851,7 +872,7 @@ async function setupDatabase() {
 
 // ===============================================================================================
 // ==================================== [API MERCADOPAGO] ================================================
-// --- POST
+// --- POST - preferência para inscrição em campeonato
 async function CreatePreference(req, res) {
     const { title, quantity, unit_price, cardId, timeId } = req.body;
 
@@ -905,9 +926,7 @@ async function CreatePreference(req, res) {
 
     const preference = new Preference(client);
 
-    preference.create({
-        body: preferenceBody
-    })
+    preference.create({ body: preferenceBody })
         .then(data => {
             res.status(200).json({
                 preference_id: data.id,
@@ -923,7 +942,53 @@ async function CreatePreference(req, res) {
                 details: error.message || 'Erro desconhecido'
             });
         });
+}
 
+// Preferência de pagamento para promoção de campeonatos (planos básico/premium/máximo)
+async function CreatePreferencePromocao(req, res) {
+    try {
+        const { plano, title, unit_price } = req.body;
+
+        const planoId = (plano || '').toLowerCase();
+        const itemPrice = parseFloat(unit_price) || 0;
+        const itemTitle = title && title.trim()
+            ? title.trim()
+            : `Plano ${planoId || 'promoção'} - Destaque MIXCAMP`;
+
+        if (!planoId || !['basico', 'premium', 'maximo'].includes(planoId)) {
+            return res.status(400).json({ error: 'Plano inválido. Use basico, premium ou maximo.' });
+        }
+
+        if (itemPrice <= 0) {
+            return res.status(400).json({ error: 'Preço inválido para criar preferência.' });
+        }
+
+        const preferenceBody = {
+            items: [
+                {
+                    title: itemTitle,
+                    quantity: 1,
+                    unit_price: itemPrice,
+                    currency_id: 'BRL'
+                }
+            ]
+            // Para o fluxo de promoção não vinculamos back_urls nem notification_url por enquanto;
+            // o objetivo atual é apenas testar o fluxo de pagamento dos planos.
+        };
+
+        const preference = new Preference(client);
+        const data = await preference.create({ body: preferenceBody });
+
+        return res.status(200).json({
+            preference_id: data.id,
+            preference_url: data.init_point
+        });
+    } catch (error) {
+        console.error('❌ Erro ao criar preferência de promoção:', error);
+        return res.status(500).json({
+            error: 'Erro ao criar preferência de promoção'
+        });
+    }
 }
 
 // --- WEBHOOK - Recebe notificações do Mercado Pago
@@ -1993,6 +2058,7 @@ async function getNotificacoes(req, res) {
 // ------- API POST
 async function criarMsgNotificacao(req, res) {
     const { usuario_id, texto } = req.body;
+
     let conexao;
 
     try {
@@ -2010,6 +2076,32 @@ async function criarMsgNotificacao(req, res) {
         console.error('Erro ao criar notificação:', error);
     }
     finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// ------- API POST - Enviar notificação para todos os usuários
+async function enviarNotificacaoTodos(req, res) {
+    const { texto } = req.body;
+    let conexao;
+    try {
+        if (!texto || typeof texto !== 'string' || !texto.trim()) {
+            return res.status(400).json({ message: 'Campo texto é obrigatório.' });
+        }
+        conexao = await conectar();
+        const [usuarios] = await conexao.execute('SELECT id FROM usuarios');
+        if (!usuarios || usuarios.length === 0) {
+            return res.status(200).json({ message: 'Nenhum usuário cadastrado.', total: 0 });
+        }
+        const query = 'INSERT INTO notificacoes (user_id, texto) VALUES (?, ?)';
+        for (const u of usuarios) {
+            await conexao.execute(query, [u.id, texto.trim()]);
+        }
+        res.status(200).json({ message: 'Notificação enviada para todos os usuários com sucesso.', total: usuarios.length });
+    } catch (error) {
+        console.error('Erro ao enviar notificação para todos:', error);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    } finally {
         if (conexao) await desconectar(conexao);
     }
 }
@@ -2067,7 +2159,7 @@ async function atualizarNotificacao(req, res) {
 }
 
 // ------- API DELETE
-async function deletarNotificacao(req,res){
+async function deletarNotificacao(req, res) {
     let conexao;
     try {
         conexao = await conectar();
@@ -2076,14 +2168,14 @@ async function deletarNotificacao(req,res){
         await conexao.execute(query, [id]);
         return res.status(200).json({ message: 'Notificação deletada com sucesso' });
     }
-    catch (error){
+    catch (error) {
         console.error('Erro ao deletar notificação:', error);
         return res.status(500).json({ message: "Erro interno do servidor" });
     }
     finally {
         if (conexao) await desconectar(conexao);
     }
-    
+
 }
 
 
@@ -2626,14 +2718,19 @@ async function updateConfig(req, res) {
             }
         }
 
-        // Atualiza destaques
-        await conexao.execute('DELETE FROM destaques WHERE usuario_id=?', [userID]);
-        if (destaques && destaques.length > 0) {
-            for (let i = 0; i < destaques.length; i++) {
-                await conexao.execute(
-                    'INSERT INTO destaques (usuario_id, video_url, ordem) VALUES (?, ?, ?)',
-                    [userID, destaques[i], i + 1]
-                );
+        // Atualiza destaques apenas se "destaques" vier como ARRAY no body.
+        // - Se vier como array (inclusive vazio): sobrescreve (DELETE + INSERT).
+        // - Se vier como null, string, objeto ou NÃO vier: NÃO mexe nos destaques atuais.
+        if (Array.isArray(destaques)) {
+            await conexao.execute('DELETE FROM destaques WHERE usuario_id=?', [userID]);
+
+            if (destaques.length > 0) {
+                for (let i = 0; i < destaques.length; i++) {
+                    await conexao.execute(
+                        'INSERT INTO destaques (usuario_id, video_url, ordem) VALUES (?, ?, ?)',
+                        [userID, destaques[i], i + 1]
+                    );
+                }
             }
         }
 
@@ -2673,7 +2770,13 @@ async function listarTimes(req, res) {
 
     try {
         conexao = await conectar();
-        let query = 'SELECT * FROM times';
+        let query = `
+            SELECT 
+                t.*,
+                u.username AS lider_nome
+            FROM times t
+            LEFT JOIN usuarios u ON u.id = t.lider_id
+        `;
 
         let [dados] = await conexao.execute(query);
 
@@ -2941,11 +3044,7 @@ async function listarSolicitacoesPorTime(req, res) {
 // ----- TEAMS POST
 
 async function criarTime(req, res) {
-    const { userId, nome, tag, sobre_time } = req.body;
-    // const userId = req.session.userId;
-
-
-
+    const { userId, nome, tag, sobre_time, link_logo, link_banner } = req.body;
     if (!userId) {
         return res.status(401).json({ error: 'Usuário não autenticado' });
     }
@@ -2959,7 +3058,7 @@ async function criarTime(req, res) {
 
         conexao = await conectar();
 
-        await conexao.beginTransaction();
+
 
         // Verificar se usuário já tem time ou está em outro time
         const [userTimeCheck] = await conexao.execute(
@@ -2967,27 +3066,30 @@ async function criarTime(req, res) {
             [userId]
         );
 
-
         if (userTimeCheck[0]?.time_id) {
-            await conexao.rollback();
+
             return res.status(400).json({ error: 'Usuário já está em um time', time_id: userTimeCheck[0].time_id });
         }
 
-        // Verificar se nome ou tag já existem
-        const [existingTeam] = await conexao.execute(
-            'SELECT id FROM times WHERE nome = ? OR tag = ?',
-            [nome, tag]
-        );
+        const [veryficarTime] = await conexao.execute('SELECT * FROM times WHERE nome = ? OR tag = ?', [nome, tag]);
+        if (veryficarTime.length > 0) {
 
-        if (existingTeam.length > 0) {
-            await conexao.rollback();
-            return res.status(400).json({ error: 'Nome ou tag do time já existem', existing: existingTeam });
+            return res.status(400).json({ error: 'Nome ou tag do time já existem', existing: veryficarTime });
         }
 
-        // Criar o time
+
+
+        // Definir URLs de avatar e banner (ou usar padrão do sistema)
+        const defaultAvatarUrl = 'https://i.ibb.co/99tvNKGP/Chat-GPT-Image-24-de-nov-de-2025-12-19-41.png';
+        const defaultBannerUrl = 'https://i.ibb.co/tPkZHy8R/banner-time.png';
+
+        const avatarUrlToSave = link_logo || defaultAvatarUrl;
+        const bannerUrlToSave = link_banner || defaultBannerUrl;
+
+        // Criar o time (já salvando as URLs de avatar e banner, se enviadas)
         const [timeResult] = await conexao.execute(
-            'INSERT INTO times (nome, tag, lider_id, sobre_time) VALUES (?, ?, ?, ?)',
-            [nome, tag, userId, sobre_time || null]
+            'INSERT INTO times (nome, tag, lider_id, sobre_time, avatar_time_url, banner_time_url) VALUES (?, ?, ?, ?, ?, ?)',
+            [nome, tag, userId, sobre_time || null, avatarUrlToSave, bannerUrlToSave]
         );
 
         const timeId = timeResult.insertId;
@@ -3006,6 +3108,8 @@ async function criarTime(req, res) {
 
         await conexao.commit();
 
+        console.log('Time criado com sucesso')
+
         res.status(201).json({
             message: 'Time criado com sucesso',
             time: {
@@ -3016,13 +3120,10 @@ async function criarTime(req, res) {
             }
         });
 
+
     } catch (error) {
-        if (conexao) await conexao.rollback();
-        if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-            return res.status(409).json({ error: 'Já existe um time com este nome ou tag. Escolha outro nome ou tag.' });
-        }
-        console.error('Erro ao criar time:', error);
-        res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+
+        return res.status(500).json({ error: 'Erro interno do servidor' });
     } finally {
         if (conexao) await desconectar(conexao);
     }
@@ -3305,9 +3406,41 @@ async function atualizarTime(req, res) {
             await conexao.execute('INSERT INTO destaques_time (time_id, video_url) VALUES (?, ?)', [id, video_url]);
         }
 
-        if (noticia) {
-            await conexao.execute('DELETE FROM noticias_time WHERE time_id = ?', [id]);
-            await conexao.execute('INSERT INTO noticias_time (time_id, titulo, conteudo) VALUES (?, ?, ?)', [id, noticia[0].titulo ?? null, noticia[0].conteudo ?? null]);
+        // Atualizar notícia do time apenas se algum dado vier na requisição,
+        // sem apagar o que já existe quando os campos não forem enviados.
+        if (noticia && Array.isArray(noticia) && noticia.length > 0) {
+            const novaNoticia = noticia[0] || {};
+
+            // Verifica se pelo menos um dos campos foi realmente enviado
+            const temTituloNovo = Object.prototype.hasOwnProperty.call(novaNoticia, 'titulo');
+            const temConteudoNovo = Object.prototype.hasOwnProperty.call(novaNoticia, 'conteudo');
+
+            if (temTituloNovo || temConteudoNovo) {
+                // Buscar notícia existente (se houver) para preservar campos não enviados
+                const [noticiaAtualRows] = await conexao.execute(
+                    'SELECT titulo, conteudo FROM noticias_time WHERE time_id = ? LIMIT 1',
+                    [id]
+                );
+
+                const noticiaAtual = noticiaAtualRows[0] || {};
+
+                const tituloFinal = temTituloNovo ? novaNoticia.titulo : noticiaAtual.titulo;
+                const conteudoFinal = temConteudoNovo ? novaNoticia.conteudo : noticiaAtual.conteudo;
+
+                if (noticiaAtualRows.length > 0) {
+                    // Já existe notícia: apenas atualiza os campos enviados
+                    await conexao.execute(
+                        'UPDATE noticias_time SET titulo = ?, conteudo = ? WHERE time_id = ?',
+                        [tituloFinal ?? null, conteudoFinal ?? null, id]
+                    );
+                } else {
+                    // Não existe notícia ainda e veio pelo menos um campo: insere
+                    await conexao.execute(
+                        'INSERT INTO noticias_time (time_id, titulo, conteudo) VALUES (?, ?, ?)',
+                        [id, tituloFinal ?? null, conteudoFinal ?? null]
+                    );
+                }
+            }
         }
 
         if (games) {
@@ -4132,6 +4265,35 @@ async function getMedalhas(req, res) {
     }
 }
 
+// Lista todas as medalhas (uso administrativo)
+async function listarTodasMedalhas(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const [rows] = await conexao.execute(`
+            SELECT
+                id,
+                nome,
+                descricao,
+                imagem_url_campeao,
+                imagem_url_segundo,
+                iframe_url_campeao,
+                iframe_url_segundo,
+                edicao_campeonato,
+                data_criacao
+            FROM medalhas
+            ORDER BY data_criacao DESC, id DESC
+        `);
+
+        res.status(200).json({ medalhas: rows });
+    } catch (error) {
+        console.error("Erro ao listar todas as medalhas:", error);
+        res.status(500).json({ message: "Erro interno do servidor." });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
 async function getMedalhasUsuario(req, res) {
     const { id } = req.params; // CORREÇÃO AQUI
 
@@ -4496,15 +4658,15 @@ async function getNoticiasCampeonato(req, res) {
 
 // ----- NOTICIA POST
 async function criarNoticiaDestaque(req, res) {
-    const { tipo, titulo, subtitulo, texto, autor, imagem_url } = req.body;
+    const { titulo, subtitulo, texto, autor, imagem_url } = req.body;
     let conexao;
 
     try {
         conexao = await conectar();
 
         await conexao.execute(
-            'INSERT INTO noticias_destaques ( tipo, titulo, subtitulo, texto, autor, imagem_url) VALUES (?, ?, ?, ?, ?, ?)',
-            [tipo, titulo, subtitulo, texto, autor, imagem_url]
+            'INSERT INTO noticias_destaques (titulo, subtitulo, texto, autor, imagem_url) VALUES (?, ?, ?, ?, ?)',
+            [titulo, subtitulo, texto, autor, imagem_url]
         );
         res.status(201).json({ message: 'Notícia de destaque criada com sucesso!' });
     } catch (error) {
@@ -10049,19 +10211,219 @@ async function atualizarRankingTimes(req, res) {
 // --- DELETE RANKING
 
 
+// ===============================================================================================
+// ==================================== [API PROMOVER BANNER] ================================================
 
+
+// --- GET PROMOVER BANNER
+async function getpromoverbanner(req, res){
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        const [promover_banner] = await conexao.execute('SELECT * FROM promover_eventos');
+        res.status(200).json({ promover_banner });
+    } catch (error) {
+        console.error('Erro ao buscar promover banner:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// --- POST PROMOVER BANNER
+// Cria um registro em promover_eventos sempre com:
+// - banner_img vindo de inscricoes_campeonato.imagem_url (se não informado);
+// - data_encerramento = data atual + 7 dias;
+// - status_promover_evento padrão "disponivel" (definido no schema).
+async function criarPromoverBanner(req, res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const {
+            evento_id,
+            titulo,
+            data_inicio,
+            premiacao,
+            valor_inscricao,
+            qnt_times,
+            chave,
+            game,
+            plataforma,
+            banner_img: bannerImgBody,
+            banner_local,
+            plano_assinado
+        } = req.body;
+
+        if (!evento_id) {
+            return res.status(400).json({ message: 'evento_id é obrigatório para criar promover banner.' });
+        }
+
+        // Buscar banner_img da tabela inscricoes_campeonato se não veio no body
+        let finalBannerImg = bannerImgBody || null;
+        if (!finalBannerImg) {
+            const [rows] = await conexao.execute(
+                'SELECT imagem_url FROM inscricoes_campeonato WHERE id = ?',
+                [evento_id]
+            );
+            if (rows && rows.length > 0) {
+                finalBannerImg = rows[0].imagem_url || null;
+            }
+        }
+
+        // Calcular data_encerramento = hoje + 7 dias
+        const now = new Date();
+        const enc = new Date(now);
+        enc.setDate(enc.getDate() + 7);
+        const pad = (n) => String(n).padStart(2, '0');
+        const data_encerramento = `${enc.getFullYear()}-${pad(enc.getMonth() + 1)}-${pad(enc.getDate())} ${pad(enc.getHours())}:${pad(enc.getMinutes())}:${pad(enc.getSeconds())}`;
+
+        await conexao.execute(
+            'INSERT INTO promover_eventos (evento_id, titulo, data_inicio, premiacao, valor_inscricao, qnt_times, chave, game, plataforma, banner_img, banner_local, plano_assinado, data_encerramento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                evento_id,
+                titulo,
+                data_inicio,
+                premiacao,
+                valor_inscricao,
+                qnt_times,
+                chave,
+                game,
+                plataforma,
+                finalBannerImg,
+                banner_local,
+                plano_assinado,
+                data_encerramento
+            ]
+        );
+
+        // Notificar o organizador: evento promovido com sucesso até data_encerramento
+        const [rowsOrg] = await conexao.execute(
+            'SELECT id_organizador FROM inscricoes_campeonato WHERE id = ?',
+            [evento_id]
+        );
+        if (rowsOrg && rowsOrg.length > 0) {
+            const userId = rowsOrg[0].id_organizador;
+            const [y, m, d] = data_encerramento.split(' ')[0].split('-');
+            const dataExibicao = `${d}/${m}/${y}`;
+            const msg = `Foi aprovado e o evento já foi promovido com sucesso até dia ${dataExibicao}.`;
+            await conexao.execute('INSERT INTO notificacoes (user_id, texto) VALUES (?, ?)', [userId, msg]);
+        }
+
+        res.status(201).json({ message: 'Promover banner criado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao criar promover banner:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// --- PUT PROMOVER BANNER
+async function atualizarPromoverBanner(req, res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const {
+            id,
+            evento_id,
+            titulo,
+            data_inicio,
+            premiacao,
+            valor_inscricao,
+            qnt_times,
+            chave,
+            game,
+            plataforma,
+            banner_img,
+            banner_local,
+            plano_assinado,
+            data_encerramento
+        } = req.body;
+
+        await conexao.execute(
+            'UPDATE promover_eventos SET evento_id = ?, titulo = ?, data_inicio = ?, premiacao = ?, valor_inscricao = ?, qnt_times = ?, chave = ?, game = ?, plataforma = ?, banner_img = ?, banner_local = ?, plano_assinado = ?, data_encerramento = ? WHERE id = ?',
+            [evento_id, titulo, data_inicio, premiacao, valor_inscricao, qnt_times, chave, game, plataforma, banner_img, banner_local, plano_assinado, data_encerramento, id]
+        );
+        res.status(200).json({ message: 'Promover banner atualizado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar promover banner:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// --- DELETE PROMOVER BANNER
+async function deletarPromoverBanner(req, res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const { id } = req.params;
+        await conexao.execute('DELETE FROM promover_eventos WHERE id = ?', [id]);
+        res.status(200).json({ message: 'Promover banner deletado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar promover banner:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+// --- FUNCTION VERIFICAR ATIVIDADE DO EVENTO SE EXPIROU OU NÃO
+async function verficarAtividadeDoEvento(){
+    let conexao;
+    try{
+        conexao = await conectar();
+
+        
+        const [eventos] = await conexao.execute('SELECT * FROM promover_eventos ')
+        for(const evento of eventos)
+            if(evento.data_encerramento < new Date()){
+                
+                await conexao.execute('UPDATE promover_eventos SET status_promover_evento = "encerrado" WHERE id = ?', [evento.id]);
+
+                const [inscricoes] = await conexao.execute('SELECT * FROM inscricoes_campeonato WHERE id = ?', [evento.evento_id]);
+
+                for(const inscricao of inscricoes){
+                    const userId = inscricao.id_organizador;
+
+                    const msg = `A sua assinatura para promover o evento ${evento.titulo} foi expirada.`;
+
+                    await conexao.execute('INSERT INTO notificacoes (user_id,texto) VALUES (?,?)', [userId,msg]);
+                }
+                
+            }
+
+    }catch(error){
+        console.error('Erro ao verificar atividade do evento:', error);
+        return false;
+    }finally{
+        if(conexao) await desconectar(conexao);
+    }
+    
+}
+
+cron.schedule('0 1 * * *', () => {
+    console.log("Executando função verificar atividade do evento diária:", new Date());
+    verficarAtividadeDoEvento();
+});
 
 
 // ===============================================================================================
 
 module.exports = {
-    getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, autenticar,
+    getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar,
     getTimeById, getTimeByUser, deletarTime, transferirLideranca, listarMembrosParaLideranca, criarTime, atualizarTime, atualizarPosicaoMembro, removerMembro,
     solicitarEntradaTime, aceitarSolicitacao, rejeitarSolicitacao, verificarStatusSolicitacao, getTransferencias, criarTransferencia, deletarTransferencia,
     getSolicitacaoById, listarTodasSolicitacoes, buscarTimes, buscarUsuarios, listarSolicitacoesPorTime, aceitarSolicitacaoPorId, rejeitarSolicitacaoPorId, MembroSair, deletarSolicitacao,
     atualizarTransferencia, listarTimes, getplayers, buscarDadosFaceitPlayer, locationMatchesIds, infoMatchId, buscarInfoMatchId, uploadImagemCloudinary, criarTrofeus, buscarImgPosition, createImgPosition, updateImgPosition,
-    listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
+    listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference, CreatePreferencePromocao,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, atualizarNotificacao, deletarNotificacao
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner
 };

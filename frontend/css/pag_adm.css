@@ -329,6 +329,567 @@ body {
     transform: translateY(-2px);
 }
 
+/* Botões pequenos de ação nas tabelas (editar/excluir em medalhas, troféus, notícias) */
+.btn-small {
+    padding: 0.4rem 0.7rem;
+    border-radius: 8px;
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.btn-small:hover {
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-1px);
+}
+
+.btn-small.btn-edit {
+    background: #1d4ed8; /* azul */
+    border-color: #1d4ed8;
+}
+
+.btn-small.btn-edit:hover {
+    background: #1e40af;
+    border-color: #1d4ed8;
+}
+
+.btn-small.btn-delete {
+    background: #b91c1c; /* vermelho */
+    border-color: #b91c1c;
+}
+
+.btn-small.btn-delete:hover {
+    background: #991b1b;
+    border-color: #b91c1c;
+}
+
+/* ========== Campeonatos / Organizadores ========== */
+.campeonatos-organizadores {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.organizador-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.organizador-card:hover {
+    border-color: rgba(245, 110, 8, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.organizador-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.organizador-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f56e08;
+}
+
+.organizador-info h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.25rem;
+}
+
+.organizador-info small {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.campeonatos-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.campeonato-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border-left: 3px solid #f56e08;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.campeonato-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.campeonato-item:focus {
+    outline: 2px solid #f56e08;
+    outline-offset: 2px;
+}
+
+.campeonato-item.tipo-oficial {
+    border-left-color: #7c3aed;
+}
+
+.campeonato-item.tipo-oficial:hover {
+    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.25);
+}
+
+.campeonato-item.tipo-comum {
+    border-left-color: #f56e08;
+}
+
+.campeonato-titulo {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.campeonato-meta {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ========== Modal Detalhes Campeonato ========== */
+.detalhe-campeonato-modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s, visibility 0.25s;
+}
+
+.detalhe-campeonato-modal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.detalhe-campeonato-content {
+    background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(10, 10, 18, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    max-width: 640px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.detalhe-campeonato-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.2s;
+}
+
+.detalhe-campeonato-close:hover {
+    background: rgba(245, 110, 8, 0.8);
+}
+
+.detalhe-campeonato-header {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detalhe-campeonato-imagem {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid rgba(245, 110, 8, 0.4);
+}
+
+.detalhe-campeonato-header-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.detalhe-campeonato-header-text h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.detalhe-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.detalhe-badge.statusembreve,
+.detalhe-badge.status-em-breve { background: #1e3a5f; color: #93c5fd; }
+.detalhe-badge.statusdisponivel { background: #166534; color: #86efac; }
+.detalhe-badge.statusandamento { background: #b45309; color: #fde047; }
+.detalhe-badge.statusencerrado { background: #374151; color: #d1d5db; }
+.detalhe-badge.statuscancelado { background: #7f1d1d; color: #fca5a5; }
+
+.detalhe-edicao {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.detalhe-campeonato-body {
+    padding: 1.5rem;
+}
+
+.detalhe-organizador {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+}
+
+.detalhe-organizador-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #f56e08;
+}
+
+.detalhe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detalhe-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.detalhe-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.detalhe-item span:last-child {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.detalhe-tipo.detalhe-tipo-oficial {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.detalhe-tipo.detalhe-tipo-comum {
+    color: #f56e08;
+    font-weight: 600;
+}
+
+.detalhe-mixcamp-lucro {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(245, 110, 8, 0.08);
+    border: 1px solid rgba(245, 110, 8, 0.25);
+    border-radius: 12px;
+}
+
+.detalhe-mixcamp-lucro .detalhe-block-title {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detalhe-lucro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.detalhe-lucro-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.detalhe-lucro-item.destaque .detalhe-lucro-valor {
+    color: #22c55e;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.detalhe-lucro-valor {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.detalhe-block {
+    margin-bottom: 1.25rem;
+}
+
+.detalhe-block-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #f56e08;
+    margin-bottom: 0.5rem;
+}
+
+.detalhe-block-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.detalhe-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detalhe-links .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ========== Campeonatos - Dashboard de gráficos ========== */
+.campeonatos-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.campeonatos-dashboard .dashboard-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.campeonatos-dashboard canvas {
+    width: 100%;
+    max-height: 260px;
+}
+
+.camp-lucro-resumo {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.75);
+}
+
+.camp-lucro-resumo strong {
+    color: #22c55e;
+}
+
+/* ========== Modal Form Criar Campeonato Adm ========== */
+.form-modal-content .form-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.form-modal-header h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.35rem 0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-modal-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-modal-body {
+    padding: 1.5rem;
+}
+
+.form-modal-body .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-modal-body .form-group {
+    flex: 1;
+    min-width: 120px;
+    margin-bottom: 0;
+}
+
+.form-modal-body .form-group.flex2 {
+    flex: 2;
+    min-width: 180px;
+}
+
+.form-modal-body .form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.form-modal-body .form-group input,
+.form-modal-body .form-group select,
+.form-modal-body .form-group textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.form-modal-body .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-modal-body .form-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.form-modal-body .btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.form-modal-body .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ========== Enviar notificação ========== */
+.notificacao-enviar-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 2rem;
+    max-width: 600px;
+}
+
+.notificacao-enviar-form .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.notificacao-enviar-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.notificacao-enviar-form select,
+.notificacao-enviar-form textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 1rem;
+}
+
+.notificacao-enviar-form textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.notificacao-enviar-form textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.notificacao-enviar-form .form-actions {
+    margin-top: 1.5rem;
+}
+
+.notificacao-enviar-form .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 /* 
 ============================================================================
 ========================[DASHBOARD]=========================================
@@ -1111,5 +1672,9 @@ body {
     
     .section-actions {
         justify-content: center;
+    }
+
+    .detalhe-lucro-grid {
+        grid-template-columns: 1fr;
     }
 }

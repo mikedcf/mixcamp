@@ -302,9 +302,16 @@ async function buscarDadosTime() {
         
         // Verificar se notícias existem antes de acessar
         if (data.noticias && data.noticias.length > 0) {
-            noticia_antiga = {titulo: data.noticias[0].titulo, conteudo: data.noticias[0].conteudo}
+            noticia_antiga = {
+                titulo: data.noticias[0].titulo || '',
+                conteudo: data.noticias[0].conteudo || ''
+            };
         } else {
-            noticia_antiga = null
+            // Garante que nunca seja null para evitar erro ao acessar .titulo/.conteudo
+            noticia_antiga = {
+                titulo: '',
+                conteudo: ''
+            };
         }
         
         // Verificar se coresDoTime existe antes de acessar
@@ -1076,11 +1083,14 @@ async function carregarCorTime(corSalva) {
 async function salvarConfiguracoesTime() {
     const params = new URLSearchParams(window.location.search);
     const timeId = params.get('id');
+
+    console.log('1')
     try {
         // Coletar dados do formulário
         const nome = document.getElementById('teamName').value.trim();
         const tag = document.getElementById('teamTag').value.trim();
         const sobre = document.getElementById('teamDescription').value.trim();
+        console.log('2')
         
         const redes = {
             discord: document.getElementById('teamDiscordLink').value.trim(),
@@ -1093,6 +1103,7 @@ async function salvarConfiguracoesTime() {
             gamesclub: document.getElementById('teamGamesclubLink').value.trim(),
             steam: document.getElementById('teamSteamLink').value.trim(),
         };
+        console.log('3')
 
         const destaques = document.getElementById('teamVideoUrl').value.trim()
         let video = '';
@@ -1103,6 +1114,7 @@ async function salvarConfiguracoesTime() {
         else{
            video = destaques;
         }
+        console.log('4')
             
         
 
@@ -1116,6 +1128,7 @@ async function salvarConfiguracoesTime() {
             showNotification('error', 'Tag do time é obrigatória');
             return;
         }
+        console.log('5')
 
         // Upload de imagens se houver
         let logoUrl = null;
@@ -1123,6 +1136,7 @@ async function salvarConfiguracoesTime() {
 
         const inputLogo = document.getElementById('inputTeamLogo');
         const inputBanner = document.getElementById('inputTeamBanner');
+        console.log('6')
 
         if (inputLogo.files && inputLogo.files[0]) {
             logoUrl = avatar;
@@ -1133,9 +1147,11 @@ async function salvarConfiguracoesTime() {
             bannerUrl = banner;
             if (!bannerUrl) return; // Erro no upload
         }
+        console.log('7')
 
         const tituloNoticia = document.getElementById('teamNewsTitle').value.trim();
         const conteudoNoticia = document.getElementById('teamNewsText').value.trim();
+        console.log('8')
         
 
         // Montar payload
@@ -1151,6 +1167,8 @@ async function salvarConfiguracoesTime() {
             games: games,
             cores_perfil: corTimeSelecionada
         };
+
+        console.log(dados);
 
         // Enviar para o backend
         const response = await fetch(`${API_URL}/update/times/${timeId}`, {

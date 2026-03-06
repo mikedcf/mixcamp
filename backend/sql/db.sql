@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
 );
 
 
+ALTER TABLE usuarios 
+ADD COLUMN cfg_cs VARCHAR(255);
+
 
 
 -- Tabela para armazenar os links de redes sociais dos usuários
@@ -79,6 +82,12 @@ CREATE TABLE IF NOT EXISTS `times` (
     `cores_perfil` VARCHAR(50) DEFAULT '#ffffff80',
     FOREIGN KEY (`lider_id`) REFERENCES `usuarios` (`id`)
 );
+
+
+ALTER TABLE times
+    DROP INDEX nome,
+    DROP INDEX tag,
+    ADD UNIQUE KEY uk_times_nome_tag (nome, tag);
 
 -- Tabela de relacionamento entre usuários e times (membros)
 CREATE TABLE IF NOT EXISTS `membros_time` (
@@ -776,3 +785,29 @@ CREATE TABLE notificacoes (
 
     FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE IF NOT EXISTS promover_eventos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    evento_id INT NOT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    data_inicio DATETIME NOT NULL,
+    premiacao DECIMAL(10, 2) NOT NULL,
+    valor_inscricao DECIMAL(10, 2) NOT NULL,
+    qnt_times INT NOT NULL,
+    chave VARCHAR(100) NOT NULL,
+    game VARCHAR(100) NOT NULL,
+    plataforma VARCHAR(100) NOT NULL,
+    banner_img VARCHAR(255) NOT NULL,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_encerramento DATETIME NOT NULL,
+    banner_local ENUM('home','campeonato','ambos') NOT NULL,
+    plano_assinado ENUM('basico','premium','maximo') NOT NULL,
+    status_promover_evento ENUM('disponivel','encerrado') NOT NULL DEFAULT 'disponivel',
+
+    
+    FOREIGN KEY (evento_id) REFERENCES inscricoes_campeonato(id) ON DELETE CASCADE
+);
+
+
+ALTER TABLE promover_eventos ADD COLUMN status_promover_evento ENUM('disponivel','encerrado') DEFAULT 'disponivel';

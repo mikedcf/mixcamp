@@ -488,18 +488,26 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
     emptyState.style.display = 'none';
 
     const campeonatos = await buscarCampeonatosOrganizador();
+
+    // guardar em cache global simples para uso em outras ações (ex: promover)
+    window.campeonatosCache = Array.isArray(campeonatos) ? campeonatos : [];
     
+    // Função helper para normalizar status (remove espaços e deixa minúsculo)
+    const normalizeStatus = (s) => (s || '').toLowerCase().trim().replace(/\s/g, '');
+
     // Aplicar filtro
     let campeonatosFiltrados = campeonatos;
     if (filtroStatus !== 'todos') {
+        const filtroNormalizado = normalizeStatus(filtroStatus);
         campeonatosFiltrados = campeonatos.filter(
-            c => c.status.toLowerCase() === filtroStatus.toLowerCase()
+            c => normalizeStatus(c.status) === filtroNormalizado
         );
     }
 
     if (campeonatosFiltrados.length === 0) {
         grid.innerHTML = '';
         emptyState.style.display = 'block';
+        atualizarPromocoesAtivasSidebar();
         return;
     }
 
@@ -509,14 +517,14 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
         <div class="campeonato-card">
             <div class="card-header">
                 <div class="card-badges-row">
-                    <span class="card-badge badge-status ${(campeonato.status || 'disponivel').toLowerCase()}">
+                    <span class="card-badge badge-status ${normalizeStatus(campeonato.status || 'disponivel')}">
                         ${(() => {
-                            const status = (campeonato.status || '').toLowerCase().trim();
-                            if (status === 'disponivel') return '✓ Disponível';
-                            if (status === 'embreve') return '⏱ Em Breve';
-                            if (status === 'andamento') return '▶ Em Andamento';
-                            if (status === 'encerrado') return '✗ Encerrado';
-                            if (status === 'cancelado') return '⚠ Cancelado';
+                            const statusNorm = normalizeStatus(campeonato.status || 'disponivel');
+                            if (statusNorm === 'disponivel') return '✓ Disponível';
+                            if (statusNorm === 'embreve') return '⏱ Em Breve';
+                            if (statusNorm === 'andamento') return '▶ Em Andamento';
+                            if (statusNorm === 'encerrado') return '✗ Encerrado';
+                            if (statusNorm === 'cancelado') return '⚠ Cancelado';
                             return '✗ Encerrado';
                         })()}
                     </span>
@@ -553,7 +561,12 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
                 <button class="btn-action btn-editar" onclick="editarCampeonato(${campeonato.id})">
                     <i class="fas fa-edit"></i> Editar
                 </button>
-                ${(['andamento', 'encerrado'].includes((campeonato.status || '').toLowerCase().trim()) ? `
+                ${(['embreve', 'disponivel'].includes(normalizeStatus(campeonato.status)) ? `
+                <button class="btn-action btn-promover" onclick="promoverCampeonato(${campeonato.id})">
+                    <i class="fas fa-bullhorn"></i> Promover
+                </button>
+                ` : '')}
+                ${(['andamento', 'encerrado'].includes(normalizeStatus(campeonato.status)) ? `
                 <button class="btn-action btn-chaveamento" onclick="window.location.href='chaveamento.html?id=${campeonato.id}'" style="background: rgba(138, 43, 226, 0.2); color: #8A2BE2; border: 1px solid rgba(138, 43, 226, 0.3);">
                     <i class="fas fa-sitemap"></i> Chaveamento
                 </button>
@@ -564,6 +577,67 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
             </div>
         </div>
     `).join('');
+    atualizarPromocoesAtivasSidebar();
+}
+
+// =================================
+// ========= PROMOÇÕES ATIVAS (SIDEBAR) =========
+async function atualizarPromocoesAtivasSidebar() {
+    const sidebar = document.getElementById('promocoesAtivasSidebar');
+    const list = document.getElementById('promocoesAtivasList');
+    if (!sidebar || !list) return;
+
+    const meusIds = (window.campeonatosCache || []).map(c => String(c.id));
+    if (meusIds.length === 0) {
+        sidebar.hidden = true;
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/promover/banner`, { credentials: 'include' });
+        if (!response.ok) return;
+        const data = await response.json();
+        const todos = data.promover_banner || [];
+        const agora = new Date();
+
+        const ativas = todos.filter((p) => {
+            const eventoIdOk = meusIds.includes(String(p.evento_id));
+            const statusOk = (p.status_promover_evento || '').toLowerCase() === 'disponivel';
+            const dataEnc = p.data_encerramento ? new Date(p.data_encerramento) : null;
+            const aindaAtiva = !dataEnc || dataEnc > agora;
+            return eventoIdOk && statusOk && aindaAtiva;
+        });
+
+        if (ativas.length === 0) {
+            sidebar.hidden = true;
+            return;
+        }
+
+        sidebar.hidden = false;
+        const formatarDataExibicao = (dt) => {
+            if (!dt) return '—';
+            const d = new Date(dt);
+            if (isNaN(d.getTime())) return '—';
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        };
+
+        list.innerHTML = ativas.map((p) => {
+            const titulo = (p.titulo || 'Evento').replace(/'/g, '&#39;');
+            const bannerUrl = p.banner_img || '';
+            const styleBg = bannerUrl ? "background-image: url('" + bannerUrl.replace(/'/g, "\\'") + "');" : '';
+            const dataEncStr = formatarDataExibicao(p.data_encerramento);
+            const game = p.game || 'CS2';
+            return '<div class="promocao-ativa-card" style="' + styleBg + '">' +
+                '<div class="promocao-ativa-card-content">' +
+                '<span class="promocao-ativa-card-title">' + titulo + '</span>' +
+                '<div class="promocao-ativa-card-meta">' +
+                '<span><i class="fas fa-calendar-times"></i> Até ' + dataEncStr + '</span>' +
+                '<span><i class="fas fa-gamepad"></i> ' + game + '</span>' +
+                '</div></div></div>';
+        }).join('');
+    } catch (e) {
+        sidebar.hidden = true;
+    }
 }
 
 // =================================
@@ -571,6 +645,258 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
 function filtrarCampeonatos() {
     const filtro = document.getElementById('filtroStatus').value;
     renderizarCampeonatos(filtro);
+}
+
+// =================================
+// ========= PROMOVER CAMPEONATO =========
+let campeonatoPromovendoId = null;
+let pacotePromocaoSelecionado = 'basico';
+
+const PACOTES_PROMOCAO = {
+    basico: { id: 'basico', nome: 'Destaque Básico', preco: 20, dias: 7 },
+    premium: { id: 'premium', nome: 'Destaque Premium', preco: 50, dias: 7 },
+    maximo: { id: 'maximo', nome: 'Destaque Máximo', preco: 80, dias: 7 }
+};
+
+// Helper: somar dias e formatar para DATETIME MySQL (YYYY-MM-DD HH:MM:SS)
+function adicionarDias(date, dias) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + dias);
+    return d;
+}
+
+function formatDateTimeMySQL(date) {
+    const d = new Date(date);
+    const pad = (n) => String(n).padStart(2, '0');
+    const ano = d.getFullYear();
+    const mes = pad(d.getMonth() + 1);
+    const dia = pad(d.getDate());
+    const hora = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    const seg = pad(d.getSeconds());
+    return `${ano}-${mes}-${dia} ${hora}:${min}:${seg}`;
+}
+
+// Calcula data de encerramento da promoção: hoje + 7 dias (formato MySQL)
+function calcularDataEncerramentoPromocao() {
+    const agora = new Date();
+    const enc = adicionarDias(agora, 7);
+    return formatDateTimeMySQL(enc);
+}
+
+function promoverCampeonato(id) {
+    const campeonato = (window.campeonatosCache || []).find(c => c.id === id);
+    const titulo = campeonato && campeonato.titulo ? campeonato.titulo : `ID ${id}`;
+
+    const modal = document.getElementById('modalPromover');
+    const nomeEl = document.getElementById('promoverCampNome');
+
+    if (!modal) {
+        showNotification('error', 'Modal de promoção não encontrado.');
+        return;
+    }
+
+    campeonatoPromovendoId = id;
+
+    if (nomeEl) {
+        nomeEl.textContent = titulo;
+    }
+
+    // Reset seleção visual
+    const cards = modal.querySelectorAll('.promover-pacote-card');
+    cards.forEach(card => card.classList.remove('selected'));
+    const defaultRadio = modal.querySelector('input[name="pacotePromocao"][value="basico"]');
+    if (defaultRadio) {
+        defaultRadio.checked = true;
+        const card = defaultRadio.closest('.promover-pacote-card');
+        if (card) card.classList.add('selected');
+    }
+    pacotePromocaoSelecionado = 'basico';
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalPromover() {
+    const modal = document.getElementById('modalPromover');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        campeonatoPromovendoId = null;
+    }
+}
+
+function selecionarPacotePromocao(id) {
+    const modal = document.getElementById('modalPromover');
+    if (!modal) return;
+
+    pacotePromocaoSelecionado = id;
+
+    const cards = modal.querySelectorAll('.promover-pacote-card');
+    cards.forEach(card => {
+        const radio = card.querySelector('.pacote-radio');
+        const isCurrent = radio && radio.value === id;
+        card.classList.toggle('selected', isCurrent);
+        if (isCurrent && radio) {
+            radio.checked = true;
+        }
+    });
+}
+
+async function iniciarPagamentoPromocao() {
+    const modal = document.getElementById('modalPromover');
+    if (!modal || !campeonatoPromovendoId) {
+        showNotification('error', 'Nenhum campeonato selecionado para promoção.');
+        return;
+    }
+
+    const campeonatos = window.campeonatosCache || [];
+    const campeonato = campeonatos.find(c => String(c.id) === String(campeonatoPromovendoId));
+
+    if (!campeonato) {
+        showNotification('error', 'Campeonato não encontrado para promoção.');
+        return;
+    }
+
+    // Garantir que algum plano esteja selecionado
+    const radioSelecionado = modal.querySelector('input[name="pacotePromocao"]:checked');
+    if (!radioSelecionado) {
+        showNotification('error', 'Selecione um dos planos de promoção (Básico, Premium ou Máximo).');
+        return;
+    }
+
+    pacotePromocaoSelecionado = radioSelecionado.value;
+    const pacote = PACOTES_PROMOCAO[pacotePromocaoSelecionado] || PACOTES_PROMOCAO.basico;
+
+    const tipoCampeonato = (campeonato.tipo || 'comum').toLowerCase();
+
+    try {
+        if (tipoCampeonato === 'oficial') {
+            // Campeonato oficial: não passa por pagamento, já cria o registro em promover_eventos
+            const agora = new Date();
+            const dataEncerramentoStr = calcularDataEncerramentoPromocao();
+
+            // Mapeia local de exibição conforme plano
+            let bannerLocal = 'campeonato';
+            if (pacote.id === 'premium' || pacote.id === 'maximo') {
+                bannerLocal = 'ambos';
+            }
+
+            const body = {
+                evento_id: campeonato.id,
+                titulo: campeonato.titulo || '',
+                data_inicio: campeonato.previsao_data_inicio || formatDateTimeMySQL(agora),
+                premiacao: campeonato.premiacao || 0,
+                valor_inscricao: campeonato.preco_inscricao || 0,
+                qnt_times: campeonato.qnt_times || 0,
+                chave: campeonato.chave || '',
+                game: campeonato.game || 'CS2',
+                plataforma: campeonato.plataforma || 'FACEIT',
+                banner_img: campeonato.imagem_url || '',
+                banner_local: bannerLocal,
+                plano_assinado: pacote.id,
+                data_encerramento: dataEncerramentoStr
+            };
+
+            const response = await fetch(`${API_URL}/promover/banner/criar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro ao criar promoção para o campeonato oficial. Status: ${response.status}`);
+            }
+
+            showNotification('success', 'Campeonato oficial promovido com sucesso por 7 dias!');
+            fecharModalPromover();
+            atualizarPromocoesAtivasSidebar();
+            return;
+        }
+
+        // Campeonato comum: passa pelo fluxo de pagamento (Mercado Pago)
+        const priceMap = {
+            basico: 0.01,
+            premium: 0.02,
+            maximo: 0.03
+        };
+
+        const unitPrice = priceMap[pacote.id] || 0.01;
+
+        const bodyPagamento = {
+            plano: pacote.id,
+            title: `Plano ${pacote.nome} - Promoção do campeonato "${campeonato.titulo || campeonato.id}"`,
+            unit_price: unitPrice
+        };
+
+        showNotification('info', 'Redirecionando para o pagamento do plano selecionado...', 4000);
+
+        const responsePagamento = await fetch(`${API_URL}/promover/create_preference`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyPagamento)
+        });
+
+        if (!responsePagamento.ok) {
+            throw new Error(`Não foi possível iniciar o pagamento do plano selecionado. Status: ${responsePagamento.status}`);
+        }
+
+        const dataPagamento = await responsePagamento.json();
+
+        if (!dataPagamento || !dataPagamento.preference_url) {
+            throw new Error('Resposta inválida ao criar preferência de pagamento.');
+        }
+
+        // Para campeonatos COMUNS: após criarmos a preferência com sucesso,
+        // também registramos a promoção no banco (como no fluxo oficial).
+        try {
+            const agoraComum = new Date();
+            const dataEncerramentoComum = calcularDataEncerramentoPromocao();
+
+            let bannerLocalComum = 'campeonato';
+            if (pacote.id === 'premium' || pacote.id === 'maximo') {
+                bannerLocalComum = 'ambos';
+            }
+
+            const bodyComum = {
+                evento_id: campeonato.id,
+                titulo: campeonato.titulo || '',
+                data_inicio: campeonato.previsao_data_inicio || formatDateTimeMySQL(agoraComum),
+                premiacao: campeonato.premiacao || 0,
+                valor_inscricao: campeonato.preco_inscricao || 0,
+                qnt_times: campeonato.qnt_times || 0,
+                chave: campeonato.chave || '',
+                game: campeonato.game || 'CS2',
+                plataforma: campeonato.plataforma || 'FACEIT',
+                banner_img: campeonato.imagem_url || '',
+                banner_local: bannerLocalComum,
+                plano_assinado: pacote.id,
+                data_encerramento: dataEncerramentoComum
+            };
+
+            const respComum = await fetch(`${API_URL}/promover/banner/criar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(bodyComum)
+            });
+
+            if (!respComum.ok) {
+                showNotification('error', 'Pagamento criado, mas houve erro ao registrar a promoção no banco.');
+            } else {
+                showNotification('success', 'Plano de promoção registrado com sucesso por 7 dias!');
+            }
+        } catch (erroComum) {
+            // Erro ao registrar promoção no banco; fluxo de pagamento segue normalmente
+        }
+
+        atualizarPromocoesAtivasSidebar();
+        window.open(dataPagamento.preference_url, '_blank');
+        fecharModalPromover();
+    } catch (error) {
+        showNotification('error', error.message || 'Erro ao processar promoção do campeonato.');
+    }
 }
 
 // =================================
@@ -783,6 +1109,12 @@ async function salvarCampeonato(event) {
     const perfilData = await buscarDadosPerfil();
     const tipoOrg = perfilData?.perfilData?.usuario?.organizador || 'simples';
     
+    // Normalizar status: garantir que "Em Breve" vá como "em breve" (com espaço)
+    let statusValue = formData.get('status');
+    if (statusValue === 'embreve') {
+        statusValue = 'em breve';
+    }
+
     const dados = {
         tipo: document.getElementById('tipo').value,
         titulo: formData.get('titulo'),
@@ -800,7 +1132,7 @@ async function salvarCampeonato(event) {
         formato: formData.get('formato'),
         qnt_times: formData.get('qnt_times'),
         regras: formData.get('regras'),
-        status: formData.get('status'),
+        status: statusValue,
         previsao_data_inicio: formData.get('previsao_data_inicio'),
         id_organizador: auth_dados.usuario.id,
         link_hub: formData.get('url_hub'),
@@ -920,8 +1252,17 @@ async function verDetalhes(id) {
                 </div>
                 <div class="detalhe-item">
                     <label>Status</label>
-                    <span>${campeonato.status === 'disponivel' ? 'Disponível' : 
-                          campeonato.status === 'embreve' ? 'Em Breve' : 'Encerrado'}</span>
+                    <span>${
+                        (() => {
+                            const statusNorm = (campeonato.status || '').toLowerCase().trim().replace(/\s/g, '');
+                            if (statusNorm === 'disponivel') return 'Disponível';
+                            if (statusNorm === 'embreve') return 'Em Breve';
+                            if (statusNorm === 'andamento') return 'Em Andamento';
+                            if (statusNorm === 'cancelado') return 'Cancelado';
+                            if (statusNorm === 'encerrado') return 'Encerrado';
+                            return campeonato.status || 'Encerrado';
+                        })()
+                    }</span>
                 </div>
                 <div class="detalhe-item">
                     <label>Edição</label>
@@ -1013,6 +1354,7 @@ function fecharModalDetalhes() {
 document.addEventListener('click', function(event) {
     const modal = document.getElementById('modalCampeonato');
     const modalDetalhes = document.getElementById('modalDetalhes');
+    const modalPromover = document.getElementById('modalPromover');
     
     if (event.target === modal) {
         fecharModal();
@@ -1020,6 +1362,10 @@ document.addEventListener('click', function(event) {
     
     if (event.target === modalDetalhes) {
         fecharModalDetalhes();
+    }
+
+    if (event.target === modalPromover) {
+        fecharModalPromover();
     }
 });
 
@@ -1043,6 +1389,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             header.classList.remove("scrolled");
         }
     });
+});
+
+// Seleção de pacote de promoção (delegação)
+document.addEventListener('click', function(e) {
+    const card = e.target.closest('.promover-pacote-card');
+    if (card && card.querySelector('.pacote-radio')) {
+        const radio = card.querySelector('.pacote-radio');
+        if (radio) {
+            selecionarPacotePromocao(radio.value);
+        }
+    }
 });
 
 document.addEventListener('DOMContentLoaded', function() {

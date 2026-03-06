@@ -159,6 +159,23 @@ document.addEventListener('keydown', function (event) {
 // =================================
 // ========= SISTEMA DE NOTIFICAÇÕES =========
 
+
+async function EnviarNotificacao(userId,msg){
+    const response = await fetch(`${API_URL}/notificacoes/criar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ usuario_id: userId, texto: msg })
+    });
+    if (response.ok) {
+        return true;
+    } else {
+        console.error('Erro ao enviar notificação:', response.statusText);
+        return false;
+    }
+
+}
+
 async function buscarNotificacoes(){
     const response = await fetch(`${API_URL}/notificacoes`, {
         credentials: 'include'
@@ -176,16 +193,29 @@ let notify = false;
 let notifyTemp = true;
 async function verificarNovasNotificacoes(){
 
-    const notificacoes = await buscarNotificacoes();
+    const notificacoes = await buscarNotificacoes() || [];
     const dotnumber = document.getElementById('menuNotificationBadge');
-    dotnumber.style.display = 'none';
+    if (dotnumber) dotnumber.style.display = 'none';
+
+    const auth_dados = await autenticacao();
+    if (!auth_dados || !auth_dados.usuario) return;
+    const userId = auth_dados.usuario.id;
+
+    const qntNotificacoes = null;
+    let contador = 0;
     
 
     for(const notificao of notificacoes) {
-        if(notificao.lida === 0){
-            dotnumber.style.display = 'flex';
-            dotnumber.textContent = notificacoes.length;
-            notify = true;
+        if(notificao.user_id === userId){
+            if(notificao.lida === 0){
+                contador+=1;
+                console.log(contador);
+                if (dotnumber) {
+                    dotnumber.style.display = 'flex';
+                    dotnumber.textContent = contador;
+                }
+                notify = true;
+            }
         }
     }
 
@@ -193,7 +223,7 @@ async function verificarNovasNotificacoes(){
         if (notifyTemp == false){
             return;
         }
-        showNotification('success', 'Você tem ' + notificacoes.length + ' notificações não lidas');
+        showNotification('success', 'Você tem ' + contador + ' notificações não lidas');
         notifyTemp = false;
     }
 }
@@ -237,6 +267,19 @@ async function filtrarNotificacoesUssuario() {
         return dataDados;
     }
     if (!Array.isArray(notificacoes)) notificacoes = [];
+
+    // Ordenar da mais recente para a mais antiga
+    try {
+        notificacoes.sort((a, b) => {
+            const dataA = a && a.criada_em ? new Date(a.criada_em) : null;
+            const dataB = b && b.criada_em ? new Date(b.criada_em) : null;
+            if (!dataA || !dataB || isNaN(dataA) || isNaN(dataB)) return 0;
+            return dataB - dataA; // mais recente primeiro
+        });
+    } catch (e) {
+        console.warn('Não foi possível ordenar notificações por data:', e);
+    }
+
     for (const notificao of notificacoes) {
         if (Number(notificao.user_id) === userId) {
             var criadaEm = notificao.criada_em;
@@ -568,12 +611,24 @@ async function criarTime() {
     const userId = auth_dados.usuario.id;
     const form = document.getElementById('formCriarTime');
     const formData = new FormData(form);
+
+    const logoInput = document.getElementById('logoTime');
+    const bannerInput = document.getElementById('bannerTime');
+
+    const link_logo = logoInput && logoInput.dataset
+        ? (logoInput.dataset.uploadUrl || null)
+        : null;
+    const link_banner = bannerInput && bannerInput.dataset
+        ? (bannerInput.dataset.uploadUrl || null)
+        : null;
     
     const data = {
         userId: userId,
         nome: formData.get('nome'),
         tag: formData.get('tag'),
-        sobre_time: formData.get('sobre_time')
+        sobre_time: formData.get('sobre_time'),
+        link_logo,
+        link_banner
     };
 
     // Validações básicas
@@ -701,8 +756,9 @@ function setupImageUpload() {
 
 
 
-function handleImageUpload(event, previewElement, uploadArea) {
-    const file = event.target.files[0];
+async function handleImageUpload(event, previewElement, uploadArea) {
+    const input = event.target;
+    const file = input.files[0];
     
     if (file) {
         // Validar tipo de arquivo
@@ -725,6 +781,70 @@ function handleImageUpload(event, previewElement, uploadArea) {
             uploadArea.classList.add('has-image');
         };
         reader.readAsDataURL(file);
+
+        // Upload para Cloudinary via backend
+        const url = await uploadImagemCloudinary(file);
+        if (url) {
+            if (input.id === 'logoTime') {
+                input.dataset.uploadUrl = url;
+            } else if (input.id === 'bannerTime') {
+                input.dataset.uploadUrl = url;
+            }
+        }
+    }
+}
+
+// =============================================================
+// ====================== [ upload imagem (Cloudinary) ] ======================
+
+async function uploadImagemCloudinary(file) {
+    if (!file) {
+        showNotification('error', 'Nenhum arquivo selecionado.');
+        return null;
+    }
+
+    // Validação do arquivo
+    if (!file.type.startsWith('image/')) {
+        showNotification('error', 'Por favor, selecione apenas arquivos de imagem.');
+        return null;
+    }
+    
+    // Validação adicional de extensão
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
+        showNotification('error', 'Formato de arquivo não suportado. Use: JPG, PNG, GIF ou WebP.');
+        return null;
+    }
+
+    // Limita o tamanho do arquivo (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('error', 'A imagem deve ter menos de 5MB.');
+        return null;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/cloudinary/upload`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erro no upload');
+        }
+
+        const data = await response.json();
+        showNotification('success', 'Upload da imagem concluído!');
+        return data.secure_url;
+    } catch (error) {
+        console.error('Erro no upload da imagem:', error);
+        showNotification('error', `Erro ao fazer upload da imagem: ${error.message}`);
+        return null;
     }
 }
 // =================================

@@ -92,6 +92,9 @@ async function dados_e_Login(event) {
                 }, 2000);
             }
         }
+        else{
+            showNotification("error", `${result.message}`);
+        }
     }
     catch (error) {
     console.error('Erro na requisição:', error);

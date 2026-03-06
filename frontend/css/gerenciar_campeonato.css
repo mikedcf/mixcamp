@@ -205,6 +205,102 @@ main {
     padding: 2rem;
 }
 
+.campeonatos-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.promocoes-ativas-sidebar {
+    flex-shrink: 0;
+    width: 280px;
+    position: sticky;
+    top: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.promocoes-ativas-sidebar[hidden] {
+    display: none !important;
+}
+
+.promocoes-ativas-title {
+    font-size: 1rem;
+    color: #ff6b35;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.promocoes-ativas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.promocao-ativa-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 100px;
+    background: rgba(0, 0, 0, 0.4);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.promocao-ativa-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    pointer-events: none;
+}
+
+.promocao-ativa-card-content {
+    position: relative;
+    z-index: 1;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 100px;
+}
+
+.promocao-ativa-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.promocao-ativa-card-meta {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.promocao-ativa-card-meta i {
+    color: #ff6b35;
+    margin-right: 0.15rem;
+}
+
+.campeonatos-main {
+    flex: 1;
+    min-width: 0;
+}
+
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -342,8 +438,8 @@ main {
 }
 
 .badge-status.embreve {
-    background: #f39c12;
-    color: white;
+    background: #1d4ed8; /* azul escuro */
+    color: #ffffff;
 }
 
 .badge-status.andamento {
@@ -362,12 +458,12 @@ main {
 }
 
 .badge-tipo.oficial {
-    background: #3498db;
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
     color: white;
 }
 
 .badge-tipo.comum {
-    background: #95a5a6;
+    background: #f56e08;
     color: white;
 }
 
@@ -449,6 +545,169 @@ main {
 .btn-excluir:hover {
     background: rgba(231, 76, 60, 0.3);
     transform: translateY(-2px);
+}
+
+/* Botão Promover */
+.btn-promover {
+    background: rgba(250, 204, 21, 0.15);
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, 0.5);
+}
+
+.btn-promover:hover {
+    background: rgba(250, 204, 21, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.45);
+}
+
+/* Modal Promover Campeonato */
+.promover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.promover-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.promover-camp-nome {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.promover-descricao {
+    color: #b0b0b0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.promover-pacotes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+}
+
+.promover-pacote-card {
+    border-radius: 18px;
+    padding: 1.25rem 1.5rem;
+    background: radial-gradient(circle at top, rgba(15,23,42,0.95) 0%, rgba(3,7,18,0.98) 70%);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.promover-pacote-card .pacote-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.promover-pacote-card.selected {
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.9), 0 20px 40px rgba(0, 0, 0, 0.8);
+    transform: translateY(-2px);
+}
+
+.promover-pacote-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.12;
+    background: radial-gradient(circle at top, #f97316, transparent 55%);
+    pointer-events: none;
+}
+
+.promover-pacote-card.basico {
+    border-color: rgba(96, 165, 250, 0.6);
+}
+
+.promover-pacote-card.premium {
+    border-color: rgba(251, 191, 36, 0.7);
+}
+
+.promover-pacote-card.maximo {
+    border-color: rgba(244, 63, 94, 0.8);
+}
+
+.pacote-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.promover-pacote-card.basico .pacote-titulo {
+    color: #60a5fa;
+}
+
+.promover-pacote-card.premium .pacote-titulo {
+    color: #facc15;
+}
+
+.promover-pacote-card.maximo .pacote-titulo {
+    color: #fb7185;
+}
+
+.pacote-subtitulo {
+    font-size: 0.9rem;
+    color: #e5e7eb;
+    opacity: 0.85;
+}
+
+.pacote-lista {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.25rem 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: #d1d5db;
+}
+
+.pacote-lista li::before {
+    content: '•';
+    color: #f97316;
+    margin-right: 0.4rem;
+}
+
+.pacote-preco {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.pacote-preco .valor {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #f97316;
+}
+
+.pacote-preco .periodo {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #9ca3af;
+}
+
+.promover-footer {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.promover-aviso {
+    font-size: 0.85rem;
+    color: #9ca3af;
 }
 
 /* Botão Chaveamento no card: ultils.css usa display:none global; exibir aqui */
@@ -865,6 +1124,15 @@ main {
 @media (max-width: 768px) {
     .form-row {
         grid-template-columns: 1fr;
+    }
+
+    .campeonatos-layout {
+        flex-direction: column;
+    }
+
+    .promocoes-ativas-sidebar {
+        width: 100%;
+        position: static;
     }
 
     .campeonatos-grid {

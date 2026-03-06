@@ -440,6 +440,12 @@ function formatarData(dataISO, { comHora = true } = {}) {
     }
 }
 
+function truncateText(text, maxLength) {
+    if (typeof text !== 'string') return '';
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength).trim() + '...';
+}
+
 
 // =================================
 // ========= DADOS CARD CAMPEONATOS =========
@@ -462,8 +468,11 @@ async function getCardDados() {
 // Índice do slide atualmente visível no banner
 let bannerIndex = 0;
 
-// ID do intervalo usado no autoplay (setInterval)
-let bannerInterval;
+// Backup: timeout para avançar caso transitionend não dispare
+let bannerProgressTimeout = null;
+
+// Listener do transitionend da barra de progresso (só registrar uma vez)
+let bannerProgressListenerAdded = false;
 
 // Lista padrão de slides do banner (fallback)
 // Cada item é um objeto representando um slide do carrossel
@@ -497,7 +506,85 @@ const defaultBannerSlides = [
 // Lista de slides efetivamente usada pelo carrossel.
 // Será preenchida a partir de uma "lista de arrays" (array de objetos)
 // vinda de fora, ou com o default acima se nada for passado.
-let bannerSlides = [...defaultBannerSlides];
+let bannerSlides = [];
+
+
+async function getPromoverBanner() {
+    try {
+        const response = await fetch(`${API_URL}/promover/banner`);
+        const data = await response.json();
+        return data.promover_banner ?? [];
+    } catch (error) {
+        console.error('Erro ao buscar promover banner:', error);
+        return [];
+    }
+}
+
+/**
+ * Atualiza o slider do banner com os itens retornados pela API "promover/banner".
+ * Cada item deve ter: banner_img, titulo, data_inicio, premiacao, valor_inscricao,
+ * qnt_times, game, plataforma, chave, evento_id ou id, banner_local,
+ * plano_assinado e status_promover_evento.
+ *
+ * Regras da página CAMPEONATO:
+ * - Só exibe banners cujo banner_local seja "campeonato" ou "ambos";
+ * - Só exibe banners com status_promover_evento === "disponivel";
+ * - Se, após o filtro, não restar nenhum item, o banner é ocultado.
+ */
+function atualizarBannerComPromover(lista) {
+    if (!Array.isArray(lista) || lista.length === 0) return;
+
+    // Filtra apenas os itens que devem aparecer na página de CAMPEONATO
+    const listaFiltrada = lista.filter((c) => {
+        const bannerLocal = c.banner_local || c.bannerLocal;
+        const statusPromover = c.status_promover_evento || c.statusPromoverEvento;
+
+        if (statusPromover !== 'disponivel') return false;
+        if (!bannerLocal) return false;
+
+        // Na página de campeonatos, aceitamos "campeonato" ou "ambos"
+        return bannerLocal === 'campeonato' || bannerLocal === 'ambos';
+    });
+
+    if (listaFiltrada.length === 0) {
+        // Força o esvaziamento para esconder a seção de banner
+        setBannerSlides([]);
+        return;
+    }
+
+    const slides = listaFiltrada.map((c) => {
+        const dataInicioFmt = c.data_inicio
+            ? formatarData(c.data_inicio, { comHora: true })
+            : 'A definir';
+        const premiacao = c.premiacao || '';
+        const preco = c.valor_inscricao || '';
+        const qnt = c.qnt_times ?? '0';
+        const game = c.game || 'CS2';
+        const plataforma = c.plataforma || 'FACEIT';
+        const chave = c.chave || '';
+        const id = c.evento_id ?? c.id;
+
+        const subtitle = `Início: ${dataInicioFmt} • Premiação: R$ ${premiacao} • Inscrição: R$ ${preco}`;
+
+        return {
+            id,
+            image: c.banner_img,
+            // Plano será usado depois para aplicar efeitos especiais (ex: "maximo")
+            planoAssinado: c.plano_assinado || c.planoAssinado || null,
+            title: c.titulo || 'Campeonato Mixcamp',
+            subtitle,
+            dataInicio: dataInicioFmt,
+            premiacao: premiacao ? `R$ ${premiacao}` : '',
+            preco: preco ? `R$ ${preco}` : '',
+            qntTimes: String(qnt),
+            game,
+            plataforma,
+            chave
+        };
+    });
+
+    setBannerSlides(slides);
+}
 
 /**
  * Define a lista de slides do banner a partir de um array externo.
@@ -512,37 +599,84 @@ let bannerSlides = [...defaultBannerSlides];
  *   ]);
  */
 function setBannerSlides(slidesArray) {
-    // Garante que veio um array válido com ao menos 1 elemento
-    if (Array.isArray(slidesArray) && slidesArray.length > 0) {
-        bannerSlides = slidesArray;
-    } else {
-        // Se não for válido, volta para o padrão
-        bannerSlides = [...defaultBannerSlides];
-    }
+    // Banner é preenchido somente pela API promover/banner; aceita array vazio
+    bannerSlides = Array.isArray(slidesArray) ? slidesArray : [];
 
-    // Sempre reinicia do primeiro slide ao trocar a lista
     bannerIndex = 0;
-
-    // Recria toda a estrutura do banner com a nova lista
     criarBannerSlides();
+}
+
+// Atualiza o banner usando os dados reais dos campeonatos
+function atualizarBannerComCampeonatos(listaCampeonatos) {
+    if (!Array.isArray(listaCampeonatos) || listaCampeonatos.length === 0) return;
+
+    const slides = listaCampeonatos.slice(0, 4).map(c => {
+        const dataInicioFmt = c.previsaoInicio
+            ? formatarData(c.previsaoInicio.toISOString(), { comHora: true })
+            : 'A definir';
+        const premiacao = c.premiacao || '';
+        const preco = c.preco || '';
+        const qnt = c.qntTimes || '0';
+        const game = c.game || 'CS2';
+        const plataforma = c.plataforma || 'FACEIT';
+        const chave = c.chave || '';
+
+        const subtitle =
+            c.descricao && c.descricao.length > 0
+                ? truncateText(c.descricao, 90)
+                : `Início: ${dataInicioFmt} • Premiação: ${premiacao} • Inscrição: ${preco}`;
+
+        return {
+            id: c.id,
+            image: c.imagem,
+            title: c.titulo || 'Campeonato Mixcamp',
+            subtitle,
+            dataInicio: dataInicioFmt,
+            premiacao,
+            preco,
+            qntTimes: qnt,
+            game,
+            plataforma,
+            chave
+        };
+    });
+
+    if (slides.length > 0) {
+        setBannerSlides(slides);
+    }
 }
 
 /**
  * Reinicia a barra de progresso do banner (linha que "enche" em 5s).
+ * Ao terminar a animação (100%), o evento transitionend troca para o próximo slide.
  */
 function resetBannerProgress() {
     const progress = document.getElementById('bannerProgress');
     if (!progress) return;
 
+    if (bannerProgressTimeout) {
+        clearTimeout(bannerProgressTimeout);
+        bannerProgressTimeout = null;
+    }
+
+    progress.classList.remove('banner-progress-paused');
     progress.style.transition = 'none';
     progress.style.width = '0%';
 
     // Força reflow para reiniciar a animação
     void progress.offsetWidth;
 
-    // Anima novamente de 0 a 100% em 5 segundos
+    // Anima de 0 a 100% em 5 segundos; ao terminar, transitionend avança o slide
     progress.style.transition = 'width 5s linear';
     progress.style.width = '100%';
+
+    // Backup: se transitionend não disparar, avança após 5s
+    bannerProgressTimeout = setTimeout(() => {
+        if (progress.classList.contains('banner-progress-paused')) return;
+        if (bannerSlides.length === 0) return;
+        bannerIndex = (bannerIndex + 1) % bannerSlides.length;
+        atualizarBanner();
+    }, 5000);
 }
 
 /**
@@ -557,26 +691,61 @@ function resetBannerProgress() {
 function criarBannerSlides() {
     const track = document.getElementById('bannerTrack');
     const dots = document.getElementById('bannerDots');
-    
+    const bannerSection = document.querySelector('.banner-section');
+
     if (!track || !dots) return;
 
+    // Se não houver slides (banner só vem de getPromoverBanner), esconde a seção
+    if (bannerSlides.length === 0) {
+        if (bannerSection) bannerSection.style.display = 'none';
+        track.innerHTML = '';
+        dots.innerHTML = '';
+        return;
+    }
+    if (bannerSection) bannerSection.style.display = '';
+
     // Criar slides do banner dinamicamente a partir de `bannerSlides`
-    track.innerHTML = bannerSlides.map((slide, index) => `
-        <div class="banner-slide ${index === bannerIndex ? 'active' : ''}">
+    track.innerHTML = bannerSlides.map((slide, index) => {
+        const isMaximo = slide.planoAssinado === 'maximo';
+        const link = slide.id
+            ? `inscricao.html?id=${slide.id}`
+            : (slide.link || '#campeonatos');
+
+        const dataInfo = slide.dataInicio ? `<span class="banner-meta-item"><span class="banner-meta-icon"><i class="fas fa-calendar-alt"></i></span><span class="banner-meta-label">Início</span><strong>${slide.dataInicio}</strong></span>` : '';
+        const premioInfo = slide.premiacao ? `<span class="banner-meta-item"><span class="banner-meta-icon"><i class="fas fa-trophy"></i></span><span class="banner-meta-label">Premiação</span><strong>${slide.premiacao}</strong></span>` : '';
+        const precoInfo = slide.preco ? `<span class="banner-meta-item"><span class="banner-meta-icon"><i class="fas fa-ticket-alt"></i></span><span class="banner-meta-label">Inscrição</span><strong>${slide.preco}</strong></span>` : '';
+        const qntInfo = slide.qntTimes ? `<span class="banner-meta-item"><span class="banner-meta-icon"><i class="fas fa-users"></i></span><span class="banner-meta-label">Vagas</span><strong>${slide.qntTimes} times</strong></span>` : '';
+        const gamePlatInfo = (slide.game || slide.plataforma)
+            ? `<span class="banner-meta-item"><span class="banner-meta-icon"><i class="fas fa-gamepad"></i></span><span class="banner-meta-label">Game / Plataforma</span><strong>${slide.game || 'CS2'} • ${slide.plataforma || 'FACEIT'}</strong></span>`
+            : '';
+        const chaveInfo = slide.chave ? `<span class="banner-meta-item"><span class="banner-meta-icon"><i class="fas fa-sitemap"></i></span><span class="banner-meta-label">Chave</span><strong>${slide.chave}</strong></span>` : '';
+
+        const metaRow1 = [dataInfo, premioInfo, precoInfo, qntInfo].filter(Boolean).join('');
+        const metaRow2 = [gamePlatInfo, chaveInfo].filter(Boolean).join('');
+
+        const maxClass = isMaximo ? ' banner-slide-maximo' : '';
+
+        return `
+        <div class="banner-slide${maxClass} ${index === bannerIndex ? 'active' : ''}">
             <img src="${slide.image}" alt="${slide.title}">
             <div class="banner-overlay">
                 <div class="banner-overlay-inner">
                     <h2 class="banner-title">${slide.title}</h2>
                     <p class="banner-subtitle">${slide.subtitle}</p>
+                    <div class="banner-meta">
+                        <div class="banner-meta-row">${metaRow1}</div>
+                        ${metaRow2 ? `<div class="banner-meta-row">${metaRow2}</div>` : ''}
+                    </div>
                     <div class="banner-cta-wrapper">
-                        <button class="banner-cta" data-link="${slide.link || '#campeonatos'}">
+                        <button class="banner-cta" data-link="${link}">
                             Ver Campeonato
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     // Ações de clique no botão de CTA (call to action)
     track.querySelectorAll('.banner-cta').forEach((btn) => {
@@ -631,8 +800,31 @@ function criarBannerSlides() {
         }, { passive: true });
     }
 
-    // Inicia o autoplay sempre que os slides são recriados
+    // Inicia o autoplay: barra de progresso enche em 5s e ao terminar troca de slide
     iniciarAutoPlayBanner();
+}
+
+/**
+ * Configura o listener da barra de progresso (uma vez) e inicia o ciclo.
+ * Quando a barra chega a 100%, avança para o próximo slide e reinicia a barra.
+ */
+function configurarProgressBarListener() {
+    const progress = document.getElementById('bannerProgress');
+    if (!progress || bannerProgressListenerAdded) return;
+
+    progress.addEventListener('transitionend', function onProgressEnd(e) {
+        if (e.propertyName !== 'width') return;
+        if (progress.classList.contains('banner-progress-paused')) return;
+        if (bannerSlides.length === 0) return;
+
+        if (bannerProgressTimeout) {
+            clearTimeout(bannerProgressTimeout);
+            bannerProgressTimeout = null;
+        }
+        bannerIndex = (bannerIndex + 1) % bannerSlides.length;
+        atualizarBanner();
+    });
+    bannerProgressListenerAdded = true;
 }
 
 /**
@@ -668,13 +860,13 @@ function atualizarBanner() {
 
 
 function iniciarAutoPlayBanner() {
-    clearInterval(bannerInterval);
+    if (bannerProgressTimeout) {
+        clearTimeout(bannerProgressTimeout);
+        bannerProgressTimeout = null;
+    }
+    configurarProgressBarListener();
+    // A troca de slide ocorre no transitionend da barra (ao terminar de carregar); backup em resetBannerProgress
     resetBannerProgress();
-
-    bannerInterval = setInterval(() => {
-        bannerIndex = (bannerIndex + 1) % bannerSlides.length;
-        atualizarBanner();
-    }, 5000);
 }
 
 // =================================
@@ -833,12 +1025,15 @@ function renderizarCampeonatos(lista) {
         else if (campeonato.status === 'encerrado') statusText = 'Encerrado';
         else if (campeonato.status === 'cancelado') statusText = 'Cancelado';
 
-        // Dividir título (assumindo formato "MIX EXTREME" ou similar)
+        // Classe CSS do badge: normalizar "em breve" para "embreve" (uma única classe)
+        const statusClass = (campeonato.status === 'em breve') ? 'embreve' : (campeonato.status || 'disponivel');
+
+        // Dividir título
         const tituloParts = campeonato.titulo.split(' ');
         const primeiraParte = tituloParts[0] || campeonato.titulo;
         const restoParte = tituloParts.slice(1).join(' ') || '';
 
-        console.log(campeonato);
+        
 
         
 
@@ -856,7 +1051,7 @@ function renderizarCampeonatos(lista) {
                         <span class="card-badge badge-organizador ${campeonato.organizador}">
                             <i class="fa fa-circle-check"></i> ${campeonato.organizador === 'oficial' ? 'Oficial' : 'Comum'}
                         </span>
-                        <span class="card-badge badge-status ${campeonato.status}">
+                        <span class="card-badge badge-status ${statusClass}">
                             ${statusText}
                         </span>
                     </div>
@@ -928,6 +1123,9 @@ function renderizarCampeonatos(lista) {
     }).join('');
 }
 
+
+
+
 async function criarCardsCampeonatos() {
     const grid = document.getElementById('campeonatosGrid');
     if (!grid) return;
@@ -961,6 +1159,7 @@ async function criarCardsCampeonatos() {
             chave: item.chave || '',
             formato: item.formato || '',
             plataforma: item.plataforma || '',
+            game: item.game || '',
             edicao: item.edicao_campeonato || '',
             qntTimes: item.qnt_times || '0'
         }));
@@ -1136,14 +1335,29 @@ document.addEventListener('DOMContentLoaded', function () {
     verificarTimeUsuario();
     addScrollProgress();
 
-    // Banner
-    criarBannerSlides();
+    // Banner: preenchido somente por getPromoverBanner()
+    getPromoverBanner().then((lista) => {
+        if (lista && lista.length > 0) {
+            atualizarBannerComPromover(lista);
+        } else {
+            setBannerSlides([]);
+        }
+    });
 
-    // Pausar autoplay do banner no hover
+    // Pausar autoplay do banner no hover (congela a barra de progresso)
     const bannerCarousel = document.querySelector('.banner-carousel');
-    if (bannerCarousel) {
-        bannerCarousel.addEventListener('mouseenter', () => clearInterval(bannerInterval));
-        bannerCarousel.addEventListener('mouseleave', iniciarAutoPlayBanner);
+    const bannerProgress = document.getElementById('bannerProgress');
+    if (bannerCarousel && bannerProgress) {
+        bannerCarousel.addEventListener('mouseenter', () => {
+            if (bannerProgressTimeout) {
+                clearTimeout(bannerProgressTimeout);
+                bannerProgressTimeout = null;
+            }
+            bannerProgress.classList.add('banner-progress-paused');
+        });
+        bannerCarousel.addEventListener('mouseleave', () => {
+            iniciarAutoPlayBanner();
+        });
     }
 
     // Filtros de campeonatos

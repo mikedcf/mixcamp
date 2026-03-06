@@ -900,12 +900,24 @@ async function criarTime() {
     const userId = auth_dados.usuario.id;
     const form = document.getElementById('formCriarTime');
     const formData = new FormData(form);
+
+    const logoInput = document.getElementById('logoTime');
+    const bannerInput = document.getElementById('bannerTime');
+
+    const link_logo = logoInput && logoInput.dataset
+        ? (logoInput.dataset.uploadUrl || null)
+        : null;
+    const link_banner = bannerInput && bannerInput.dataset
+        ? (bannerInput.dataset.uploadUrl || null)
+        : null;
     
     const data = {
         userId: userId,
         nome: formData.get('nome'),
         tag: formData.get('tag'),
-        sobre_time: formData.get('sobre_time')
+        sobre_time: formData.get('sobre_time'),
+        link_logo,
+        link_banner
     };
 
     // Validações básicas
@@ -925,8 +937,6 @@ async function criarTime() {
     }
 
 
-    // Por enquanto, apenas envia os dados básicos
-
     try {
         const response = await fetch(`${API_URL}/times/criar`, {
             method: 'POST',
@@ -938,6 +948,8 @@ async function criarTime() {
         });
 
         const result = await response.json();
+
+        console.log('[team.js] resposta de /times/criar:', response.status, result);
 
         if (response.ok) {
             showNotification('success', 'Time criado com sucesso!');
@@ -1001,58 +1013,7 @@ function fecharModalCriarTime() {
 
 // =================================
 // ========= UPLOAD DE IMAGENS =========
-function setupImageUpload() {
-    // Logo upload
-    const logoInput = document.getElementById('logoTime');
-    const logoPreview = document.getElementById('logoPreview');
-    const logoUploadArea = document.getElementById('logoUploadArea');
-
-    if (logoInput && logoPreview && logoUploadArea) {
-        logoInput.addEventListener('change', function(e) {
-            handleImageUpload(e, logoPreview, logoUploadArea);
-        });
-    }
-
-    // Banner upload
-    const bannerInput = document.getElementById('bannerTime');
-    const bannerPreview = document.getElementById('bannerPreview');
-    const bannerUploadArea = document.getElementById('bannerUploadArea');
-
-    if (bannerInput && bannerPreview && bannerUploadArea) {
-        bannerInput.addEventListener('change', function(e) {
-            handleImageUpload(e, bannerPreview, bannerUploadArea);
-        });
-    }
-}
-
-
-
-function handleImageUpload(event, previewElement, uploadArea) {
-    const file = event.target.files[0];
-    
-    if (file) {
-        // Validar tipo de arquivo
-        if (!file.type.startsWith('image/')) {
-            showNotification('alert', 'Por favor, selecione apenas arquivos de imagem.');
-            return;
-        }
-
-        // Validar tamanho (máximo 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            showNotification('alert', 'A imagem deve ter no máximo 5MB.');
-            return;
-        }
-
-        // Criar preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewElement.style.backgroundImage = `url(${e.target.result})`;
-            previewElement.classList.add('show');
-            uploadArea.classList.add('has-image');
-        };
-        reader.readAsDataURL(file);
-    }
-}
+// Usamos as funções globais definidas em utils.js (setupImageUpload/handleImageUpload)
 
 
 // ===============================================================================================

@@ -109,12 +109,20 @@
 
         <!-- Lista de Campeonatos -->
         <section class="campeonatos-section">
+            <div class="campeonatos-layout">
+                <aside class="promocoes-ativas-sidebar" id="promocoesAtivasSidebar" aria-label="Promoções ativas" hidden>
+                    <h3 class="promocoes-ativas-title"><i class="fas fa-bullhorn"></i> Promoções ativas</h3>
+                    <div class="promocoes-ativas-list" id="promocoesAtivasList">
+                        <!-- Mini cards gerados via JS -->
+                    </div>
+                </aside>
+                <div class="campeonatos-main">
             <div class="section-header">
                 <h2><i class="fas fa-list"></i> Meus Campeonatos</h2>
                 <div class="filtros">
                     <select id="filtroStatus" onchange="filtrarCampeonatos()">
                         <option value="todos">Todos os Status</option>
-                        <option value="embreve">Em Breve</option>
+                        <option value="em breve">Em Breve</option>
                         <option value="disponivel">Disponível</option>
                         <option value="andamento">Em Andamento</option>
                         <option value="encerrado">Encerrado</option>
@@ -138,6 +146,8 @@
                 <button class="btn-criar-campeonato" onclick="abrirModalCriar()">
                     <i class="fas fa-plus"></i> Criar Primeiro Campeonato
                 </button>
+            </div>
+                </div>
             </div>
         </section>
     </main>
@@ -279,7 +289,7 @@
                 <div class="form-group">
                     <label for="status"><i class="fas fa-info-circle"></i> Status *</label>
                     <select id="status" name="status" required>
-                        <option value="embreve">Em Breve</option>
+                        <option value="em breve">Em Breve</option>
                         <option value="disponivel">Disponível</option>
                         <option value="andamento">Em Andamento</option>
                         <option value="encerrado">Encerrado</option>
@@ -319,6 +329,85 @@
             
             <div class="detalhes-content" id="detalhesContent">
                 <!-- Conteúdo será preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Promover Campeonato -->
+    <div class="modal" id="modalPromover">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="promoverTitulo"><i class="fas fa-bullhorn"></i> Promover Campeonato</h2>
+                <button class="modal-close" onclick="fecharModalPromover()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="promover-body">
+                <div class="promover-intro">
+                    <h3 id="promoverCampNome" class="promover-camp-nome">Nome do Campeonato</h3>
+                    <p class="promover-descricao">
+                        Escolha um pacote de destaque para exibir seu campeonato em banners
+                        na página de campeonatos ou na home, dependendo do plano selecionado.
+                    </p>
+                </div>
+
+                <div class="promover-pacotes-grid">
+                    <label class="promover-pacote-card basico">
+                        <input type="radio" name="pacotePromocao" value="basico" class="pacote-radio" checked>
+                        <h4 class="pacote-titulo">Destaque Básico</h4>
+                        <p class="pacote-subtitulo">Visibilidade na página de campeonatos</p>
+                        <ul class="pacote-lista">
+                            <li>Banner na página de campeonatos</li>
+                            <li>Posição padrão na grade de destaques</li>
+                            <li>Ideal para campeonatos de entrada</li>
+                        </ul>
+                        <div class="pacote-preco">
+                            <span class="valor">R$ 20</span>
+                            <span class="periodo">por 7 dias</span>
+                        </div>
+                    </label>
+
+                    <label class="promover-pacote-card premium">
+                        <input type="radio" name="pacotePromocao" value="premium" class="pacote-radio">
+                        <h4 class="pacote-titulo">Destaque Premium</h4>
+                        <p class="pacote-subtitulo">Presença forte na home e campeonatos</p>
+                        <ul class="pacote-lista">
+                            <li>Banner na home</li>
+                            <li>Banner na página de campeonatos</li>
+                            <li>Mais cliques e alcance para seu evento</li>
+                        </ul>
+                        <div class="pacote-preco">
+                            <span class="valor">R$ 50</span>
+                            <span class="periodo">por 7 dias</span>
+                        </div>
+                    </label>
+
+                    <label class="promover-pacote-card maximo">
+                        <input type="radio" name="pacotePromocao" value="maximo" class="pacote-radio">
+                        <h4 class="pacote-titulo">Destaque Máximo</h4>
+                        <p class="pacote-subtitulo">O foco total do MIXCAMP</p>
+                        <ul class="pacote-lista">
+                            <li>Primeiro banner da home</li>
+                            <li>Destaque visual especial</li>
+                            <li>Máxima visibilidade para o seu campeonato</li>
+                        </ul>
+                        <div class="pacote-preco">
+                            <span class="valor">R$ 80</span>
+                            <span class="periodo">por 7 dias</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="promover-footer">
+                    <p class="promover-aviso">
+                        Em breve, o pagamento dos pacotes será feito via Mercado Pago. 
+                        Neste espaço ficará a integração de checkout e o registro da promoção no banco de dados.
+                    </p>
+                    <button type="button" class="btn-salvar" onclick="iniciarPagamentoPromocao()">
+                        <i class="fas fa-credit-card"></i> Prosseguir para pagamento
+                    </button>
+                </div>
             </div>
         </div>
     </div>

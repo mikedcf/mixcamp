@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const multer = require('multer');
 const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 const { 
-    getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, autenticar, 
+    getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar, 
     getTimeById, getTimeByUser, deletarTime, transferirLideranca, listarMembrosParaLideranca, criarTime, atualizarTime, atualizarPosicaoMembro, removerMembro,
     solicitarEntradaTime, aceitarSolicitacao, rejeitarSolicitacao, verificarStatusSolicitacao,getTransferencias,criarTransferencia,deletarTransferencia,
     getSolicitacaoById, listarTodasSolicitacoes,buscarTimes,buscarUsuarios, listarSolicitacoesPorTime, aceitarSolicitacaoPorId, rejeitarSolicitacaoPorId,MembroSair,deletarSolicitacao,atualizarTransferencia, listarTimes, getplayers, buscarDadosFaceitPlayer, locationMatchesIds, infoMatchId, buscarInfoMatchId, uploadImagemCloudinary, criarTrofeus, createImgPosition, updateImgPosition, buscarImgPosition,
@@ -16,7 +16,9 @@ const {
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
     criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout,
-    getNotificacoes, criarMsgNotificacao, atualizarNotificacao, deletarNotificacao
+    getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,
+    getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner,
+    CreatePreferencePromocao
 } = require('./controller');
 require('dotenv').config();
 
@@ -112,6 +114,8 @@ app.get('/hello', (req, res) => {
 // ==================================== [API MERCADOPAGO] =============================================
 // --- POST
 app.post(process.env.ROUTE_CREATE_PREFERENCE, CreatePreference)
+// Pagamento para promoção de campeonatos (planos básico/premium/máximo)
+app.post('/api/v1/promover/create_preference', CreatePreferencePromocao)
 
 // --- WEBHOOK - Recebe notificações do Mercado Pago
 app.post(process.env.ROUTE_MERCADOPAGO_WEBHOOK, webhookMercadoPago)
@@ -182,6 +186,7 @@ app.post(process.env.ROUTE_EMAIL_VERYCODE, verificarCodigoEmail);
 // ==================================== [API MERCADOPAGO] =============================================
 app.get(process.env.ROUTE_NOTIFICACOES, getNotificacoes);
 app.post(process.env.ROUTE_NOTIFICACOES_CRIAR, criarMsgNotificacao);
+app.post('/api/v1/notificacoes/enviar-todos', enviarNotificacaoTodos);
 app.put(process.env.ROUTE_NOTIFICACOES_ATUALIZAR, atualizarNotificacao);
 app.delete(process.env.ROUTE_NOTIFICACOES_DELETAR, deletarNotificacao);
 
@@ -287,6 +292,8 @@ app.delete(process.env.ROUTE_DEL_SOLICITACOES, deletarSolicitacao);
 
 // ----- MEDALHAS GET
 app.get(process.env.ROUTE_MEDALHAS_ID, getMedalhas);
+// Admin: listar todas as medalhas
+app.get('/api/v1/admin/medalhas', listarTodasMedalhas);
 
 app.get(process.env.ROUTE_MEDALHAS_USUARIO_ID, getMedalhasUsuario)
 
@@ -436,9 +443,26 @@ app.post(process.env.ROUTE_RANKING_TIMES_HISTORICO, criarRankingTimesHistorico);
 
 // ----- RANKING UPDATE
 app.put(process.env.ROUTE_RANKING_TIMES, atualizarRankingTimes);
-
-
 // ----- RANKING DELETE
+
+// ===============================================================================================
+// ==================================== [API PROMOVER BANNER] ================================================
+
+// ----- PROMOVER BANNER GET
+app.get(process.env.ROUTE_PROMOVER_BANNER, getpromoverbanner);
+
+// ----- PROMOVER BANNER POST
+app.post(process.env.ROUTE_PROMOVER_BANNER_CRIAR, criarPromoverBanner);
+
+// ----- PROMOVER BANNER PUT
+app.put(process.env.ROUTE_PROMOVER_BANNER_ATUALIZAR, atualizarPromoverBanner);
+
+// ----- PROMOVER BANNER DELETE
+app.delete(process.env.ROUTE_PROMOVER_BANNER_DELETAR, deletarPromoverBanner);
+
+
+
+
 
 // ===============================================================================================
 // ==================================== [PORTA DA API] ==========================================

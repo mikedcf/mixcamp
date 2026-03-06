@@ -83,6 +83,7 @@ async function verificar_auth() {
     else {
         document.getElementById("buconfig").style.display = "none";
         document.getElementById('userAuth').classList.remove('hidden');
+        document.getElementById("userPerfil").style.display = 'none'
         document.getElementById("userPerfil").classList.add("hidden");
         document.getElementById("followBtnBanner").style.display = "none";
 
@@ -306,6 +307,8 @@ async function buscarDadosFaceit(link) {
     if (link == null || link == undefined || link == '') {
         return null;
     }
+
+    
     try {
         const response = await fetch(`${API_URL}/faceit/player`, {
             method: 'POST',
@@ -548,23 +551,37 @@ async function atualizarDadosPerfil() {
     const faceit_link = redeSocialData ? (redeSocialData.faceit_url || '') : '';
     const steam_link = redeSocialData ? (redeSocialData.steam_url || '') : '';
 
-    if (verify) {
-        const temFaceit = faceit_link && String(faceit_link).trim() !== '';
-        const temSteam = steam_link && String(steam_link).trim() !== '';
-        if (temFaceit && temSteam) {
-            verify.style.display = 'flex';
+    if(faceit_link == null || faceit_link == undefined || faceit_link == '' || steam_link == null || steam_link == undefined || steam_link == ''){
+        console.log('nada')
+        if (faceit_link) {
+            
             atualizarLevelFaceit(faceit_link);
-        } else {
-            // Só esconde o selo quando temos dados de redes e os dois links estão vazios.
-            // Se redesSociais não veio ou veio vazio, não esconde (evita sumir após config/salvar).
-            if (redeSocialData !== null && !temFaceit && !temSteam) {
-                verify.style.display = 'none';
-            }
-            if (faceit_link) {
-                atualizarLevelFaceit(faceit_link);
-            }
         }
+        verify.style.display = 'none';
+        
     }
+    else{
+        verify.style.display = 'flex';
+        atualizarLevelFaceit(faceit_link);
+    }
+
+    // if (verify) {
+    //     const temFaceit = faceit_link && String(faceit_link).trim() !== '';
+    //     const temSteam = steam_link && String(steam_link).trim() !== '';
+    //     if (temFaceit && temSteam) {
+    //         verify.style.display = 'flex';
+    //         atualizarLevelFaceit(faceit_link);
+    //     } else {
+    //         // Só esconde o selo quando temos dados de redes e os dois links estão vazios.
+    //         // Se redesSociais não veio ou veio vazio, não esconde (evita sumir após config/salvar).
+    //         if (redeSocialData !== null && !temFaceit && !temSteam) {
+    //             verify.style.display = 'none';
+    //         }
+    //         if (faceit_link) {
+    //             atualizarLevelFaceit(faceit_link);
+    //         }
+    //     }
+    // }
 
 
     if (cargo == 'admin') {
@@ -1341,7 +1358,7 @@ async function Copiarl_Link_Perfil() {
 
     navigator.clipboard.writeText(url)
         .then(() => {
-            alert("Copiado para a área de transferência!");
+            
             showNotification('success', 'Link copiado para a área de transferência!');
         })
         .catch(err => {
@@ -1350,10 +1367,7 @@ async function Copiarl_Link_Perfil() {
 }
 
 
-function presentearPerfil() {
-    // Implementar funcionalidade de presentear
-    showNotification('alert', 'Funcionalidade de presentear em desenvolvimento!');
-}
+
 
 
 async function baixarCfg() {
@@ -1382,6 +1396,52 @@ async function baixarCfg() {
     return;
 }
 
+
+function abrirModalPresente() {
+    const modal = document.getElementById('giftModalOverlay');
+    if (!modal) return;
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+
+    const input = document.getElementById('giftCouponInput');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+}
+
+function fecharModalPresente() {
+    const modal = document.getElementById('giftModalOverlay');
+    if (!modal) return;
+
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function presentearPerfil() {
+    abrirModalPresente();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const submitBtn = document.getElementById('giftSubmitBtn');
+    const input = document.getElementById('giftCouponInput');
+
+    if (submitBtn && input) {
+        submitBtn.addEventListener('click', () => {
+            const codigo = input.value.trim();
+
+            if (!codigo) {
+                showNotification('alert', 'Digite um cupom para presentear.');
+                input.focus();
+                return;
+            }
+
+            showNotification('success', 'Em breve validaremos seu cupom.');
+            fecharModalPresente();
+        });
+    }
+});
 
 
 // =================================
