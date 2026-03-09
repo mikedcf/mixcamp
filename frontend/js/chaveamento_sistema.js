@@ -163,7 +163,7 @@ async function buscarDadosTrofeu(trofeuId) {
     
     try {
         // Buscar todos os troféus e filtrar pelo ID
-        const response = await fetch(`${API_URL || '/api/v1'}/trofeus`, {
+        const response = await fetch(`${API_URL}/trofeus`, {
             method: 'GET',
             credentials: 'include'
         });
@@ -2930,8 +2930,8 @@ window.isChampionshipOwner = false;
 // Tornar global para ser acessível de outros scripts
 window.verificarAutenticacao = async function verificarAutenticacao() {
     try {
-        const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
-        const response = await fetch(`${apiUrl}/dashboard`, {
+        // //const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
+        const response = await fetch(`${API_URL}/dashboard`, {
             method: 'GET',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' }
@@ -3005,7 +3005,7 @@ async function carregarCampeonatosNoModal() {
             return;
         }
 
-        const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
+        // //const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
         let meusCampeonatos = [];
         let tituloModal = '🏆 Meus Campeonatos';
 
@@ -3019,7 +3019,7 @@ async function carregarCampeonatosNoModal() {
             tituloModal = '🏆 Meus Campeonatos (Criados)';
 
             // Buscar todos os campeonatos
-            const response = await fetch(`${apiUrl}/inscricoes/campeonato`, {
+            const response = await fetch(`${API_URL}/inscricoes/campeonato`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -3058,7 +3058,7 @@ async function carregarCampeonatosNoModal() {
             }
 
             // Buscar inscrições do time
-            const responseInscricoes = await fetch(`${apiUrl}/inscricoes/times`, {
+            const responseInscricoes = await fetch(`${API_URL}/inscricoes/times`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -3087,7 +3087,7 @@ async function carregarCampeonatosNoModal() {
             }
 
             // Buscar todos os campeonatos
-            const responseCampeonatos = await fetch(`${apiUrl}/inscricoes/campeonato`, {
+            const responseCampeonatos = await fetch(`${API_URL}/inscricoes/campeonato`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -3892,8 +3892,8 @@ async function verificarPermissoesChaveamento() {
         } else {
             // Buscar diretamente da API
             try {
-                const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
-                const response = await fetch(`${apiUrl}/dashboard`, {
+                //const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
+                const response = await fetch(`${API_URL}/dashboard`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' }
@@ -3937,8 +3937,8 @@ async function verificarPermissoesChaveamento() {
         // Tentar 2: Buscar diretamente da API se não encontrou
         if (!campeonato) {
             try {
-                const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
-                const response = await fetch(`${apiUrl}/inscricoes/campeonato`, {
+                //const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
+                const response = await fetch(`${API_URL}/inscricoes/campeonato`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include'
@@ -4085,7 +4085,7 @@ window.addEventListener('load', () => {
 
         try {
             const apiUrl = window.API_URL || API_URL_DEFAULT;
-            const response = await fetch(`${apiUrl}/times/list`, {
+            const response = await fetch(`${API_URL}/times/list`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -4127,7 +4127,7 @@ window.addEventListener('load', () => {
             const apiUrl = window.API_URL || API_URL_DEFAULT;
 
             // Buscar chaveamento do campeonato
-            const response = await fetch(`${apiUrl}/chaveamentos/${campeonatoId}`, {
+            const response = await fetch(`${API_URL}/chaveamentos/${campeonatoId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -4269,7 +4269,7 @@ window.addEventListener('load', () => {
 
             try {
                 // Buscar IDs dos times inscritos
-                const response = await fetch(`${apiUrl}/inscricoes/times`, {
+                const response = await fetch(`${API_URL}/inscricoes/times`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include'
@@ -4303,7 +4303,7 @@ window.addEventListener('load', () => {
                 // Buscar informações de cada time
                 const promises = times_inscritos.map(async (timeId) => {
                     try {
-                        const response = await fetch(`${apiUrl}/times/${timeId}`, {
+                        const response = await fetch(`${API_URL}/times/${timeId}`, {
                             method: 'GET',
                             headers: { 'Content-Type': 'application/json' },
                             credentials: 'include'
@@ -7632,8 +7632,8 @@ window.addEventListener('load', () => {
                 if (chaveamentoIdAtual && campeonatoIdAtual) {
                     try {
                         // Chamar endpoint para resetar chaveamento
-                        const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
-                        const response = await fetch(`${apiUrl}/chaveamentos/${chaveamentoIdAtual}/resetar`, {
+                        //const apiUrl = window.API_URL || 'http://127.0.0.1:3000/api/v1';
+                        const response = await fetch(`${API_URL}/chaveamentos/${chaveamentoIdAtual}/resetar`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             credentials: 'include'
