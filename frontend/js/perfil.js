@@ -73,7 +73,9 @@ async function verificar_auth() {
         document.getElementById("buconfig").style.display = "none";
         if(userId == userId_params){
             document.getElementById("addVideoBtn").style.display = "flex";
-            deleteReel.style.display = "flex";
+            if(deleteReel){
+                deleteReel.style.display = "flex";
+            }
             document.getElementById("buconfig").style.display = "flex";
         }
         
