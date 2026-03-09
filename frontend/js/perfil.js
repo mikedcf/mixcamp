@@ -64,11 +64,16 @@ async function verificar_auth() {
 
         
 
-        document.getElementById("deleteReel").style.display = "none";
+        const deleteReel = document.getElementById("deleteReel")
+
+        if(deleteReel){
+            deleteReel.style.display = "none";
+        }
+
         document.getElementById("buconfig").style.display = "none";
         if(userId == userId_params){
             document.getElementById("addVideoBtn").style.display = "flex";
-            document.getElementById("deleteReel").style.display = "flex";
+            deleteReel.style.display = "flex";
             document.getElementById("buconfig").style.display = "flex";
         }
         
