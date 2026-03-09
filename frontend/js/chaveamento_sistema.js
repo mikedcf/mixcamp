@@ -1531,6 +1531,7 @@ async function atualizarClassificacaoFinalComPartidas(partidas) {
 
 // Função para atualizar o bracket com dados do banco
 async function atualizarBracketComDadosDoBanco(dadosChaveamento) {
+    console.log(dadosChaveamento)
     try {
         // IMPORTANTE: Definir window.dadosChaveamento para uso em outras funções
         window.dadosChaveamento = dadosChaveamento;
@@ -1552,7 +1553,7 @@ async function atualizarBracketComDadosDoBanco(dadosChaveamento) {
                 // Sincronizar os controles de UI com o valor vindo do backend
                 const selectEl = window.teamCountSelect || document.getElementById('teamCountSelect');
                 if (selectEl && String(selectEl.value) !== String(quantidadeTimes)) {
-                    selectEl.value = String(quantidadeTimes);
+                    selectEl.value = String(quantidadeTimes.quantidade_times);
                 }
 
                 // Re-renderizar o bracket usando a quantidade real de times vinda do backend
