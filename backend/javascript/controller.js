@@ -41,6 +41,14 @@ async function setupDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS promocao_pendente_pagamento (
+    external_reference VARCHAR(191) PRIMARY KEY,
+    body_json TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
+
     /*
     =====================================================
     1️⃣ TABELAS BASE (SEM DEPENDÊNCIA)
@@ -949,10 +957,28 @@ async function CreatePreference(req, res) {
         });
 }
 
-// Preferência de pagamento para promoção de campeonatos (planos básico/premium/máximo)
+// Preferência de pagamento para promoção de campeonatos (planos básico/premium/máximo).
+// Guarda os dados em promocao_pendente_pagamento; só insere em promover_eventos quando o webhook receber pagamento aprovado.
 async function CreatePreferencePromocao(req, res) {
+    let conexao;
     try {
-        const { plano, title, unit_price } = req.body;
+        const {
+            plano,
+            title,
+            unit_price,
+            evento_id,
+            titulo,
+            data_inicio,
+            premiacao,
+            valor_inscricao,
+            qnt_times,
+            chave,
+            game,
+            plataforma,
+            banner_img,
+            banner_local,
+            plano_assinado
+        } = req.body;
 
         const planoId = (plano || '').toLowerCase();
         const itemPrice = parseFloat(unit_price) || 0;
@@ -963,10 +989,36 @@ async function CreatePreferencePromocao(req, res) {
         if (!planoId || !['basico', 'premium', 'maximo'].includes(planoId)) {
             return res.status(400).json({ error: 'Plano inválido. Use basico, premium ou maximo.' });
         }
-
         if (itemPrice <= 0) {
             return res.status(400).json({ error: 'Preço inválido para criar preferência.' });
         }
+        if (!evento_id) {
+            return res.status(400).json({ error: 'evento_id é obrigatório para promoção.' });
+        }
+
+        const externalRef = `PROMO_${evento_id}_${Date.now()}`;
+        const bodyParaBanco = {
+            evento_id,
+            titulo: titulo || '',
+            data_inicio: data_inicio || null,
+            premiacao: premiacao != null ? Number(premiacao) : 0,
+            valor_inscricao: valor_inscricao != null ? Number(valor_inscricao) : 0,
+            qnt_times: qnt_times != null ? Number(qnt_times) : 0,
+            chave: chave || '',
+            game: game || 'CS2',
+            plataforma: plataforma || 'FACEIT',
+            banner_img: banner_img || null,
+            banner_local: banner_local || 'campeonato',
+            plano_assinado: plano_assinado || planoId
+        };
+
+        conexao = await conectar();
+        await conexao.execute(
+            'INSERT INTO promocao_pendente_pagamento (external_reference, body_json) VALUES (?, ?)',
+            [externalRef, JSON.stringify(bodyParaBanco)]
+        );
+        await desconectar(conexao);
+        conexao = null;
 
         const preferenceBody = {
             items: [
@@ -976,9 +1028,8 @@ async function CreatePreferencePromocao(req, res) {
                     unit_price: itemPrice,
                     currency_id: 'BRL'
                 }
-            ]
-            // Para o fluxo de promoção não vinculamos back_urls nem notification_url por enquanto;
-            // o objetivo atual é apenas testar o fluxo de pagamento dos planos.
+            ],
+            external_reference: externalRef
         };
 
         const preference = new Preference(client);
@@ -989,6 +1040,7 @@ async function CreatePreferencePromocao(req, res) {
             preference_url: data.init_point
         });
     } catch (error) {
+        if (conexao) await desconectar(conexao).catch(() => {});
         console.error('❌ Erro ao criar preferência de promoção:', error);
         return res.status(500).json({
             error: 'Erro ao criar preferência de promoção'
@@ -1046,10 +1098,34 @@ async function processarPagamento(paymentId) {
         const payment = new Payment(client);
         const paymentData = await payment.get({ id: paymentId });
 
-        // Extrair cardId e timeId do external_reference
-        const externalRef = paymentData.external_reference || '';
-        const match = externalRef.match(/CAMP_(\d+)_TIME_(\d+)_/);
+        const externalRef = (paymentData.external_reference || '').trim();
 
+        // Pagamento de promoção (plano comum): só registra em promover_eventos quando aprovado
+        if (externalRef.startsWith('PROMO_')) {
+            let conexao;
+            try {
+                conexao = await conectar();
+                const [rows] = await conexao.execute(
+                    'SELECT body_json FROM promocao_pendente_pagamento WHERE external_reference = ?',
+                    [externalRef]
+                );
+                if (rows && rows.length > 0 && paymentData.status === 'approved') {
+                    const body = JSON.parse(rows[0].body_json);
+                    await registrarPromocaoAposPagamento(conexao, body);
+                    await conexao.execute('DELETE FROM promocao_pendente_pagamento WHERE external_reference = ?', [externalRef]);
+                    return { success: true, tipo: 'promocao', evento_id: body.evento_id };
+                }
+                if (rows && rows.length > 0 && (paymentData.status === 'rejected' || paymentData.status === 'cancelled')) {
+                    await conexao.execute('DELETE FROM promocao_pendente_pagamento WHERE external_reference = ?', [externalRef]);
+                }
+            } finally {
+                if (conexao) await desconectar(conexao);
+            }
+            return { success: paymentData.status === 'approved', tipo: 'promocao', status: paymentData.status };
+        }
+
+        // Inscrição em campeonato (CAMP_xxx_TIME_xxx)
+        const match = externalRef.match(/CAMP_(\d+)_TIME_(\d+)_/);
         if (!match) {
             console.error('❌ External reference inválido:', externalRef);
             return { success: false, error: 'External reference inválido' };
@@ -1058,9 +1134,7 @@ async function processarPagamento(paymentId) {
         const cardId = match[1];
         const timeId = match[2];
 
-        // Verificar se o pagamento foi aprovado
         if (paymentData.status === 'approved') {
-            // Registrar a inscrição do time no campeonato
             const result = await registrarInscricaoAposPagamento(cardId, timeId, paymentId);
             return { success: true, cardId, timeId, paymentId };
         } else if (paymentData.status === 'rejected' || paymentData.status === 'cancelled') {
@@ -1071,11 +1145,9 @@ async function processarPagamento(paymentId) {
 
         return { success: false, status: paymentData.status };
     } catch (error) {
-        // Tratar erro específico de pagamento não encontrado
         if (error.status === 404 || error.error === 'not_found') {
             return { success: false, error: 'Payment not found', isTest: true };
         }
-
         console.error('❌ Erro ao processar pagamento:', error);
         return { success: false, error: error.message || 'Erro desconhecido' };
     }
@@ -1268,6 +1340,10 @@ async function retornoPagamentoPending(req, res) {
 async function buscarStatusplayer(req, res) {
     const faceitid = req.body.faceitid;
 
+    if (!faceitid) {
+        return res.status(400).json({ message: 'faceitid é obrigatório' });
+    }
+
     const url = `https://open.faceit.com/data/v4/players/${faceitid}/stats/cs2`;
 
     try {
@@ -1280,13 +1356,22 @@ async function buscarStatusplayer(req, res) {
         return res.status(200).json(response.data);
     } catch (error) {
         if (error.response) {
-            console.error("Erro FACEIT:", error.response.status, error.response.data);
-        } else {
-            console.error("Erro de requisição:", error.message);
+            const status = error.response.status;
+            const data = error.response.data;
+            const msg = (data && data.errors && data.errors[0] && data.errors[0].message) 
+                ? data.errors[0].message 
+                : `FACEIT retornou erro ${status}`;
+            console.error("Erro FACEIT stats:", status, msg);
+            return res.status(502).json({ 
+                message: 'Não foi possível obter as estatísticas CS2 da FACEIT. Tente novamente mais tarde.',
+                faceit_status: status 
+            });
         }
-        throw error;
+        console.error("Erro de requisição FACEIT:", error.message);
+        return res.status(503).json({ 
+            message: 'Serviço FACEIT temporariamente indisponível. Tente novamente mais tarde.' 
+        });
     }
-
 }
 
 async function buscarDadosFaceitPlayer(req, res) {
@@ -10241,106 +10326,87 @@ async function getpromoverbanner(req, res){
 // - banner_img vindo de inscricoes_campeonato.imagem_url (se não informado);
 // - data_encerramento = data atual + 7 dias;
 // - status_promover_evento padrão "disponivel" (definido no schema).
+// registrarPromocaoAposPagamento: lógica interna reutilizada pelo POST e pelo webhook (após pagamento aprovado).
+async function registrarPromocaoAposPagamento(conexao, body) {
+    const {
+        evento_id,
+        titulo,
+        data_inicio,
+        premiacao,
+        valor_inscricao,
+        qnt_times,
+        chave,
+        game,
+        plataforma,
+        banner_img: bannerImgBody,
+        banner_local,
+        plano_assinado
+    } = body;
+
+    if (!evento_id) throw new Error('evento_id é obrigatório.');
+    let finalBannerImg = bannerImgBody || null;
+    if (!finalBannerImg) {
+        const [rows] = await conexao.execute(
+            'SELECT imagem_url FROM inscricoes_campeonato WHERE id = ?',
+            [evento_id]
+        );
+        if (rows && rows.length > 0) finalBannerImg = rows[0].imagem_url || null;
+    }
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const formatDateTimeMySQL = (date) => {
+        const d = new Date(date);
+        if (Number.isNaN(d.getTime())) return null;
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
+    const now = new Date();
+    const enc = new Date(now);
+    enc.setDate(enc.getDate() + 7);
+    const data_encerramento = formatDateTimeMySQL(enc);
+
+    let finalDataInicio = null;
+    if (data_inicio) finalDataInicio = formatDateTimeMySQL(data_inicio);
+    if (!finalDataInicio) {
+        const [rowsDataInicio] = await conexao.execute(
+            'SELECT previsao_data_inicio FROM inscricoes_campeonato WHERE id = ?',
+            [evento_id]
+        );
+        if (rowsDataInicio && rowsDataInicio.length > 0 && rowsDataInicio[0].previsao_data_inicio)
+            finalDataInicio = rowsDataInicio[0].previsao_data_inicio;
+        else
+            finalDataInicio = formatDateTimeMySQL(now);
+    }
+
+    await conexao.execute(
+        'INSERT INTO promover_eventos (evento_id, titulo, data_inicio, premiacao, valor_inscricao, qnt_times, chave, game, plataforma, banner_img, banner_local, plano_assinado, data_encerramento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+            evento_id, titulo, finalDataInicio, premiacao, valor_inscricao, qnt_times, chave, game, plataforma,
+            finalBannerImg || '', banner_local, plano_assinado, data_encerramento
+        ]
+    );
+
+    const [rowsOrg] = await conexao.execute(
+        'SELECT id_organizador FROM inscricoes_campeonato WHERE id = ?',
+        [evento_id]
+    );
+    if (rowsOrg && rowsOrg.length > 0) {
+        const userId = rowsOrg[0].id_organizador;
+        const [y, m, d] = data_encerramento.split(' ')[0].split('-');
+        const dataExibicao = `${d}/${m}/${y}`;
+        const msg = `Foi aprovado e o evento já foi promovido com sucesso até dia ${dataExibicao}.`;
+        await conexao.execute('INSERT INTO notificacoes (user_id, texto) VALUES (?, ?)', [userId, msg]);
+    }
+}
+
 async function criarPromoverBanner(req, res){
     let conexao;
     try{
         conexao = await conectar();
-        const {
-            evento_id,
-            titulo,
-            data_inicio,
-            premiacao,
-            valor_inscricao,
-            qnt_times,
-            chave,
-            game,
-            plataforma,
-            banner_img: bannerImgBody,
-            banner_local,
-            plano_assinado
-        } = req.body;
-
-        if (!evento_id) {
+        if (!req.body || !req.body.evento_id) {
             return res.status(400).json({ message: 'evento_id é obrigatório para criar promover banner.' });
         }
-
-        // Buscar banner_img da tabela inscricoes_campeonato se não veio no body
-        let finalBannerImg = bannerImgBody || null;
-        if (!finalBannerImg) {
-            const [rows] = await conexao.execute(
-                'SELECT imagem_url FROM inscricoes_campeonato WHERE id = ?',
-                [evento_id]
-            );
-            if (rows && rows.length > 0) {
-                finalBannerImg = rows[0].imagem_url || null;
-            }
-        }
-
-        // Helper para formatar datas em formato compatível com DATETIME do MySQL
-        const pad = (n) => String(n).padStart(2, '0');
-        const formatDateTimeMySQL = (date) => {
-            const d = new Date(date);
-            if (Number.isNaN(d.getTime())) return null;
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-        };
-
-        // Calcular data_encerramento = hoje + 7 dias
-        const now = new Date();
-        const enc = new Date(now);
-        enc.setDate(enc.getDate() + 7);
-        const data_encerramento = formatDateTimeMySQL(enc);
-
-        // Normalizar data_inicio enviada pelo frontend (ISO, datetime-local, etc.)
-        let finalDataInicio = null;
-        if (data_inicio) {
-            finalDataInicio = formatDateTimeMySQL(data_inicio);
-        }
-        // Se ainda não conseguir, tenta reaproveitar previsao_data_inicio do campeonato
-        if (!finalDataInicio) {
-            const [rowsDataInicio] = await conexao.execute(
-                'SELECT previsao_data_inicio FROM inscricoes_campeonato WHERE id = ?',
-                [evento_id]
-            );
-            if (rowsDataInicio && rowsDataInicio.length > 0 && rowsDataInicio[0].previsao_data_inicio) {
-                finalDataInicio = rowsDataInicio[0].previsao_data_inicio;
-            } else {
-                // Fallback extremo: usa "agora" apenas para não quebrar a inserção
-                finalDataInicio = formatDateTimeMySQL(now);
-            }
-        }
-
-        await conexao.execute(
-            'INSERT INTO promover_eventos (evento_id, titulo, data_inicio, premiacao, valor_inscricao, qnt_times, chave, game, plataforma, banner_img, banner_local, plano_assinado, data_encerramento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [
-                evento_id,
-                titulo,
-                finalDataInicio,
-                premiacao,
-                valor_inscricao,
-                qnt_times,
-                chave,
-                game,
-                plataforma,
-                finalBannerImg,
-                banner_local,
-                plano_assinado,
-                data_encerramento
-            ]
-        );
-
-        // Notificar o organizador: evento promovido com sucesso até data_encerramento
-        const [rowsOrg] = await conexao.execute(
-            'SELECT id_organizador FROM inscricoes_campeonato WHERE id = ?',
-            [evento_id]
-        );
-        if (rowsOrg && rowsOrg.length > 0) {
-            const userId = rowsOrg[0].id_organizador;
-            const [y, m, d] = data_encerramento.split(' ')[0].split('-');
-            const dataExibicao = `${d}/${m}/${y}`;
-            const msg = `Foi aprovado e o evento já foi promovido com sucesso até dia ${dataExibicao}.`;
-            await conexao.execute('INSERT INTO notificacoes (user_id, texto) VALUES (?, ?)', [userId, msg]);
-        }
-
+        await registrarPromocaoAposPagamento(conexao, req.body);
         res.status(201).json({ message: 'Promover banner criado com sucesso!' });
     }
     catch (error) {
@@ -10446,6 +10512,230 @@ cron.schedule('0 1 * * *', () => {
 
 
 // ===============================================================================================
+// ==================================== [API CUPOM] ================================================
+
+// --- GET CUPOM
+async function getcupom(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const [cupons] = await conexao.execute('SELECT * FROM cupons');
+        res.status(200).json({ cupons });
+    }
+    catch(error){
+        console.error('Erro ao buscar cupom:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// --- POST CUPOM
+async function criarcupom(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+
+        let { codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo } = req.body;
+        descricao = descricao ?? null;
+        desconto_percentual = desconto_percentual ?? null;
+        id_item = id_item ?? null;
+        id_trofeu = id_trofeu ?? null;
+        id_medalha = id_medalha ?? null;
+        usos_maximos = usos_maximos ?? 1;
+        usos_restantes = usos_restantes ?? usos_maximos;
+        ativo = ativo ?? true;
+
+        if(!codigo || !tipo || !usos_maximos){
+            return res.status(400).json({ message: 'Confira os campos obrigatórios' });
+        }
+
+        await conexao.execute('INSERT INTO cupons (codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?)', [codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo]);
+        res.status(201).json({ message: 'Cupom criado com sucesso!' });
+        
+    }
+    catch(error){
+        console.error('Erro ao criar cupom:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// --- PUT CUPOM
+async function atualizarcupom(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const { id } = req.params;
+        const { codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo } = req.body;
+        descricao = descricao ?? null;
+        desconto_percentual = desconto_percentual ?? null;
+        id_item = id_item ?? null;
+        id_trofeu = id_trofeu ?? null;
+        id_medalha = id_medalha ?? null;
+        usos_maximos = usos_maximos ?? 1;
+        usos_restantes = usos_restantes ?? usos_maximos;
+        ativo = ativo ?? true;
+        console.log( codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo)
+
+        if(!codigo || !tipo || !usos_maximos){
+            return res.status(400).json({ message: 'Confira os campos obrigatórios' });
+        }
+
+        await conexao.execute('UPDATE cupons SET codigo = ?, tipo = ?, descricao = ?, desconto_percentual = ?, id_item = ?, id_trofeu = ?, id_medalha = ?, usos_maximos = ?, usos_restantes = ?, ativo = ? WHERE id = ?', [codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo, id]);
+        res.status(200).json({ message: 'Cupom atualizado com sucesso!' });
+    }
+    catch(error){
+        console.error('Erro ao atualizar cupom:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// --- DELETE CUPOM
+async function deletarcupom(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const { id } = req.params;
+        await conexao.execute('DELETE FROM cupons WHERE id = ?', [id]);
+        res.status(200).json({ message: 'Cupom deletado com sucesso!' });
+    }
+    catch(error){
+        console.error('Erro ao deletar cupom:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+
+// ------------------------- API CUPOM RESGATADOS
+// --- GET CUPOM RESGATADOS (lista com usuário e cupom para exibição)
+async function getcupomresgatado(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const [cupomresgatados] = await conexao.execute(`
+            SELECT cr.id, cr.usuario_id, cr.cupom_id, cr.data_resgate,
+                   u.username AS usuario_username, u.email AS usuario_email,
+                   c.codigo AS cupom_codigo
+            FROM cupons_resgatados cr
+            LEFT JOIN usuarios u ON cr.usuario_id = u.id
+            LEFT JOIN cupons c ON cr.cupom_id = c.id
+            ORDER BY cr.id DESC
+        `);
+        res.status(200).json({ cupomresgatados });
+    }
+    catch(error){
+        console.error('Erro ao buscar cupom resgatado:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// --- POST CUPOM RESGATADOS
+async function criarcupomresgatado(req,res){
+    const { usuario_id, codigo } = req.body;
+    
+    
+    let conexao;
+    try{
+        conexao = await conectar();
+
+        const [selectCupom] = await conexao.execute('SELECT * FROM cupons WHERE codigo = ?', [codigo]);
+        if(selectCupom.length > 0){
+            if (selectCupom[0].ativo == 1){
+                if(selectCupom[0].usos_restantes > 0){
+                    const cupom_id = selectCupom[0].id;
+
+                    const [userVerificarUsoCupom] = await conexao.execute('SELECT * FROM cupons_resgatados', [usuario_id, cupom_id]);
+                    for (user of userVerificarUsoCupom){
+                        if(user.usuario_id == usuario_id && user.cupom_id == cupom_id){
+                            return res.status(400).json({ message: 'Usuário já resgatou este cupom' });
+                        }
+                    }
+
+                    await conexao.execute('INSERT INTO cupons_resgatados (usuario_id, cupom_id) VALUES (?, ?)', [usuario_id, cupom_id]);
+                    await conexao.execute('UPDATE cupons SET usos_restantes = usos_restantes - 1 WHERE id = ?', [cupom_id]);
+
+                    if(selectCupom[0].codigo.includes("MOR")){
+                        await conexao.execute(`UPDATE usuarios SET organizador = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
+                    }
+                    else if(selectCupom[0].codigo.includes("MCARG")){
+                        await conexao.execute(`UPDATE usuarios SET gerencia = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
+
+                    }
+                    else if(selectCupom[0].codigo.includes("MCONQ")){
+                        
+                        await conexao.execute(`INSERT INTO usuario_medalhas (usuario_id, medalha_id,position_medalha) VALUES(?,?,?)`, [usuario_id, selectCupom[0].id_medalha, selectCupom[0].tipo]);
+
+                    }
+                    // else if(selectCupom[0].codigo == "MITEM"){
+                    //     await conexao.execute(`UPDATE usuarios SET gerencia = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
+
+                    // }
+                    
+
+
+                    return res.status(201).json({ message: 'Cupom resgatado com sucesso!' });
+                }else{
+                    return res.status(400).json({ message: 'Cupom sem usos restantes' });
+                }
+            }else{
+                return res.status(400).json({ message: 'Cupom não está ativo' });
+            }
+
+        }
+        return res.status(400).json({ message: 'Cupom não encontrado' });
+    }
+    catch(error){
+        console.error('Erro ao criar cupom resgatado:', error);
+        if (!res.headersSent) res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// --- PUT CUPOM RESGATADOS
+async function atualizarcupomresgatado(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const { id } = req.params;
+        const { usuario_id, cupom_id } = req.body;
+        await conexao.execute('UPDATE cupons_resgatados SET usuario_id = ?, cupom_id = ? WHERE id = ?', [usuario_id, cupom_id, id]);
+        res.status(200).json({ message: 'Cupom resgatado atualizado com sucesso!' });
+    }
+    catch(error){
+        console.error('Erro ao atualizar cupom resgatado:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// --- DELETE CUPOM RESGATADOS
+async function deletarcupomresgatado(req,res){
+    let conexao;
+    try{
+        conexao = await conectar();
+        const { id } = req.params;
+        await conexao.execute('DELETE FROM cupons_resgatados WHERE id = ?', [id]);
+        res.status(200).json({ message: 'Cupom resgatado deletado com sucesso!' });
+    }
+    catch(error){
+        console.error('Erro ao deletar cupom resgatado:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+}
+// ===============================================================================================
 
 module.exports = {
     getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar,
@@ -10456,5 +10746,6 @@ module.exports = {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference, CreatePreferencePromocao,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
+    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado
 };

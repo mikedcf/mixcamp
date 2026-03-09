@@ -602,6 +602,7 @@ main {
     gap: 0.75rem;
     position: relative;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .promover-pacote-card .pacote-radio {

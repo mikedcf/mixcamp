@@ -44,6 +44,7 @@ async function verificar_auth() {
     if (auth_dados.logado) {
         const userId = auth_dados.usuario.id;
         const perfil_data = await buscarDadosPerfil(userId);
+        const timeId = perfil_data.perfilData.usuario.time_id;
 
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
@@ -53,19 +54,34 @@ async function verificar_auth() {
         params = new URLSearchParams(window.location.search);
         const userId_params = params.get('id');
 
+        if (timeId == null || timeId == '') {
+            document.getElementById("teamTagContainer").style.display = "none";
+        }
+        else {
+            document.getElementById("teamTagContainer").style.display = "flex";
+            document.getElementById("teamTagName").textContent = perfil_data.perfilData.time.tag;
+        }
+
+        
+
+        document.getElementById("deleteReel").style.display = "none";
+        document.getElementById("buconfig").style.display = "none";
         if(userId == userId_params){
             document.getElementById("addVideoBtn").style.display = "flex";
+            document.getElementById("deleteReel").style.display = "flex";
+            document.getElementById("buconfig").style.display = "flex";
         }
         
+        document.getElementById("followBtnBanner").style.display = "none";
 
         document.getElementById('userAuth').classList.add('hidden');
         document.getElementById('userPerfil').classList.remove('hidden');
-        document.getElementById("followBtnBanner").style.display = "none";
         document.getElementById("perfilnome").textContent = auth_dados.usuario.nome;
         if (perfil_data && perfil_data.perfilData && perfil_data.perfilData.usuario) {
             document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
             
         }
+        
         // Validar se time existe antes de definir o href
         menuTimeLink.href = `team.html?id=${perfil_data.perfilData.usuario.time_id}`;
         if (menuPerfilLink) {
@@ -552,7 +568,6 @@ async function atualizarDadosPerfil() {
     const steam_link = redeSocialData ? (redeSocialData.steam_url || '') : '';
 
     if(faceit_link == null || faceit_link == undefined || faceit_link == '' || steam_link == null || steam_link == undefined || steam_link == ''){
-        console.log('nada')
         if (faceit_link) {
             
             atualizarLevelFaceit(faceit_link);
@@ -902,7 +917,7 @@ async function inserirReels(reels, idUsuarioDoPerfil){
         reelItem.className = 'reel-item';
         const videoUrl = (reel && reel.video_url) ? reel.video_url : reel;
         reelItem.innerHTML = `
-            <button type="button" class="reel-delete-btn" title="Deletar vídeo" aria-label="Deletar vídeo">
+            <button type="button" class="reel-delete-btn" title="Deletar vídeo" id="deleteReel" aria-label="Deletar vídeo">
                 <i class="fas fa-trash"></i>
             </button>
             <div class="reel-thumb">
@@ -1423,13 +1438,38 @@ function presentearPerfil() {
     abrirModalPresente();
 }
 
+
+async function aplicarCupom(userId,codigo) {
+    try{
+
+        const response = await fetch(`${API_URL}/cupom/resgatados/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id: userId, codigo: codigo })
+        });
+        const data = await response.json();
+        if(response.ok){
+            showNotification('success', data.message);
+        }else{
+            showNotification('error', data.message);
+        }
+    }catch(error){
+        showNotification('error', 'Erro ao aplicar cupom.');
+    }
+    
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('giftSubmitBtn');
     const input = document.getElementById('giftCouponInput');
 
+    params = new URLSearchParams(window.location.search);
+    const userId= params.get('id');
+
     if (submitBtn && input) {
         submitBtn.addEventListener('click', () => {
             const codigo = input.value.trim();
+            
 
             if (!codigo) {
                 showNotification('alert', 'Digite um cupom para presentear.');
@@ -1437,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            showNotification('success', 'Em breve validaremos seu cupom.');
+            aplicarCupom(userId,codigo);
             fecharModalPresente();
         });
     }
@@ -2543,26 +2583,39 @@ async function criarCardEvento(evento) {
             : '../img/banner.png';
 
     let color = '';
+    let chaveamentobtn = '';
     
 
 
-    if (statusTexto == 'disponivel'){
-        color = 'background-color: rgba(40, 167, 69, 0.42);';
-
-    }
-    else if (statusTexto == 'em breve'){
+    if (statusTexto == 'em breve'){
         color = 'background-color: rgba(3, 115, 252, 0.42);';
+        chaveamentobtn = 'none';
+        
         
  
     }
-    else if (statusTexto == 'encerrado'){
-        color = 'background-color: rgba(252, 3, 69, 0.42);';   
-
-    }
-    else if (statusTexto == 'finalizado'){
-        color = 'background-color: rgba(252, 3, 3, 0.42);';
+    else if (statusTexto == 'disponivel'){
+        color = 'background-color: rgba(40, 167, 69, 0.42);';
+        chaveamentobtn = 'none';
         
     }
+
+    else if (statusTexto == 'andamento'){
+        color = 'background-color: rgba(92, 36, 4, 0.97);';
+        chaveamentobtn = 'flex';
+        
+    }
+    else if (statusTexto == 'encerrado'){
+        color = 'background-color: rgba(252, 3, 69, 0.42);';  
+        chaveamentobtn = 'flex'; 
+
+    }
+    else if (statusTexto == 'cancelado'){
+        color = 'background-color: rgba(252, 3, 3, 0.42);';
+        chaveamentobtn = 'none';
+        
+    }
+    console.log(statusTexto)
     
 
     // Garantir que bannerUrl não seja undefined ou string 'undefined'
@@ -2650,7 +2703,7 @@ async function criarCardEvento(evento) {
                     <i class="fas fa-eye"></i>
                     <span>Ir para Evento</span>
                 </a>
-                <a href="chaveamento.html?id=${evento.id}" class="event-btn event-btn-chaveamento">
+                <a href="chaveamento.html?id=${evento.id}" class="event-btn event-btn-chaveamento" id="chaveamentoBtn" style="display: ${chaveamentobtn};">
                     <i class="fas fa-sitemap"></i>
                     <span>Chaveamento</span>
                 </a>` : '<span class="event-btn event-btn-disabled">ID do evento não disponível</span>'}
@@ -2662,6 +2715,7 @@ async function criarCardEvento(evento) {
     if (statusTexto == 'disponivel'){
         color = 'background-color: rgba(40, 167, 69, 0.42);';
         
+        
         card.addEventListener('mouseenter', () => {
             card.style.boxShadow = '0 15px 40px rgba(40, 167, 70, 0.93)';
         });
@@ -2672,6 +2726,7 @@ async function criarCardEvento(evento) {
     }
     else if (statusTexto == 'em breve'){
         color = 'background-color: rgba(3, 115, 252, 0.42);';
+        
         
         card.addEventListener('mouseenter', () => {
             card.style.boxShadow = '0 15px 40px rgba(3, 115, 252, 0.42)';

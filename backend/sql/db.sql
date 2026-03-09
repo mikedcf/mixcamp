@@ -810,4 +810,59 @@ CREATE TABLE IF NOT EXISTS promover_eventos (
 );
 
 
-ALTER TABLE promover_eventos ADD COLUMN status_promover_evento ENUM('disponivel','encerrado') DEFAULT 'disponivel';
+
+
+-- Pendências de pagamento de promoção (comum): só insere em promover_eventos após pagamento aprovado
+-- external_reference: max 191 chars para caber no limite de índice MySQL (utf8mb4 = 4 bytes/char)
+CREATE TABLE IF NOT EXISTS promocao_pendente_pagamento (
+    external_reference VARCHAR(191) PRIMARY KEY,
+    body_json TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+
+ALTER TABLE usuarios
+MODIFY COLUMN gerencia ENUM('admin','moderador','streammer','apoiador','user') DEFAULT 'user';
+
+
+CREATE TABLE IF NOT EXISTS cupons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    tipo VARCHAR(100) NOT NULL,
+    descricao TEXT NULL,
+    desconto_percentual DECIMAL(5, 2) NULL,
+    id_item INT NULL,
+    id_trofeu INT NULL,
+    id_medalha INT NULL,
+    usos_maximos INT DEFAULT 1,
+    usos_restantes INT DEFAULT 1,
+    data_expiracao DATETIME NULL,
+    ativo BOOLEAN DEFAULT TRUE,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (id_trofeu) REFERENCES trofeus(id) ON DELETE SET NULL,
+    FOREIGN KEY (id_medalha) REFERENCES medalhas(id) ON DELETE SET NULL
+); 
+
+DROP TABLE cupons
+ADD CONSTRAINT fk_cupons_resgatados
+FOREIGN KEY (id) REFERENCES usuarios(id) ON DELETE SET NULL;
+
+
+
+
+
+
+
+CREATE TABLE cupons_resgatados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    cupom_id INT NOT NULL,
+    data_resgate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (cupom_id) REFERENCES cupons(id) ON DELETE CASCADE
+);

@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="../css/pag_adm.css">
     <link rel="stylesheet" href="../css/ultils.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
@@ -83,6 +86,12 @@
                         <a href="#" class="nav-link">
                             <i class="fas fa-bell"></i>
                             <span>Enviar notificação</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="cupom">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-ticket-alt"></i>
+                            <span>Cupom</span>
                         </a>
                     </li>
                 </ul>
@@ -445,6 +454,65 @@
                     </form>
                 </div>
             </section>
+
+            <!-- Cupom Section -->
+            <section id="cupom" class="content-section">
+                <div class="section-header">
+                    <h2>Gerenciamento de Cupons</h2>
+                    <p>Criar, visualizar, atualizar e excluir cupons</p>
+                    <div class="cupom-etiquetas">
+                        <span class="cupom-etiqueta" title="Organizador"><strong>MOR</strong> → Organizador</span>
+                        <span class="cupom-etiqueta" title="Cargo no site"><strong>MCARG</strong> → Cargo no site</span>
+                        <span class="cupom-etiqueta" title="Ganhar item específico"><strong>MITEM</strong> → Ganhar item específico</span>
+                        <span class="cupom-etiqueta" title="Troféu ou medalha"><strong>MCONQ</strong> → Troféu ou medalha</span>
+                    </div>
+                    <div class="section-actions">
+                        <button type="button" class="btn btn-primary" onclick="abrirModalResgatesCupom()">
+                            <i class="fas fa-list"></i>
+                            Ver resgates
+                        </button>
+                        <button class="btn btn-primary" onclick="abrirModalCupom()">
+                            <i class="fas fa-plus"></i>
+                            Novo Cupom
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar cupons..." id="searchCupons">
+                        </div>
+                        <div class="filter-options">
+                            <select id="filterCuponsPrefix" title="Filtrar por prefixo">
+                                <option value="">Todos</option>
+                                <option value="MOR-">MOR (Organizador)</option>
+                                <option value="MCARG-">MCARG (Cargo)</option>
+                                <option value="MITEM-">MITEM (Item)</option>
+                                <option value="MCONQ-">MCONQ (Conquista)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Código</th>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                                <th>Desconto %</th>
+                                <th>Usos</th>
+                                <th>Ativo</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuponsTableBody">
+                            <!-- Dados dos cupons serão carregados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -670,7 +738,129 @@
         </div>
     </div>
 
-    <!-- Modais serão adicionados aqui quando necessário -->
+    <!-- Modal Cupom -->
+    <div id="modalCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalCupom()">
+        <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalCupom()"><i class="fas fa-times"></i></button>
+            <div class="form-modal-header"><h2><i class="fas fa-ticket-alt"></i> <span id="modalCupomTitulo">Novo Cupom</span></h2></div>
+            <form id="formCupom" class="form-modal-body">
+                <div class="cupom-etiquetas-modal">
+                    <span><strong>MOR</strong> → Organizador</span>
+                    <span><strong>MCARG</strong> → Cargo no site</span>
+                    <span><strong>MITEM</strong> → Item específico</span>
+                    <span><strong>MCONQ</strong> → Troféu ou medalha</span>
+                </div>
+                <div id="cupomCodigoGerarWrap" class="form-row">
+                    <div class="form-group">
+                        <label>Prefixo do código</label>
+                        <select id="cupomPrefixoCodigo">
+                            <option value="MOR-">MOR-</option>
+                            <option value="MCARG-">MCARG-</option>
+                            <option value="MITEM-">MITEM-</option>
+                            <option value="MCONQ-">MCONQ-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Código gerado</label>
+                        <input type="text" id="cupomCodigoGerado" readonly placeholder="Selecione o prefixo e clique em Gerar">
+                    </div>
+                    <div class="form-group" style="align-self: flex-end;">
+                        <button type="button" class="btn btn-primary" onclick="gerarCodigoCupom()"><i class="fas fa-random"></i> Gerar código</button>
+                    </div>
+                </div>
+                <div id="cupomCodigoEditWrap" class="form-group" style="display:none;">
+                    <label>Código</label>
+                    <input type="text" id="cupomCodigoEdit" readonly>
+                </div>
+                <input type="hidden" id="cupomCodigo" name="codigo">
+                <div id="cupomTipoWrap" class="form-group">
+                    <label for="cupomTipo">Tipo *</label>
+                    <select id="cupomTipoSelect" name="tipo" style="display:none;">
+                        <!-- MOR: premium, intermediario, basico, simples -->
+                        <!-- MCARG: ADMIN, STREAMMER, APOIADOR, MODERADOR -->
+                    </select>
+                    <input type="text" id="cupomTipo" name="tipo" placeholder="Ex: desconto, item" style="display:none;">
+                </div>
+                <div class="form-group"><label for="cupomDescricao">Descrição</label><textarea id="cupomDescricao" name="descricao" rows="2"></textarea></div>
+                <div class="form-group"><label for="cupomDesconto">Desconto %</label><input type="number" id="cupomDesconto" name="desconto_percentual" step="0.01" min="0" placeholder="0"></div>
+                <div class="form-group"><label for="cupomIdItem">ID Item</label><input type="number" id="cupomIdItem" name="id_item" placeholder="Opcional"></div>
+                <div class="form-group"><label for="cupomIdTrofeu">ID Troféu</label><input type="number" id="cupomIdTrofeu" name="id_trofeu" placeholder="Opcional"></div>
+                <div class="form-group"><label for="cupomIdMedalha">ID Medalha</label><input type="number" id="cupomIdMedalha" name="id_medalha" placeholder="Opcional"></div>
+                <div class="form-group"><label for="cupomUsosMaximos">Usos máximos *</label><input type="number" id="cupomUsosMaximos" name="usos_maximos" min="1" value="1" required></div>
+                <div class="form-group"><label for="cupomUsosRestantes">Usos restantes</label><input type="number" id="cupomUsosRestantes" name="usos_restantes" min="0" placeholder="Igual a usos máximos"></div>
+                <div class="form-group"><label for="cupomAtivo">Ativo</label><select id="cupomAtivo" name="ativo"><option value="true">Sim</option><option value="false">Não</option></select></div>
+                <div class="form-actions"><button type="button" class="btn btn-cancel" onclick="fecharModalCupom()">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes do Cupom -->
+    <div id="modalDetalheCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalDetalheCupom()">
+        <div class="detalhe-campeonato-content" onclick="event.stopPropagation()">
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalDetalheCupom()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="detalhe-cupom-header">
+                <div class="detalhe-cupom-icon"><i class="fas fa-ticket-alt"></i></div>
+                <div class="detalhe-cupom-header-text">
+                    <h2 id="detalheCupomCodigo"></h2>
+                    <span id="detalheCupomBadge" class="detalhe-badge"></span>
+                    <span id="detalheCupomTipo" class="detalhe-edicao"></span>
+                </div>
+            </div>
+            <div class="detalhe-campeonato-body">
+                <div class="detalhe-grid">
+                    <div class="detalhe-item"><span class="detalhe-label">ID</span><span id="detalheCupomId"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Código</span><span id="detalheCupomCodigoVal"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Tipo</span><span id="detalheCupomTipoVal"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Desconto</span><span id="detalheCupomDesconto"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Usos (restantes / máx.)</span><span id="detalheCupomUsos"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Ativo</span><span id="detalheCupomAtivo"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID Item</span><span id="detalheCupomIdItem"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID Troféu</span><span id="detalheCupomIdTrofeu"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID Medalha</span><span id="detalheCupomIdMedalha"></span></div>
+                </div>
+                <div class="detalhe-block" id="detalheCupomDescricaoBlock">
+                    <h4 class="detalhe-block-title">Descrição</h4>
+                    <p id="detalheCupomDescricao" class="detalhe-block-text"></p>
+                </div>
+                <div class="detalhe-links detalhe-cupom-actions">
+                    <button type="button" class="btn btn-primary" id="btnDetalheCupomEditar"><i class="fas fa-edit"></i> Editar</button>
+                    <button type="button" class="btn btn-excluir" id="btnDetalheCupomExcluir"><i class="fas fa-trash"></i> Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lista de resgates de cupom -->
+    <div id="modalResgatesCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalResgatesCupom()">
+        <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalResgatesCupom()"><i class="fas fa-times"></i></button>
+            <div class="form-modal-header">
+                <h2><i class="fas fa-list"></i> Quem resgatou cupom</h2>
+                <p class="form-modal-subtitle">Lista de resgates de cupons</p>
+            </div>
+            <div class="detalhe-campeonato-body">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th>Cupom</th>
+                                <th>Data resgate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resgatesCupomTableBody">
+                            <!-- preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="modalOverlay" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <!-- Conteúdo dos modais será inserido aqui -->

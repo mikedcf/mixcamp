@@ -5,6 +5,7 @@
 */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap');
 
 /* 
 ============================================================================
@@ -18,7 +19,7 @@
     text-decoration: none;
     list-style: none;
     color: #ffffff;
-    font-family: "Inter", sans-serif;
+    font-family: "Rajdhani", "Inter", sans-serif;
 }
 
 body {
@@ -72,7 +73,7 @@ body {
 }
 
 .logo-section h1 {
-    font-family: "Oswald", sans-serif;
+    font-family: "Orbitron", sans-serif;
     font-size: 1.8rem;
     font-weight: 700;
     background: linear-gradient(45deg, #f56e08, #F66600);
@@ -258,7 +259,7 @@ body {
 }
 
 .section-header h2 {
-    font-family: "Oswald", sans-serif;
+    font-family: "Orbitron", sans-serif;
     font-size: 2rem;
     font-weight: 700;
     background: linear-gradient(45deg, #f56e08, #F66600);
@@ -579,10 +580,121 @@ body {
 .detalhe-badge.statusandamento { background: #b45309; color: #fde047; }
 .detalhe-badge.statusencerrado { background: #374151; color: #d1d5db; }
 .detalhe-badge.statuscancelado { background: #7f1d1d; color: #fca5a5; }
+.detalhe-badge.ativo { background: #166534; color: #86efac; }
+.detalhe-badge.inativo { background: #374151; color: #9ca3af; }
 
 .detalhe-edicao {
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.6);
+}
+
+.detalhe-cupom-header {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    align-items: center;
+}
+
+.detalhe-cupom-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245, 110, 8, 0.2);
+    border-radius: 12px;
+    font-size: 2rem;
+    color: #f56e08;
+}
+
+.detalhe-cupom-header-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.detalhe-cupom-header-text h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    letter-spacing: 0.05em;
+    font-family: "Orbitron", sans-serif;
+}
+
+.detalhe-cupom-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.detalhe-cupom-actions .btn-excluir,
+#btnDetalheCupomExcluir {
+    background: #b91c1c;
+    color: #fff;
+    border: 1px solid #991b1b;
+}
+
+.detalhe-cupom-actions .btn-excluir:hover,
+#btnDetalheCupomExcluir:hover {
+    background: #dc2626;
+    border-color: #b91c1c;
+}
+
+/* Usos restantes / máximo: restantes vermelho, máximo verde */
+.cupom-usos-restantes {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.cupom-usos-max {
+    color: #22c55e;
+    font-weight: 600;
+}
+
+/* Etiquetas de prefixo dos cupons */
+.cupom-etiquetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.cupom-etiqueta {
+    padding: 0.25rem 0.5rem;
+    background: rgba(245, 110, 8, 0.15);
+    border-radius: 6px;
+    border: 1px solid rgba(245, 110, 8, 0.3);
+}
+
+.cupom-etiqueta strong {
+    color: #f56e08;
+}
+
+.cupom-etiquetas-modal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cupom-etiquetas-modal span {
+    padding: 0.2rem 0.4rem;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+}
+
+.cupom-etiquetas-modal strong {
+    color: #f56e08;
 }
 
 .detalhe-campeonato-body {
@@ -766,6 +878,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-family: "Orbitron", sans-serif;
 }
 
 .form-modal-subtitle {
@@ -814,6 +927,24 @@ body {
     background: rgba(0, 0, 0, 0.3);
     color: #fff;
     font-size: 0.95rem;
+}
+
+.form-modal-body .form-group select option {
+    background: #0f0f0f;
+    color: #ffffff;
+}
+
+#cupomTipoSelect,
+#cupomPrefixoCodigo,
+#cupomAtivo {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+#cupomTipoSelect option,
+#cupomPrefixoCodigo option,
+#cupomAtivo option {
+    background: #0f0f0f;
+    color: #ffffff;
 }
 
 .form-modal-body .form-group textarea {

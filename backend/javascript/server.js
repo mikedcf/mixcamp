@@ -18,7 +18,7 @@ const {
     criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout,
     getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,
     getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner,
-    CreatePreferencePromocao
+    CreatePreferencePromocao, getcupom, criarcupom, atualizarcupom, deletarcupom, getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado
 } = require('./controller');
 require('dotenv').config();
 
@@ -45,34 +45,34 @@ app.use(cors({
 
 //  ative para produção
 
-app.set('trust proxy', 1);
+// app.set('trust proxy', 1);
 
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", 
-        sameSite: 'none'
-    }
-}));
+// app.use(session({
+//     secret: process.env.SESSION_SECRET,
+//     resave: false,
+//     saveUninitialized: false,
+//     proxy: true,
+//     cookie: {
+//         maxAge: 1000 * 60 * 60 * 24,
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production", 
+//         sameSite: 'none'
+//     }
+// }));
 
 
 // LOCALHOST - descomente esta parte
-// app.use(session({
-//     secret: process.env.SESSION_SECRET, // troque por algo aleatório e seguro
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//         maxAge: 1000 * 60 * 60 * 24, // 1 dia
-//         httpOnly: true, // impede acesso via JS do cliente
-//         secure: false, 
-//         sameSite: 'lax'
-//     }
-// }))
+app.use(session({
+    secret: process.env.SESSION_SECRET, // troque por algo aleatório e seguro
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 1 dia
+        httpOnly: true, // impede acesso via JS do cliente
+        secure: false, 
+        sameSite: 'lax'
+    }
+}))
 
 
 // Configuração do multer para upload de arquivos
@@ -460,7 +460,28 @@ app.put(process.env.ROUTE_PROMOVER_BANNER_ATUALIZAR, atualizarPromoverBanner);
 // ----- PROMOVER BANNER DELETE
 app.delete(process.env.ROUTE_PROMOVER_BANNER_DELETAR, deletarPromoverBanner);
 
+// ===============================================================================================
+// ==================================== [API CUPOM] ================================================
 
+// ----- CUPOM GET
+app.get(process.env.ROUTE_CUPOM, getcupom);
+// ----- CUPOM POST
+app.post(process.env.ROUTE_CUPOM_CRIAR, criarcupom);
+// ----- CUPOM PUT
+app.put(process.env.ROUTE_CUPOM_ATUALIZAR, atualizarcupom);
+// // ----- CUPOM DELETE
+app.delete(process.env.ROUTE_CUPOM_DELETAR, deletarcupom);
+
+// ------------------------- API CUPOM RESGATADOS
+
+// --- GET CUPOM RESGATADOS
+app.get(process.env.ROUTE_CUPOM_RESGATADOS, getcupomresgatado);
+// --- POST CUPOM RESGATADOS
+app.post(process.env.ROUTE_CUPOM_RESGATADOS_CRIAR, criarcupomresgatado);
+// --- PUT CUPOM RESGATADOS
+app.put(process.env.ROUTE_CUPOM_RESGATADOS_ATUALIZAR, atualizarcupomresgatado);
+// --- DELETE CUPOM RESGATADOS
+app.delete(process.env.ROUTE_CUPOM_RESGATADOS_DELETAR, deletarcupomresgatado);
 
 
 

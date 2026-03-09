@@ -10,7 +10,10 @@
 // ===============================================================================================
 
 // URL base da API
-const API_URL = 'http://localhost:3000/api/v1';
+// const API_URL = 'http://localhost:3000/api/v1';
+
+const API_URL = 'http://127.0.0.1:3000/api/v1';
+// const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 
 // Estado global da aplicação
 const appState = {
@@ -25,6 +28,7 @@ const appState = {
         campeonato: []
     },
     campeonatos: [],
+    cupons: [],
     totalUsuarios: 0,
     isLoading: false
 };
@@ -154,6 +158,9 @@ async function loadSectionData(section) {
                 break;
             case 'notificacoes-enviar':
                 await loadNotificacoesEnviar();
+                break;
+            case 'cupom':
+                await loadCupons();
                 break;
             default:
                 console.log(`Seção ${section} não implementada ainda`);
@@ -641,6 +648,8 @@ function setupSearch() {
                 filterNoticias(searchTerm);
             } else if (section === 'campeonatos') {
                 filterCampeonatos(searchTerm);
+            } else if (section === 'cupom') {
+                filterCupons(searchTerm);
             }
         });
     });
@@ -693,6 +702,28 @@ function filterTrofeus(searchTerm) {
     displayTrofeus(filtered);
 }
 
+function filterCupons(searchTerm) {
+    if (!appState.cupons || appState.cupons.length === 0) return;
+    var prefixEl = document.getElementById('filterCuponsPrefix');
+    var prefix = prefixEl ? prefixEl.value : '';
+    var list = appState.cupons;
+    if (prefix) {
+        list = list.filter(function(c) {
+            return (c.codigo || '').indexOf(prefix) === 0;
+        });
+    }
+    if (searchTerm) {
+        searchTerm = searchTerm.toLowerCase();
+        list = list.filter(function(c) {
+            return (c.codigo || '').toLowerCase().includes(searchTerm) ||
+                (c.tipo || '').toLowerCase().includes(searchTerm) ||
+                (c.descricao || '').toLowerCase().includes(searchTerm) ||
+                (c.id && c.id.toString().includes(searchTerm));
+        });
+    }
+    displayCupons(list);
+}
+
 function filterNoticias(searchTerm) {
     const tbody = document.getElementById('noticiasTableBody');
     if (!tbody) return;
@@ -717,6 +748,15 @@ function setupFilters() {
         filterUsuarios.addEventListener('change', function() {
             const gerencia = this.value;
             filterUsuariosByGerencia(gerencia);
+        });
+    }
+    // Filtro por prefixo de cupons (MOR, MCARG, etc.)
+    var filterCuponsPrefix = document.getElementById('filterCuponsPrefix');
+    if (filterCuponsPrefix) {
+        filterCuponsPrefix.addEventListener('change', function() {
+            var searchInput = document.getElementById('searchCupons');
+            var term = searchInput ? searchInput.value.trim() : '';
+            filterCupons(term);
         });
     }
 }
@@ -1075,6 +1115,12 @@ async function excluirNoticia(id, tipoLista) {
     if (formTrofeu) formTrofeu.addEventListener('submit', salvarNovoTrofeu);
     const formNoticia = document.getElementById('formNovaNoticia');
     if (formNoticia) { formNoticia.addEventListener('submit', salvarNovaNoticia); }
+    const formCupom = document.getElementById('formCupom');
+    if (formCupom) formCupom.addEventListener('submit', salvarCupom);
+    var cupomPrefixo = document.getElementById('cupomPrefixoCodigo');
+    if (cupomPrefixo) cupomPrefixo.addEventListener('change', function() {
+        toggleCupomTipoCampo(this.value);
+    });
     const noticiaTipo = document.getElementById('noticiaTipo');
     if (noticiaTipo) noticiaTipo.addEventListener('change', toggleNoticiaCampos);
 })();
@@ -1410,6 +1456,416 @@ async function excluirTrofeu(id) {
     } catch (err) {
         console.error(err);
         showNotification('Erro ao excluir troféu.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// ===============================================================================================
+// ==================================== [CUPONS] =================================================
+// ===============================================================================================
+
+async function loadCupons() {
+    try {
+        console.log('🎫 Carregando cupons...');
+        showLoading();
+
+        const response = await fetch(`${API_URL}/cupom`, { credentials: 'include' });
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+
+        const data = await response.json();
+        const cupons = Array.isArray(data.cupons) ? data.cupons : [];
+
+        appState.cupons = cupons;
+        displayCupons(cupons);
+
+        // Reaplicar filtro de prefixo/busca se estiver ativo
+        var searchInput = document.getElementById('searchCupons');
+        var term = searchInput ? searchInput.value.trim() : '';
+        if (term || (document.getElementById('filterCuponsPrefix') && document.getElementById('filterCuponsPrefix').value)) {
+            filterCupons(term);
+        }
+
+        console.log(`✅ ${cupons.length} cupons carregados`);
+    } catch (error) {
+        console.error('❌ Erro ao carregar cupons:', error);
+        showNotification('Erro ao carregar cupons', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayCupons(cupons) {
+    const tbody = document.getElementById('cuponsTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (!cupons || cupons.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-ticket-alt" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    Nenhum cupom encontrado
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    cupons.forEach(c => {
+        const tr = document.createElement('tr');
+        const ativo = c.ativo ? 'Sim' : 'Não';
+        const restantes = c.usos_restantes != null ? c.usos_restantes : '-';
+        const maximos = c.usos_maximos != null ? c.usos_maximos : '-';
+        const usosHtml = `<span class="cupom-usos-restantes">${restantes}</span> / <span class="cupom-usos-max">${maximos}</span>`;
+
+        tr.innerHTML = `
+            <td>${c.id || '-'}</td>
+            <td><strong><a href="#" class="link-cupom-codigo" onclick="event.preventDefault(); abrirModalDetalheCupom(${c.id})">${(c.codigo || '-')}</a></strong></td>
+            <td>${c.tipo || '-'}</td>
+            <td>${truncateText(c.descricao || '', 40)}</td>
+            <td>${c.desconto_percentual != null ? c.desconto_percentual + '%' : '-'}</td>
+            <td class="cupom-usos-cell">${usosHtml}</td>
+            <td>${ativo}</td>
+            <td style="text-align:center;">
+                <button class="btn btn-small btn-view" title="Ver detalhes" onclick="abrirModalDetalheCupom(${c.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-small btn-edit" title="Editar" onclick="editarCupom(${c.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-small btn-delete" title="Excluir" onclick="excluirCupom(${c.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Opções de tipo por prefixo de cupom
+const CUPOM_OPCOES_MOR = ['premium', 'intermediario', 'basico', 'simples'];
+const CUPOM_OPCOES_MCARG = ['ADMIN', 'STREAMMER', 'APOIADOR', 'MODERADOR'];
+
+function getPrefixoCupom(codigo) {
+    if (!codigo || typeof codigo !== 'string') return '';
+    if (codigo.startsWith('MOR-')) return 'MOR-';
+    if (codigo.startsWith('MCARG-')) return 'MCARG-';
+    if (codigo.startsWith('MITEM-')) return 'MITEM-';
+    if (codigo.startsWith('MCONQ-')) return 'MCONQ-';
+    return '';
+}
+
+function toggleCupomTipoCampo(prefixo) {
+    var selectEl = document.getElementById('cupomTipoSelect');
+    var inputEl = document.getElementById('cupomTipo');
+    if (!selectEl || !inputEl) return;
+
+    selectEl.innerHTML = '';
+    selectEl.removeAttribute('required');
+    inputEl.removeAttribute('required');
+    selectEl.style.display = 'none';
+    inputEl.style.display = 'none';
+
+    if (prefixo === 'MOR-') {
+        CUPOM_OPCOES_MOR.forEach(function(op) {
+            var opt = document.createElement('option');
+            opt.value = op;
+            opt.textContent = op;
+            selectEl.appendChild(opt);
+        });
+        selectEl.setAttribute('required', 'required');
+        selectEl.style.display = '';
+    } else if (prefixo === 'MCARG-') {
+        CUPOM_OPCOES_MCARG.forEach(function(op) {
+            var opt = document.createElement('option');
+            opt.value = op;
+            opt.textContent = op;
+            selectEl.appendChild(opt);
+        });
+        selectEl.setAttribute('required', 'required');
+        selectEl.style.display = '';
+    } else {
+        inputEl.placeholder = 'Ex: nome do item, conquista';
+        inputEl.setAttribute('required', 'required');
+        inputEl.style.display = '';
+    }
+}
+
+function abrirModalCupom() {
+    const modal = document.getElementById('modalCupom');
+    if (!modal) return;
+    document.getElementById('formCupom').reset();
+    document.getElementById('cupomUsosMaximos').value = 1;
+    document.getElementById('modalCupomTitulo').textContent = 'Novo Cupom';
+    document.getElementById('cupomCodigoGerarWrap').style.display = '';
+    document.getElementById('cupomCodigoEditWrap').style.display = 'none';
+    document.getElementById('cupomCodigoGerado').value = '';
+    document.getElementById('cupomCodigo').value = '';
+    delete modal.dataset.editId;
+    var prefixoSelect = document.getElementById('cupomPrefixoCodigo');
+    if (prefixoSelect) toggleCupomTipoCampo(prefixoSelect.value);
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function fecharModalCupom() {
+    const modal = document.getElementById('modalCupom');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function abrirModalDetalheCupom(id) {
+    const cupom = (appState.cupons || []).find(c => c.id === id);
+    if (!cupom) {
+        showNotification('Cupom não encontrado.', 'error');
+        return;
+    }
+    const modal = document.getElementById('modalDetalheCupom');
+    if (!modal) return;
+
+    const codigo = cupom.codigo || '-';
+    document.getElementById('detalheCupomCodigo').textContent = codigo;
+    document.getElementById('detalheCupomBadge').textContent = cupom.ativo ? 'Ativo' : 'Inativo';
+    document.getElementById('detalheCupomBadge').className = 'detalhe-badge ' + (cupom.ativo ? 'ativo' : 'inativo');
+    document.getElementById('detalheCupomTipo').textContent = cupom.tipo || '-';
+    document.getElementById('detalheCupomId').textContent = cupom.id != null ? cupom.id : '-';
+    document.getElementById('detalheCupomCodigoVal').textContent = codigo;
+    document.getElementById('detalheCupomTipoVal').textContent = cupom.tipo || '-';
+    document.getElementById('detalheCupomDesconto').textContent = cupom.desconto_percentual != null ? cupom.desconto_percentual + '%' : '-';
+    document.getElementById('detalheCupomUsos').innerHTML = '';
+    var restSpan = document.createElement('span');
+    restSpan.className = 'cupom-usos-restantes';
+    restSpan.textContent = cupom.usos_restantes != null ? cupom.usos_restantes : '-';
+    var maxSpan = document.createElement('span');
+    maxSpan.className = 'cupom-usos-max';
+    maxSpan.textContent = cupom.usos_maximos != null ? cupom.usos_maximos : '-';
+    document.getElementById('detalheCupomUsos').appendChild(restSpan);
+    document.getElementById('detalheCupomUsos').appendChild(document.createTextNode(' / '));
+    document.getElementById('detalheCupomUsos').appendChild(maxSpan);
+    document.getElementById('detalheCupomAtivo').textContent = cupom.ativo ? 'Sim' : 'Não';
+    document.getElementById('detalheCupomIdItem').textContent = cupom.id_item != null ? cupom.id_item : '-';
+    document.getElementById('detalheCupomIdTrofeu').textContent = cupom.id_trofeu != null ? cupom.id_trofeu : '-';
+    document.getElementById('detalheCupomIdMedalha').textContent = cupom.id_medalha != null ? cupom.id_medalha : '-';
+    const descEl = document.getElementById('detalheCupomDescricao');
+    const descBlock = document.getElementById('detalheCupomDescricaoBlock');
+    if (cupom.descricao) {
+        descEl.textContent = cupom.descricao;
+        descBlock.style.display = '';
+    } else {
+        descEl.textContent = '-';
+        descBlock.style.display = 'none';
+    }
+
+    const btnEditar = document.getElementById('btnDetalheCupomEditar');
+    const btnExcluir = document.getElementById('btnDetalheCupomExcluir');
+    if (btnEditar) {
+        btnEditar.onclick = function() {
+            fecharModalDetalheCupom();
+            editarCupom(id);
+        };
+    }
+    if (btnExcluir) {
+        btnExcluir.onclick = async function() {
+            fecharModalDetalheCupom();
+            await excluirCupom(id);
+        };
+    }
+
+    modal.dataset.cupomId = id;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function fecharModalDetalheCupom() {
+    const modal = document.getElementById('modalDetalheCupom');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function abrirModalResgatesCupom() {
+    var modal = document.getElementById('modalResgatesCupom');
+    if (!modal) return;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    var tbody = document.getElementById('resgatesCupomTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>';
+    fetch(API_URL + '/cupom/resgatados', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var list = data.cupomresgatados || [];
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">Nenhum resgate encontrado.</td></tr>';
+                return;
+            }
+            list.forEach(function(r) {
+                var tr = document.createElement('tr');
+                var dataStr = r.data_resgate ? new Date(r.data_resgate).toLocaleString('pt-BR') : '-';
+                tr.innerHTML = '<td>' + (r.id || '-') + '</td><td>' + (r.usuario_username || '-') + '</td><td>' + (r.usuario_email || '-') + '</td><td><strong>' + (r.cupom_codigo || '-') + '</strong></td><td>' + dataStr + '</td>';
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(function(err) {
+            console.error(err);
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #ef4444;">Erro ao carregar resgates.</td></tr>';
+            showNotification('Erro ao carregar lista de resgates', 'error');
+        });
+}
+
+function fecharModalResgatesCupom() {
+    var modal = document.getElementById('modalResgatesCupom');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function gerarCodigoCupom() {
+    const prefixo = document.getElementById('cupomPrefixoCodigo').value || 'MOR-';
+    const numeros = Array.from({ length: 5 }, () => Math.floor(Math.random() * 10)).join('');
+    const codigo = prefixo + numeros;
+    document.getElementById('cupomCodigoGerado').value = codigo;
+    document.getElementById('cupomCodigo').value = codigo;
+}
+
+async function salvarCupom(e) {
+    e.preventDefault();
+    const modal = document.getElementById('modalCupom');
+    const editId = modal ? modal.dataset.editId : null;
+    let codigo = document.getElementById('cupomCodigo').value.trim();
+    if (!codigo && !editId) {
+        codigo = document.getElementById('cupomCodigoGerado').value.trim();
+        if (!codigo) {
+            showNotification('Selecione o prefixo e clique em "Gerar código" para gerar o código do cupom.', 'error');
+            return;
+        }
+        document.getElementById('cupomCodigo').value = codigo;
+    }
+    if (!editId && !codigo) {
+        showNotification('Gere o código do cupom antes de salvar.', 'error');
+        return;
+    }
+
+    var tipoElSelect = document.getElementById('cupomTipoSelect');
+    var tipoElInput = document.getElementById('cupomTipo');
+    var tipo = (tipoElSelect && tipoElSelect.style.display !== 'none') ? (tipoElSelect.value || '').trim() : (tipoElInput ? (tipoElInput.value || '').trim() : '');
+    if (!tipo) {
+        showNotification('Preencha o campo Tipo.', 'error');
+        return;
+    }
+
+    const usosMaximos = parseInt(document.getElementById('cupomUsosMaximos').value, 10) || 1;
+    let usosRestantes = document.getElementById('cupomUsosRestantes').value.trim();
+    if (usosRestantes === '') usosRestantes = usosMaximos;
+
+    const dados = {
+        codigo,
+        tipo,
+        descricao: document.getElementById('cupomDescricao').value.trim() || null,
+        desconto_percentual: document.getElementById('cupomDesconto').value.trim() ? parseFloat(document.getElementById('cupomDesconto').value) : null,
+        id_item: document.getElementById('cupomIdItem').value.trim() ? parseInt(document.getElementById('cupomIdItem').value, 10) : null,
+        id_trofeu: document.getElementById('cupomIdTrofeu').value.trim() ? parseInt(document.getElementById('cupomIdTrofeu').value, 10) : null,
+        id_medalha: document.getElementById('cupomIdMedalha').value.trim() ? parseInt(document.getElementById('cupomIdMedalha').value, 10) : null,
+        usos_maximos: usosMaximos,
+        usos_restantes: parseInt(usosRestantes, 10),
+        ativo: document.getElementById('cupomAtivo').value === 'true'
+    };
+
+    showLoading();
+    try {
+        let url = `${API_URL}/cupom/criar`;
+        let method = 'POST';
+        if (editId) {
+            url = `${API_URL}/cupom/atualizar/${editId}`;
+            method = 'PUT';
+        }
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(dados)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || (editId ? 'Cupom atualizado!' : 'Cupom criado!'), 'success');
+            delete modal.dataset.editId;
+            fecharModalCupom();
+            loadCupons();
+        } else {
+            showNotification(json.message || 'Erro ao salvar cupom', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao salvar cupom', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function editarCupom(id) {
+    const cupom = (appState.cupons || []).find(c => c.id === id);
+    if (!cupom) {
+        showNotification('Cupom não encontrado.', 'error');
+        return;
+    }
+    const modal = document.getElementById('modalCupom');
+    if (!modal) return;
+
+    document.getElementById('modalCupomTitulo').textContent = 'Editar Cupom';
+    document.getElementById('cupomCodigoGerarWrap').style.display = 'none';
+    document.getElementById('cupomCodigoEditWrap').style.display = '';
+    document.getElementById('cupomCodigoEdit').value = cupom.codigo || '';
+    document.getElementById('cupomCodigo').value = cupom.codigo || '';
+
+    var prefixo = getPrefixoCupom(cupom.codigo);
+    toggleCupomTipoCampo(prefixo);
+    if (prefixo === 'MOR-' || prefixo === 'MCARG-') {
+        var sel = document.getElementById('cupomTipoSelect');
+        if (sel && cupom.tipo) sel.value = cupom.tipo;
+    } else {
+        document.getElementById('cupomTipo').value = cupom.tipo || '';
+    }
+
+    document.getElementById('cupomDescricao').value = cupom.descricao || '';
+    document.getElementById('cupomDesconto').value = cupom.desconto_percentual != null ? cupom.desconto_percentual : '';
+    document.getElementById('cupomIdItem').value = cupom.id_item != null ? cupom.id_item : '';
+    document.getElementById('cupomIdTrofeu').value = cupom.id_trofeu != null ? cupom.id_trofeu : '';
+    document.getElementById('cupomIdMedalha').value = cupom.id_medalha != null ? cupom.id_medalha : '';
+    document.getElementById('cupomUsosMaximos').value = cupom.usos_maximos != null ? cupom.usos_maximos : 1;
+    document.getElementById('cupomUsosRestantes').value = cupom.usos_restantes != null ? cupom.usos_restantes : '';
+    document.getElementById('cupomAtivo').value = cupom.ativo ? 'true' : 'false';
+
+    modal.dataset.editId = id;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+async function excluirCupom(id) {
+    const confirmou = await showConfirmModal('Tem certeza que deseja excluir este cupom?', 'Confirmar exclusão');
+    if (!confirmou) return;
+    showLoading();
+    try {
+        const res = await fetch(`${API_URL}/cupom/deletar/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showNotification(json.message || 'Cupom excluído com sucesso.', 'success');
+            loadCupons();
+        } else {
+            showNotification(json.message || 'Erro ao excluir cupom.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao excluir cupom.', 'error');
     } finally {
         hideLoading();
     }

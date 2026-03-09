@@ -815,7 +815,8 @@ async function iniciarPagamentoPromocao() {
             return;
         }
 
-        // Campeonato comum: passa pelo fluxo de pagamento (Mercado Pago)
+        // Campeonato comum: passa pelo fluxo de pagamento (Mercado Pago).
+        // Só será registrado em promover_eventos quando o pagamento for aprovado (webhook).
         const priceMap = {
             basico: 0.01,
             premium: 0.02,
@@ -824,10 +825,29 @@ async function iniciarPagamentoPromocao() {
 
         const unitPrice = priceMap[pacote.id] || 0.01;
 
+        const agoraComum = new Date();
+        const dataEncerramentoComum = calcularDataEncerramentoPromocao();
+        let bannerLocalComum = 'campeonato';
+        if (pacote.id === 'premium' || pacote.id === 'maximo') {
+            bannerLocalComum = 'ambos';
+        }
+
         const bodyPagamento = {
             plano: pacote.id,
             title: `Plano ${pacote.nome} - Promoção do campeonato "${campeonato.titulo || campeonato.id}"`,
-            unit_price: unitPrice
+            unit_price: unitPrice,
+            evento_id: campeonato.id,
+            titulo: campeonato.titulo || '',
+            data_inicio: campeonato.previsao_data_inicio || formatDateTimeMySQL(agoraComum),
+            premiacao: campeonato.premiacao || 0,
+            valor_inscricao: campeonato.preco_inscricao || 0,
+            qnt_times: campeonato.qnt_times || 0,
+            chave: campeonato.chave || '',
+            game: campeonato.game || 'CS2',
+            plataforma: campeonato.plataforma || 'FACEIT',
+            banner_img: campeonato.imagem_url || '',
+            banner_local: bannerLocalComum,
+            plano_assinado: pacote.id
         };
 
         showNotification('info', 'Redirecionando para o pagamento do plano selecionado...', 4000);
@@ -848,52 +868,9 @@ async function iniciarPagamentoPromocao() {
             throw new Error('Resposta inválida ao criar preferência de pagamento.');
         }
 
-        // Para campeonatos COMUNS: após criarmos a preferência com sucesso,
-        // também registramos a promoção no banco (como no fluxo oficial).
-        try {
-            const agoraComum = new Date();
-            const dataEncerramentoComum = calcularDataEncerramentoPromocao();
-
-            let bannerLocalComum = 'campeonato';
-            if (pacote.id === 'premium' || pacote.id === 'maximo') {
-                bannerLocalComum = 'ambos';
-            }
-
-            const bodyComum = {
-                evento_id: campeonato.id,
-                titulo: campeonato.titulo || '',
-                data_inicio: campeonato.previsao_data_inicio || formatDateTimeMySQL(agoraComum),
-                premiacao: campeonato.premiacao || 0,
-                valor_inscricao: campeonato.preco_inscricao || 0,
-                qnt_times: campeonato.qnt_times || 0,
-                chave: campeonato.chave || '',
-                game: campeonato.game || 'CS2',
-                plataforma: campeonato.plataforma || 'FACEIT',
-                banner_img: campeonato.imagem_url || '',
-                banner_local: bannerLocalComum,
-                plano_assinado: pacote.id,
-                data_encerramento: dataEncerramentoComum
-            };
-
-            const respComum = await fetch(`${API_URL}/promover/banner/criar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(bodyComum)
-            });
-
-            if (!respComum.ok) {
-                showNotification('error', 'Pagamento criado, mas houve erro ao registrar a promoção no banco.');
-            } else {
-                showNotification('success', 'Plano de promoção registrado com sucesso por 7 dias!');
-            }
-        } catch (erroComum) {
-            // Erro ao registrar promoção no banco; fluxo de pagamento segue normalmente
-        }
-
-        atualizarPromocoesAtivasSidebar();
-        window.open(dataPagamento.preference_url, '_blank');
         fecharModalPromover();
+        window.open(dataPagamento.preference_url, '_blank');
+        showNotification('success', 'Após concluir o pagamento no Mercado Pago, sua promoção será ativada automaticamente em até alguns instantes.');
     } catch (error) {
         showNotification('error', error.message || 'Erro ao processar promoção do campeonato.');
     }
