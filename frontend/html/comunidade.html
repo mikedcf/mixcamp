@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="../css/ultils.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body class="claro">
     <!-- Overlay do menu mobile (abre ao clicar no hamburger) -->
     <div class="mobile-nav-overlay" id="mobileNavOverlay" aria-hidden="true">
@@ -34,11 +36,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -51,7 +53,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -60,32 +62,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
-    
+
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -100,7 +109,7 @@
             <h2 class="section-title">Transferências e Saídas</h2>
         </div>
         <div class="container">
-            
+
             <!-- Seção de Transferências -->
             <div class="transfers-subsection">
                 <h3 class="subsection-title">Últimas Transferências</h3>
@@ -142,145 +151,150 @@
             <div class="main-content">
                 <!-- Menu Lateral -->
                 <div class="sidebar">
-                <div class="search-mode">
-                    <button class="mode-btn active" data-mode="times">
-                        <i class="fas fa-users"></i>
-                        Times
-                    </button>
-                    <button class="mode-btn" data-mode="players">
-                        <i class="fas fa-user"></i>
-                        Players
-                    </button>
-                </div>
-
-                <div class="search-container">
-                    <div class="search-input-wrapper">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Pesquisar...">
-                    </div>
-                </div>
-
-                <!-- Toggle de Visualização -->
-                <div class="view-toggle">
-                    <h4>Visualização</h4>
-                    <div class="view-buttons">
-                        <button class="view-btn active" data-view="cards">
-                            <i class="fas fa-th"></i>
-                            Cards
+                    <div class="search-mode">
+                        <button class="mode-btn active" data-mode="times">
+                            <i class="fas fa-users"></i>
+                            Times
                         </button>
-                        <button class="view-btn" data-view="list">
-                            <i class="fas fa-list"></i>
-                            Lista
-                        </button>
-                        <button class="view-btn" data-view="block">
-                            <i class="fas fa-border-all"></i>
-                            Bloco
+                        <button class="mode-btn" data-mode="players">
+                            <i class="fas fa-user"></i>
+                            Players
                         </button>
                     </div>
-                </div>
 
-                <!-- Filtros para Times -->
-                <div class="filters" id="timesFilters">
-                    <h4>Filtros</h4>
-                    <div class="filter-group">
-                        <label>Quantidade de Membros:</label>
-                        <select id="memberCountFilter">
-                            <option value="">Todos</option>
-                            <option value="1-3">1-3 membros</option>
-                            <option value="4-5">4-5 membros</option>
-                            <option value="6-7">6-7 membros</option>
-                        </select>
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Pesquisar...">
+                        </div>
                     </div>
-                </div>
 
-                <!-- Filtros para Players -->
-                <div class="filters" id="playersFilters" style="display: none;">
-                    <h4>Filtros</h4>
-                    <div class="filter-group">
-                        <label>Posição:</label>
-                        <div class="custom-select" id="positionFilter">
-                            <div class="select-trigger">
-                                <span class="select-value">Todas</span>
-                                <i class="fas fa-chevron-down"></i>
+                    <!-- Toggle de Visualização -->
+                    <div class="view-toggle">
+                        <h4>Visualização</h4>
+                        <div class="view-buttons">
+                            <button class="view-btn active" data-view="cards">
+                                <i class="fas fa-th"></i>
+                                Cards
+                            </button>
+                            <button class="view-btn" data-view="list">
+                                <i class="fas fa-list"></i>
+                                Lista
+                            </button>
+                            <button class="view-btn" data-view="block">
+                                <i class="fas fa-border-all"></i>
+                                Bloco
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros para Times -->
+                    <div class="filters" id="timesFilters">
+                        <h4>Filtros</h4>
+                        <div class="filter-group">
+                            <label>Quantidade de Membros:</label>
+                            <select id="memberCountFilter">
+                                <option value="">Todos</option>
+                                <option value="1-3">1-3 membros</option>
+                                <option value="4-5">4-5 membros</option>
+                                <option value="6-7">6-7 membros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Filtros para Players -->
+                    <div class="filters" id="playersFilters" style="display: none;">
+                        <h4>Filtros</h4>
+                        <div class="filter-group">
+                            <label>Posição:</label>
+                            <div class="custom-select" id="positionFilter">
+                                <div class="select-trigger">
+                                    <span class="select-value">Todas</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="select-options">
+                                    <div class="select-option" data-value="">
+                                        <span>Todas</span>
+                                    </div>
+                                    <div class="select-option" data-value="IGL">
+                                        <img src="https://cdn-icons-png.flaticon.com/128/6466/6466962.png" alt="IGL"
+                                            class="position-icon">
+                                        <span>IGL</span>
+                                    </div>
+                                    <div class="select-option" data-value="AWP">
+                                        <img src="https://img.icons8.com/offices/30/centre-of-gravity.png" alt="AWP"
+                                            class="position-icon">
+                                        <span>AWP</span>
+                                    </div>
+                                    <div class="select-option" data-value="Entry">
+                                        <img src="https://img.icons8.com/external-others-pike-picture/50/external-Centerfire-Rifle-Ammo-shooting-others-pike-picture.png"
+                                            alt="Entry" class="position-icon">
+                                        <span>Entry</span>
+                                    </div>
+                                    <div class="select-option" data-value="Support">
+                                        <img src="https://img.icons8.com/external-flaticons-flat-flat-icons/64/external-smoke-grenade-battle-royale-flaticons-flat-flat-icons.png"
+                                            alt="Support" class="position-icon">
+                                        <span>Support</span>
+                                    </div>
+                                    <div class="select-option" data-value="Coach">
+                                        <img src="https://img.icons8.com/doodle-line/60/headset.png" alt="Coach"
+                                            class="position-icon">
+                                        <span>Coach</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="select-options">
-                                <div class="select-option" data-value="">
-                                    <span>Todas</span>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status:</label>
+                            <div class="custom-select" id="statusFilter">
+                                <div class="select-trigger">
+                                    <span class="select-value">Todos</span>
+                                    <i class="fas fa-chevron-down"></i>
                                 </div>
-                                <div class="select-option" data-value="IGL">
-                                    <img src="https://cdn-icons-png.flaticon.com/128/6466/6466962.png" alt="IGL" class="position-icon">
-                                    <span>IGL</span>
-                                </div>
-                                <div class="select-option" data-value="AWP">
-                                    <img src="https://img.icons8.com/offices/30/centre-of-gravity.png" alt="AWP" class="position-icon">
-                                    <span>AWP</span>
-                                </div>
-                                <div class="select-option" data-value="Entry">
-                                    <img src="https://img.icons8.com/external-others-pike-picture/50/external-Centerfire-Rifle-Ammo-shooting-others-pike-picture.png" alt="Entry" class="position-icon">
-                                    <span>Entry</span>
-                                </div>
-                                <div class="select-option" data-value="Support">
-                                    <img src="https://img.icons8.com/external-flaticons-flat-flat-icons/64/external-smoke-grenade-battle-royale-flaticons-flat-flat-icons.png" alt="Support" class="position-icon">
-                                    <span>Support</span>
-                                </div>
-                                <div class="select-option" data-value="Coach">
-                                    <img src="https://img.icons8.com/doodle-line/60/headset.png" alt="Coach" class="position-icon">
-                                    <span>Coach</span>
+                                <div class="select-options">
+                                    <div class="select-option" data-value="">
+                                        <span>Todos</span>
+                                    </div>
+                                    <div class="select-option" data-value="with-team">
+                                        <i class="fas fa-users"></i>
+                                        <span>Com Time</span>
+                                    </div>
+                                    <div class="select-option" data-value="without-team">
+                                        <i class="fas fa-users"></i>
+                                        <span>Sem Time</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label>Status:</label>
-                        <div class="custom-select" id="statusFilter">
-                            <div class="select-trigger">
-                                <span class="select-value">Todos</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="select-options">
-                                <div class="select-option" data-value="">
-                                    <span>Todos</span>
-                                </div>
-                                <div class="select-option" data-value="with-team">
-                                    <i class="fas fa-users"></i>
-                                    <span>Com Time</span>
-                                </div>
-                                <div class="select-option" data-value="without-team">
-                                    <i class="fas fa-users"></i>
-                                    <span>Sem Time</span>
-                                </div>
-                            </div>
+                </div>
+
+                <!-- Área de Resultados -->
+                <div class="results-area">
+                    <div class="results-header">
+                        <div class="results-info">
+                            <span id="resultsCount">0 resultados</span>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Área de Resultados -->
-            <div class="results-area">
-                <div class="results-header">
-                    <div class="results-info">
-                        <span id="resultsCount">0 resultados</span>
+                    <!-- Resultados -->
+                    <div class="results-container">
+                        <div id="resultsCards" class="results-cards">
+                            <!-- Cards serão inseridos aqui -->
+                        </div>
+                        <div id="resultsList" class="results-list" style="display: none;">
+                            <!-- Lista será inserida aqui -->
+                        </div>
+                        <div id="resultsBlocks" class="results-blocks" style="display: none;">
+                            <!-- Blocos serão inseridos aqui -->
+                        </div>
                     </div>
-                </div>
 
-                <!-- Resultados -->
-                <div class="results-container">
-                    <div id="resultsCards" class="results-cards">
-                        <!-- Cards serão inseridos aqui -->
-                    </div>
-                    <div id="resultsList" class="results-list" style="display: none;">
-                        <!-- Lista será inserida aqui -->
-                    </div>
-                    <div id="resultsBlocks" class="results-blocks" style="display: none;">
-                        <!-- Blocos serão inseridos aqui -->
+                    <!-- Paginação -->
+                    <div class="pagination" id="pagination">
+                        <!-- Botões de paginação serão inseridos aqui -->
                     </div>
                 </div>
-
-                <!-- Paginação -->
-                <div class="pagination" id="pagination">
-                    <!-- Botões de paginação serão inseridos aqui -->
-                </div>
-            </div>
             </div>
         </div>
     </section>
@@ -309,19 +323,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -335,8 +349,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -348,14 +362,14 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
@@ -381,7 +395,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -390,7 +404,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -404,7 +418,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -413,54 +427,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -487,7 +502,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -497,7 +513,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -519,4 +536,5 @@
     <script src="../js/utils.js"></script>
     <script src="../js/comunidade.js"></script>
 </body>
+
 </html>

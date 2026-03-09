@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,11 +37,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -53,7 +54,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -62,32 +63,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
-    
+
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -121,18 +129,32 @@
                         <div class="card detalhes-card">
                             <h2 class="card-title"><i class="fas fa-info-circle"></i> Informações Gerais</h2>
                             <div class="info-grid">
-                                <div class="info-item"><i class="fas fa-user-shield"></i><span><strong>Organizador:</strong> <span id="inscricaoAutor"></span></span></div>
-                                <div class="info-item"><i class="fas fa-calendar"></i><span><strong>Data de Criação:</strong> <span id="inscricaoData"></span></span></div>
-                                <div class="info-item"><i class="fas fa-clock"></i><span><strong>Previsão de Início:</strong> <span id="inscricaoPrevisao"></span></span></div>
-                                <div class="info-item"><i class="fas fa-puzzle-piece"></i><span><strong>Formato:</strong> <span id="inscricaoFormato"></span></span></div>
-                                <div class="info-item"><i class="fas fa-gamepad"></i><span><strong>Jogo:</strong> <span id="inscricaoGame"></span></span></div>
-                                <div class="info-item"><i class="fas fa-trophy"></i><span><strong>Premiação:</strong> <span id="inscricaoPremiacao"></span></span></div>
-                                <div class="info-item"><i class="fas fa-coins"></i><span><strong>Inscrição:</strong> <span id="inscricaoPreco"></span></span></div>
-                                <div class="info-item"><i class="fas fa-hashtag"></i><span><strong>Edição:</strong> <span id="inscricaoEdicao"></span></span></div>
-                                <div class="info-item"><i class="fas fa-signal"></i><span><strong>Nível:</strong> <span id="inscricaoNivel"></span></span></div>
-                                <div class="info-item"><i class="fas fa-server"></i><span><strong>Plataforma:</strong> <span id="inscricaoPlataforma"></span></span></div>
-                                <div class="info-item"><i class="fas fa-broadcast-tower"></i><span><strong>Transmissão ao vivo:</strong> <span id="inscricaoTransmissao"></span></span></div>
-                                <div class="info-item"><i class="fas fa-users"></i><span><strong>Total de Equipes:</strong> <span id="inscricaoQntTimes"></span></span></div>
+                                <div class="info-item"><i
+                                        class="fas fa-user-shield"></i><span><strong>Organizador:</strong> <span
+                                            id="inscricaoAutor"></span></span></div>
+                                <div class="info-item"><i class="fas fa-calendar"></i><span><strong>Data de
+                                            Criação:</strong> <span id="inscricaoData"></span></span></div>
+                                <div class="info-item"><i class="fas fa-clock"></i><span><strong>Previsão de
+                                            Início:</strong> <span id="inscricaoPrevisao"></span></span></div>
+                                <div class="info-item"><i
+                                        class="fas fa-puzzle-piece"></i><span><strong>Formato:</strong> <span
+                                            id="inscricaoFormato"></span></span></div>
+                                <div class="info-item"><i class="fas fa-gamepad"></i><span><strong>Jogo:</strong> <span
+                                            id="inscricaoGame"></span></span></div>
+                                <div class="info-item"><i class="fas fa-trophy"></i><span><strong>Premiação:</strong>
+                                        <span id="inscricaoPremiacao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-coins"></i><span><strong>Inscrição:</strong>
+                                        <span id="inscricaoPreco"></span></span></div>
+                                <div class="info-item"><i class="fas fa-hashtag"></i><span><strong>Edição:</strong>
+                                        <span id="inscricaoEdicao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-signal"></i><span><strong>Nível:</strong> <span
+                                            id="inscricaoNivel"></span></span></div>
+                                <div class="info-item"><i class="fas fa-server"></i><span><strong>Plataforma:</strong>
+                                        <span id="inscricaoPlataforma"></span></span></div>
+                                <div class="info-item"><i class="fas fa-broadcast-tower"></i><span><strong>Transmissão
+                                            ao vivo:</strong> <span id="inscricaoTransmissao"></span></span></div>
+                                <div class="info-item"><i class="fas fa-users"></i><span><strong>Total de
+                                            Equipes:</strong> <span id="inscricaoQntTimes"></span></span></div>
                             </div>
                         </div>
 
@@ -173,8 +195,10 @@
                                 <li><span>Início previsto</span><strong id="resumoPrevisao"></strong></li>
                                 <li><span>Times inscritos</span><strong id="resumoTimesInscritos">0/0</strong></li>
                             </ul>
-                            <button class="btn-primary" id="btnPagamento" onclick="btnPagamento()"><i class="fas fa-credit-card"></i> Prosseguir para pagamento</button>
-                            <small class="nota-pagamento" id="notaPagamento">O botão de pagamento e confirmação serão exibidos após o login.</small>
+                            <button class="btn-primary" id="btnPagamento" onclick="btnPagamento()"><i
+                                    class="fas fa-credit-card"></i> Prosseguir para pagamento</button>
+                            <small class="nota-pagamento" id="notaPagamento">O botão de pagamento e confirmação serão
+                                exibidos após o login.</small>
                         </div>
 
                         <button class="btn-action btn-chaveamento" id="btnChaveamento" onclick="irParaChaveamento()">
@@ -184,7 +208,8 @@
                         <div class="card organizador-card">
                             <h2 class="card-title"><i class="fas fa-user"></i> Organizador</h2>
                             <div class="organizador-info">
-                                <div class="organizador-logo"><img src="../img/mixcamp.png" alt="Organizador" id="organizadorLogo"></div>
+                                <div class="organizador-logo"><img src="../img/mixcamp.png" alt="Organizador"
+                                        id="organizadorLogo"></div>
                                 <div class="organizador-textos">
                                     <div class="organizador-nome" id="organizadorNome">MIXCAMP</div>
                                     <div class="organizador-tipo" id="organizadorTipo">Oficial</div>
@@ -222,19 +247,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -248,8 +273,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -261,14 +286,14 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
@@ -281,7 +306,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -291,7 +317,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -328,8 +355,8 @@
         </div>
     </div>
 
-     <!-- Modal Criar Time Profissional -->
-     <div class="modal" id="modalCriarTime">
+    <!-- Modal Criar Time Profissional -->
+    <div class="modal" id="modalCriarTime">
         <div class="modal-content-profissional">
             <div class="modal-header-profissional">
                 <div class="header-content">
@@ -345,7 +372,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -354,7 +381,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -368,7 +395,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -377,54 +404,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -445,4 +473,5 @@
     <script src="../js/utils.js"></script>
     <script src="../js/inscricao.js"></script>
 </body>
+
 </html>

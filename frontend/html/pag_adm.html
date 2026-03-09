@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <!-- Header -->
     <header class="admin-header">
@@ -21,7 +25,7 @@
             </div>
             <div class="user-info">
                 <div class="user-avatar">
-                    <img src="../img/legalize.png" alt="Admin" class="avatar-img">
+                    <img src="" alt="Admin" class="avatar-img">
                 </div>
                 <div class="user-details">
                     <span class="user-name">Administrador</span>
@@ -106,7 +110,7 @@
                     <h2>Dashboard</h2>
                     <p>Visão geral do sistema MIXCAMP</p>
                 </div>
-                
+
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">
@@ -388,7 +392,8 @@
                         <div class="dashboard-card">
                             <h3>Distribuição por tipo</h3>
                             <p style="font-size: 0.85rem; color: rgba(255,255,255,0.65); margin-bottom: 0.75rem;">
-                                Comparação entre campeonatos <span style="color:#f56e08;">comuns</span> e <span style="color:#a78bfa;">oficiais</span>.
+                                Comparação entre campeonatos <span style="color:#f56e08;">comuns</span> e <span
+                                    style="color:#a78bfa;">oficiais</span>.
                             </p>
                             <canvas id="chartCampTipos"></canvas>
                         </div>
@@ -400,7 +405,8 @@
                             <canvas id="chartCampLucro"></canvas>
                             <div class="camp-lucro-resumo">
                                 <span>Total campeonatos comuns: <strong id="campResumoQtdComum">0</strong></span>
-                                <span>Receita total inscrições comuns: <strong id="campResumoReceitaComum">R$ 0,00</strong></span>
+                                <span>Receita total inscrições comuns: <strong id="campResumoReceitaComum">R$
+                                        0,00</strong></span>
                                 <span>Lucro Mixcamp (8%): <strong id="campResumoLucroComum">R$ 0,00</strong></span>
                             </div>
                         </div>
@@ -444,7 +450,8 @@
                         </div>
                         <div class="form-group">
                             <label for="notifTexto">Mensagem</label>
-                            <textarea id="notifTexto" name="texto" rows="4" placeholder="Digite a mensagem da notificação..." required></textarea>
+                            <textarea id="notifTexto" name="texto" rows="4"
+                                placeholder="Digite a mensagem da notificação..." required></textarea>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">
@@ -463,8 +470,10 @@
                     <div class="cupom-etiquetas">
                         <span class="cupom-etiqueta" title="Organizador"><strong>MOR</strong> → Organizador</span>
                         <span class="cupom-etiqueta" title="Cargo no site"><strong>MCARG</strong> → Cargo no site</span>
-                        <span class="cupom-etiqueta" title="Ganhar item específico"><strong>MITEM</strong> → Ganhar item específico</span>
-                        <span class="cupom-etiqueta" title="Troféu ou medalha"><strong>MCONQ</strong> → Troféu ou medalha</span>
+                        <span class="cupom-etiqueta" title="Ganhar item específico"><strong>MITEM</strong> → Ganhar item
+                            específico</span>
+                        <span class="cupom-etiqueta" title="Troféu ou medalha"><strong>MCONQ</strong> → Troféu ou
+                            medalha</span>
                     </div>
                     <div class="section-actions">
                         <button type="button" class="btn btn-primary" onclick="abrirModalResgatesCupom()">
@@ -517,9 +526,11 @@
     </div>
 
     <!-- Modal Detalhes do Campeonato -->
-    <div id="modalDetalheCampeonato" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalDetalheCampeonato()">
+    <div id="modalDetalheCampeonato" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalDetalheCampeonato()">
         <div class="detalhe-campeonato-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalDetalheCampeonato()">
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalDetalheCampeonato()">
                 <i class="fas fa-times"></i>
             </button>
             <div class="detalhe-campeonato-header">
@@ -532,24 +543,37 @@
             </div>
             <div class="detalhe-campeonato-body">
                 <div class="detalhe-organizador">
-                    <img id="detalheCampeonatoOrganizadorAvatar" src="" alt="Organizador" class="detalhe-organizador-avatar">
+                    <img id="detalheCampeonatoOrganizadorAvatar" src="" alt="Organizador"
+                        class="detalhe-organizador-avatar">
                     <span id="detalheCampeonatoOrganizadorNome"></span>
                 </div>
                 <div class="detalhe-grid">
-                    <div class="detalhe-item"><span class="detalhe-label">Tipo</span><span id="detalheCampeonatoTipo"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Mixcamp</span><span id="detalheCampeonatoMixcamp"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Plataforma</span><span id="detalheCampeonatoPlataforma"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Game</span><span id="detalheCampeonatoGame"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Nível</span><span id="detalheCampeonatoNivel"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Formato</span><span id="detalheCampeonatoFormato"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Vagas (times)</span><span id="detalheCampeonatoVagas"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Preço inscrição</span><span id="detalheCampeonatoPreco"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Premiação</span><span id="detalheCampeonatoPremiacao"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Previsão início</span><span id="detalheCampeonatoDataInicio"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Chave</span><span id="detalheCampeonatoChave"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Tipo</span><span
+                            id="detalheCampeonatoTipo"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Mixcamp</span><span
+                            id="detalheCampeonatoMixcamp"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Plataforma</span><span
+                            id="detalheCampeonatoPlataforma"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Game</span><span
+                            id="detalheCampeonatoGame"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Nível</span><span
+                            id="detalheCampeonatoNivel"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Formato</span><span
+                            id="detalheCampeonatoFormato"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Vagas (times)</span><span
+                            id="detalheCampeonatoVagas"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Preço inscrição</span><span
+                            id="detalheCampeonatoPreco"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Premiação</span><span
+                            id="detalheCampeonatoPremiacao"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Previsão início</span><span
+                            id="detalheCampeonatoDataInicio"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Chave</span><span
+                            id="detalheCampeonatoChave"></span></div>
                 </div>
                 <div class="detalhe-mixcamp-lucro">
-                    <h4 class="detalhe-block-title"><i class="fas fa-percentage"></i> Taxa Mixcamp (8% sobre inscrições)</h4>
+                    <h4 class="detalhe-block-title"><i class="fas fa-percentage"></i> Taxa Mixcamp (8% sobre inscrições)
+                    </h4>
                     <div class="detalhe-lucro-grid">
                         <div class="detalhe-lucro-item">
                             <span class="detalhe-label">Receita total inscrições (se lotado)</span>
@@ -570,73 +594,126 @@
                     <p id="detalheCampeonatoRegras" class="detalhe-block-text"></p>
                 </div>
                 <div class="detalhe-links">
-                    <a id="detalheCampeonatoLinkHub" href="#" target="_blank" rel="noopener" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Hub</a>
-                    <a id="detalheCampeonatoLinkConvite" href="#" target="_blank" rel="noopener" class="btn btn-primary"><i class="fas fa-link"></i> Convite</a>
-                    <a id="detalheCampeonatoLinkWhatsapp" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="display:none;"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                    <a id="detalheCampeonatoLinkHub" href="#" target="_blank" rel="noopener" class="btn btn-primary"><i
+                            class="fas fa-external-link-alt"></i> Hub</a>
+                    <a id="detalheCampeonatoLinkConvite" href="#" target="_blank" rel="noopener"
+                        class="btn btn-primary"><i class="fas fa-link"></i> Convite</a>
+                    <a id="detalheCampeonatoLinkWhatsapp" href="#" target="_blank" rel="noopener"
+                        class="btn btn-primary" style="display:none;"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Nova Medalha -->
-    <div id="modalNovaMedalha" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalNovaMedalha()">
+    <div id="modalNovaMedalha" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalNovaMedalha()">
         <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalNovaMedalha()"><i class="fas fa-times"></i></button>
-            <div class="form-modal-header"><h2><i class="fas fa-medal"></i> Nova Medalha</h2></div>
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalNovaMedalha()"><i class="fas fa-times"></i></button>
+            <div class="form-modal-header">
+                <h2><i class="fas fa-medal"></i> Nova Medalha</h2>
+            </div>
             <form id="formNovaMedalha" class="form-modal-body">
-                <div class="form-group"><label for="medalhaNome">Nome *</label><input type="text" id="medalhaNome" name="nome" required></div>
-                <div class="form-group"><label for="medalhaDescricao">Descrição *</label><textarea id="medalhaDescricao" name="descricao" rows="2" required></textarea></div>
-                <div class="form-group"><label for="medalhaImgCampeao">URL imagem campeão *</label><input type="url" id="medalhaImgCampeao" name="imagem_url_campeao" required placeholder="https://..."></div>
-                <div class="form-group"><label for="medalhaImgSegundo">URL imagem segundo *</label><input type="url" id="medalhaImgSegundo" name="imagem_url_segundo" required placeholder="https://..."></div>
-                <div class="form-group"><label for="medalhaIframeCampeao">URL iframe campeão</label><input type="url" id="medalhaIframeCampeao" name="iframe_url_campeao" placeholder="https://..."></div>
-                <div class="form-group"><label for="medalhaIframeSegundo">URL iframe segundo</label><input type="url" id="medalhaIframeSegundo" name="iframe_url_segundo" placeholder="https://..."></div>
-                <div class="form-group"><label for="medalhaEdicao">Edição campeonato *</label><input type="text" id="medalhaEdicao" name="edicao_campeonato" required></div>
-                <div class="form-actions"><button type="button" class="btn btn-cancel" onclick="fecharModalNovaMedalha()">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Criar</button></div>
+                <div class="form-group"><label for="medalhaNome">Nome *</label><input type="text" id="medalhaNome"
+                        name="nome" required></div>
+                <div class="form-group"><label for="medalhaDescricao">Descrição *</label><textarea id="medalhaDescricao"
+                        name="descricao" rows="2" required></textarea></div>
+                <div class="form-group"><label for="medalhaImgCampeao">URL imagem campeão *</label><input type="url"
+                        id="medalhaImgCampeao" name="imagem_url_campeao" required placeholder="https://..."></div>
+                <div class="form-group"><label for="medalhaImgSegundo">URL imagem segundo *</label><input type="url"
+                        id="medalhaImgSegundo" name="imagem_url_segundo" required placeholder="https://..."></div>
+                <div class="form-group"><label for="medalhaIframeCampeao">URL iframe campeão</label><input type="url"
+                        id="medalhaIframeCampeao" name="iframe_url_campeao" placeholder="https://..."></div>
+                <div class="form-group"><label for="medalhaIframeSegundo">URL iframe segundo</label><input type="url"
+                        id="medalhaIframeSegundo" name="iframe_url_segundo" placeholder="https://..."></div>
+                <div class="form-group"><label for="medalhaEdicao">Edição campeonato *</label><input type="text"
+                        id="medalhaEdicao" name="edicao_campeonato" required></div>
+                <div class="form-actions"><button type="button" class="btn btn-cancel"
+                        onclick="fecharModalNovaMedalha()">Cancelar</button><button type="submit"
+                        class="btn btn-primary"><i class="fas fa-save"></i> Criar</button></div>
             </form>
         </div>
     </div>
 
     <!-- Modal Novo Troféu -->
-    <div id="modalNovoTrofeu" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalNovoTrofeu()">
+    <div id="modalNovoTrofeu" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalNovoTrofeu()">
         <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalNovoTrofeu()"><i class="fas fa-times"></i></button>
-            <div class="form-modal-header"><h2><i class="fas fa-trophy"></i> Novo Troféu</h2></div>
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalNovoTrofeu()"><i class="fas fa-times"></i></button>
+            <div class="form-modal-header">
+                <h2><i class="fas fa-trophy"></i> Novo Troféu</h2>
+            </div>
             <form id="formNovoTrofeu" class="form-modal-body">
-                <div class="form-group"><label for="trofeuNome">Nome *</label><input type="text" id="trofeuNome" name="nome" required></div>
-                <div class="form-group"><label for="trofeuDescricao">Descrição *</label><textarea id="trofeuDescricao" name="descricao" rows="2" required></textarea></div>
-                <div class="form-group"><label for="trofeuImagem">URL imagem *</label><input type="url" id="trofeuImagem" name="imagem_url" required placeholder="https://..."></div>
-                <div class="form-group"><label for="trofeuIframe">URL iframe *</label><input type="url" id="trofeuIframe" name="iframe_url" required placeholder="https://..."></div>
-                <div class="form-group"><label for="trofeuEdicao">Edição campeonato *</label><input type="text" id="trofeuEdicao" name="edicao_campeonato" required></div>
-                <div class="form-group"><label for="trofeuCategoria">Categoria *</label><input type="text" id="trofeuCategoria" name="categoria" required placeholder="Ex: CS2"></div>
-                <div class="form-actions"><button type="button" class="btn btn-cancel" onclick="fecharModalNovoTrofeu()">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Criar</button></div>
+                <div class="form-group"><label for="trofeuNome">Nome *</label><input type="text" id="trofeuNome"
+                        name="nome" required></div>
+                <div class="form-group"><label for="trofeuDescricao">Descrição *</label><textarea id="trofeuDescricao"
+                        name="descricao" rows="2" required></textarea></div>
+                <div class="form-group"><label for="trofeuImagem">URL imagem *</label><input type="url"
+                        id="trofeuImagem" name="imagem_url" required placeholder="https://..."></div>
+                <div class="form-group"><label for="trofeuIframe">URL iframe *</label><input type="url"
+                        id="trofeuIframe" name="iframe_url" required placeholder="https://..."></div>
+                <div class="form-group"><label for="trofeuEdicao">Edição campeonato *</label><input type="text"
+                        id="trofeuEdicao" name="edicao_campeonato" required></div>
+                <div class="form-group"><label for="trofeuCategoria">Categoria *</label><input type="text"
+                        id="trofeuCategoria" name="categoria" required placeholder="Ex: CS2"></div>
+                <div class="form-actions"><button type="button" class="btn btn-cancel"
+                        onclick="fecharModalNovoTrofeu()">Cancelar</button><button type="submit"
+                        class="btn btn-primary"><i class="fas fa-save"></i> Criar</button></div>
             </form>
         </div>
     </div>
 
     <!-- Modal Nova Notícia -->
-    <div id="modalNovaNoticia" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalNovaNoticia()">
+    <div id="modalNovaNoticia" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalNovaNoticia()">
         <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalNovaNoticia()"><i class="fas fa-times"></i></button>
-            <div class="form-modal-header"><h2><i class="fas fa-newspaper"></i> Nova Notícia</h2><p class="form-modal-subtitle">Escolha o tipo e preencha os campos</p></div>
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalNovaNoticia()"><i class="fas fa-times"></i></button>
+            <div class="form-modal-header">
+                <h2><i class="fas fa-newspaper"></i> Nova Notícia</h2>
+                <p class="form-modal-subtitle">Escolha o tipo e preencha os campos</p>
+            </div>
             <form id="formNovaNoticia" class="form-modal-body">
-                <div class="form-group"><label for="noticiaTipo">Tipo *</label><select id="noticiaTipo" name="tipo" required><option value="destaque">Destaque</option><option value="site">Site</option><option value="campeonato">Campeonato</option></select></div>
-                <div class="form-group"><label for="noticiaTitulo">Título *</label><input type="text" id="noticiaTitulo" name="titulo" required></div>
-                <div class="form-group" id="noticiaGroupSubtitulo"><label for="noticiaSubtitulo">Subtítulo</label><input type="text" id="noticiaSubtitulo" name="subtitulo"></div>
-                <div class="form-group"><label for="noticiaTexto">Texto / Conteúdo *</label><textarea id="noticiaTexto" name="texto" rows="4" required></textarea></div>
-                <div class="form-group" id="noticiaGroupCategoria" style="display:none;"><label for="noticiaCategoria">Categoria</label><input type="text" id="noticiaCategoria" name="categoria" placeholder="Ex: atualizacao"></div>
-                <div class="form-group" id="noticiaGroupVersao" style="display:none;"><label for="noticiaVersao">Versão</label><input type="text" id="noticiaVersao" name="versao" placeholder="Ex: 1.0"></div>
-                <div class="form-group" id="noticiaGroupDestaque" style="display:none;"><label for="noticiaDestaque">Destaque</label><input type="text" id="noticiaDestaque" name="destaque" placeholder="Ex: sim"></div>
-                <div class="form-group"><label for="noticiaAutor">Autor *</label><input type="text" id="noticiaAutor" name="autor" required></div>
-                <div class="form-group"><label for="noticiaImagem">URL imagem</label><input type="url" id="noticiaImagem" name="imagem_url" placeholder="https://..."></div>
-                <div class="form-actions"><button type="button" class="btn btn-cancel" onclick="fecharModalNovaNoticia()">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Criar</button></div>
+                <div class="form-group"><label for="noticiaTipo">Tipo *</label><select id="noticiaTipo" name="tipo"
+                        required>
+                        <option value="destaque">Destaque</option>
+                        <option value="site">Site</option>
+                        <option value="campeonato">Campeonato</option>
+                    </select></div>
+                <div class="form-group"><label for="noticiaTitulo">Título *</label><input type="text" id="noticiaTitulo"
+                        name="titulo" required></div>
+                <div class="form-group" id="noticiaGroupSubtitulo"><label for="noticiaSubtitulo">Subtítulo</label><input
+                        type="text" id="noticiaSubtitulo" name="subtitulo"></div>
+                <div class="form-group"><label for="noticiaTexto">Texto / Conteúdo *</label><textarea id="noticiaTexto"
+                        name="texto" rows="4" required></textarea></div>
+                <div class="form-group" id="noticiaGroupCategoria" style="display:none;"><label
+                        for="noticiaCategoria">Categoria</label><input type="text" id="noticiaCategoria"
+                        name="categoria" placeholder="Ex: atualizacao"></div>
+                <div class="form-group" id="noticiaGroupVersao" style="display:none;"><label
+                        for="noticiaVersao">Versão</label><input type="text" id="noticiaVersao" name="versao"
+                        placeholder="Ex: 1.0"></div>
+                <div class="form-group" id="noticiaGroupDestaque" style="display:none;"><label
+                        for="noticiaDestaque">Destaque</label><input type="text" id="noticiaDestaque" name="destaque"
+                        placeholder="Ex: sim"></div>
+                <div class="form-group"><label for="noticiaAutor">Autor *</label><input type="text" id="noticiaAutor"
+                        name="autor" required></div>
+                <div class="form-group"><label for="noticiaImagem">URL imagem</label><input type="url"
+                        id="noticiaImagem" name="imagem_url" placeholder="https://..."></div>
+                <div class="form-actions"><button type="button" class="btn btn-cancel"
+                        onclick="fecharModalNovaNoticia()">Cancelar</button><button type="submit"
+                        class="btn btn-primary"><i class="fas fa-save"></i> Criar</button></div>
             </form>
         </div>
     </div>
 
     <!-- Modal Criar Campeonato (Admin - tipo oficial fixo) -->
-    <div id="modalCriarCampeonatoAdm" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalCriarCampeonatoAdm()">
+    <div id="modalCriarCampeonatoAdm" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalCriarCampeonatoAdm()">
         <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalCriarCampeonatoAdm()">
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalCriarCampeonatoAdm()">
                 <i class="fas fa-times"></i>
             </button>
             <div class="form-modal-header">
@@ -656,16 +733,19 @@
                 </div>
                 <div class="form-group">
                     <label for="admCampDescricao">Descrição *</label>
-                    <textarea id="admCampDescricao" name="descricao" rows="3" required placeholder="Descrição do campeonato"></textarea>
+                    <textarea id="admCampDescricao" name="descricao" rows="3" required
+                        placeholder="Descrição do campeonato"></textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="admCampPreco">Preço inscrição (R$) *</label>
-                        <input type="number" id="admCampPreco" name="preco_inscricao" step="0.01" min="0" required placeholder="0,00">
+                        <input type="number" id="admCampPreco" name="preco_inscricao" step="0.01" min="0" required
+                            placeholder="0,00">
                     </div>
                     <div class="form-group">
                         <label for="admCampPremiacao">Premiação (R$) *</label>
-                        <input type="number" id="admCampPremiacao" name="premiacao" step="0.01" min="0" required placeholder="0,00">
+                        <input type="number" id="admCampPremiacao" name="premiacao" step="0.01" min="0" required
+                            placeholder="0,00">
                     </div>
                     <div class="form-group">
                         <label for="admCampQntTimes">Vagas (times) *</label>
@@ -719,7 +799,8 @@
                     </div>
                     <div class="form-group">
                         <label for="admCampLinkConvite">Link Convite *</label>
-                        <input type="url" id="admCampLinkConvite" name="link_convite" required placeholder="https://...">
+                        <input type="url" id="admCampLinkConvite" name="link_convite" required
+                            placeholder="https://...">
                     </div>
                 </div>
                 <div class="form-group">
@@ -728,10 +809,12 @@
                 </div>
                 <div class="form-group">
                     <label for="admCampRegras">Regras *</label>
-                    <textarea id="admCampRegras" name="regras" rows="4" required placeholder="Regras do campeonato"></textarea>
+                    <textarea id="admCampRegras" name="regras" rows="4" required
+                        placeholder="Regras do campeonato"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-cancel" onclick="fecharModalCriarCampeonatoAdm()">Cancelar</button>
+                    <button type="button" class="btn btn-cancel"
+                        onclick="fecharModalCriarCampeonatoAdm()">Cancelar</button>
                     <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Criar campeonato</button>
                 </div>
             </form>
@@ -739,10 +822,14 @@
     </div>
 
     <!-- Modal Cupom -->
-    <div id="modalCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalCupom()">
+    <div id="modalCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalCupom()">
         <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalCupom()"><i class="fas fa-times"></i></button>
-            <div class="form-modal-header"><h2><i class="fas fa-ticket-alt"></i> <span id="modalCupomTitulo">Novo Cupom</span></h2></div>
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalCupom()"><i
+                    class="fas fa-times"></i></button>
+            <div class="form-modal-header">
+                <h2><i class="fas fa-ticket-alt"></i> <span id="modalCupomTitulo">Novo Cupom</span></h2>
+            </div>
             <form id="formCupom" class="form-modal-body">
                 <div class="cupom-etiquetas-modal">
                     <span><strong>MOR</strong> → Organizador</span>
@@ -762,10 +849,12 @@
                     </div>
                     <div class="form-group">
                         <label>Código gerado</label>
-                        <input type="text" id="cupomCodigoGerado" readonly placeholder="Selecione o prefixo e clique em Gerar">
+                        <input type="text" id="cupomCodigoGerado" readonly
+                            placeholder="Selecione o prefixo e clique em Gerar">
                     </div>
                     <div class="form-group" style="align-self: flex-end;">
-                        <button type="button" class="btn btn-primary" onclick="gerarCodigoCupom()"><i class="fas fa-random"></i> Gerar código</button>
+                        <button type="button" class="btn btn-primary" onclick="gerarCodigoCupom()"><i
+                                class="fas fa-random"></i> Gerar código</button>
                     </div>
                 </div>
                 <div id="cupomCodigoEditWrap" class="form-group" style="display:none;">
@@ -779,25 +868,40 @@
                         <!-- MOR: premium, intermediario, basico, simples -->
                         <!-- MCARG: ADMIN, STREAMMER, APOIADOR, MODERADOR -->
                     </select>
-                    <input type="text" id="cupomTipo" name="tipo" placeholder="Ex: desconto, item" style="display:none;">
+                    <input type="text" id="cupomTipo" name="tipo" placeholder="Ex: desconto, item"
+                        style="display:none;">
                 </div>
-                <div class="form-group"><label for="cupomDescricao">Descrição</label><textarea id="cupomDescricao" name="descricao" rows="2"></textarea></div>
-                <div class="form-group"><label for="cupomDesconto">Desconto %</label><input type="number" id="cupomDesconto" name="desconto_percentual" step="0.01" min="0" placeholder="0"></div>
-                <div class="form-group"><label for="cupomIdItem">ID Item</label><input type="number" id="cupomIdItem" name="id_item" placeholder="Opcional"></div>
-                <div class="form-group"><label for="cupomIdTrofeu">ID Troféu</label><input type="number" id="cupomIdTrofeu" name="id_trofeu" placeholder="Opcional"></div>
-                <div class="form-group"><label for="cupomIdMedalha">ID Medalha</label><input type="number" id="cupomIdMedalha" name="id_medalha" placeholder="Opcional"></div>
-                <div class="form-group"><label for="cupomUsosMaximos">Usos máximos *</label><input type="number" id="cupomUsosMaximos" name="usos_maximos" min="1" value="1" required></div>
-                <div class="form-group"><label for="cupomUsosRestantes">Usos restantes</label><input type="number" id="cupomUsosRestantes" name="usos_restantes" min="0" placeholder="Igual a usos máximos"></div>
-                <div class="form-group"><label for="cupomAtivo">Ativo</label><select id="cupomAtivo" name="ativo"><option value="true">Sim</option><option value="false">Não</option></select></div>
-                <div class="form-actions"><button type="button" class="btn btn-cancel" onclick="fecharModalCupom()">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button></div>
+                <div class="form-group"><label for="cupomDescricao">Descrição</label><textarea id="cupomDescricao"
+                        name="descricao" rows="2"></textarea></div>
+                <div class="form-group"><label for="cupomDesconto">Desconto %</label><input type="number"
+                        id="cupomDesconto" name="desconto_percentual" step="0.01" min="0" placeholder="0"></div>
+                <div class="form-group"><label for="cupomIdItem">ID Item</label><input type="number" id="cupomIdItem"
+                        name="id_item" placeholder="Opcional"></div>
+                <div class="form-group"><label for="cupomIdTrofeu">ID Troféu</label><input type="number"
+                        id="cupomIdTrofeu" name="id_trofeu" placeholder="Opcional"></div>
+                <div class="form-group"><label for="cupomIdMedalha">ID Medalha</label><input type="number"
+                        id="cupomIdMedalha" name="id_medalha" placeholder="Opcional"></div>
+                <div class="form-group"><label for="cupomUsosMaximos">Usos máximos *</label><input type="number"
+                        id="cupomUsosMaximos" name="usos_maximos" min="1" value="1" required></div>
+                <div class="form-group"><label for="cupomUsosRestantes">Usos restantes</label><input type="number"
+                        id="cupomUsosRestantes" name="usos_restantes" min="0" placeholder="Igual a usos máximos"></div>
+                <div class="form-group"><label for="cupomAtivo">Ativo</label><select id="cupomAtivo" name="ativo">
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                    </select></div>
+                <div class="form-actions"><button type="button" class="btn btn-cancel"
+                        onclick="fecharModalCupom()">Cancelar</button><button type="submit" class="btn btn-primary"><i
+                            class="fas fa-save"></i> Salvar</button></div>
             </form>
         </div>
     </div>
 
     <!-- Modal Detalhes do Cupom -->
-    <div id="modalDetalheCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalDetalheCupom()">
+    <div id="modalDetalheCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalDetalheCupom()">
         <div class="detalhe-campeonato-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalDetalheCupom()">
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalDetalheCupom()">
                 <i class="fas fa-times"></i>
             </button>
             <div class="detalhe-cupom-header">
@@ -810,32 +914,45 @@
             </div>
             <div class="detalhe-campeonato-body">
                 <div class="detalhe-grid">
-                    <div class="detalhe-item"><span class="detalhe-label">ID</span><span id="detalheCupomId"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Código</span><span id="detalheCupomCodigoVal"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Tipo</span><span id="detalheCupomTipoVal"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Desconto</span><span id="detalheCupomDesconto"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Usos (restantes / máx.)</span><span id="detalheCupomUsos"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">Ativo</span><span id="detalheCupomAtivo"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">ID Item</span><span id="detalheCupomIdItem"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">ID Troféu</span><span id="detalheCupomIdTrofeu"></span></div>
-                    <div class="detalhe-item"><span class="detalhe-label">ID Medalha</span><span id="detalheCupomIdMedalha"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID</span><span id="detalheCupomId"></span>
+                    </div>
+                    <div class="detalhe-item"><span class="detalhe-label">Código</span><span
+                            id="detalheCupomCodigoVal"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Tipo</span><span
+                            id="detalheCupomTipoVal"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Desconto</span><span
+                            id="detalheCupomDesconto"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Usos (restantes / máx.)</span><span
+                            id="detalheCupomUsos"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Ativo</span><span
+                            id="detalheCupomAtivo"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID Item</span><span
+                            id="detalheCupomIdItem"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID Troféu</span><span
+                            id="detalheCupomIdTrofeu"></span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">ID Medalha</span><span
+                            id="detalheCupomIdMedalha"></span></div>
                 </div>
                 <div class="detalhe-block" id="detalheCupomDescricaoBlock">
                     <h4 class="detalhe-block-title">Descrição</h4>
                     <p id="detalheCupomDescricao" class="detalhe-block-text"></p>
                 </div>
                 <div class="detalhe-links detalhe-cupom-actions">
-                    <button type="button" class="btn btn-primary" id="btnDetalheCupomEditar"><i class="fas fa-edit"></i> Editar</button>
-                    <button type="button" class="btn btn-excluir" id="btnDetalheCupomExcluir"><i class="fas fa-trash"></i> Excluir</button>
+                    <button type="button" class="btn btn-primary" id="btnDetalheCupomEditar"><i class="fas fa-edit"></i>
+                        Editar</button>
+                    <button type="button" class="btn btn-excluir" id="btnDetalheCupomExcluir"><i
+                            class="fas fa-trash"></i> Excluir</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Lista de resgates de cupom -->
-    <div id="modalResgatesCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true" onclick="if(event.target === this) fecharModalResgatesCupom()">
+    <div id="modalResgatesCupom" class="modal-overlay detalhe-campeonato-modal" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalResgatesCupom()">
         <div class="detalhe-campeonato-content form-modal-content" onclick="event.stopPropagation()">
-            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar" onclick="fecharModalResgatesCupom()"><i class="fas fa-times"></i></button>
+            <button type="button" class="detalhe-campeonato-close" aria-label="Fechar"
+                onclick="fecharModalResgatesCupom()"><i class="fas fa-times"></i></button>
             <div class="form-modal-header">
                 <h2><i class="fas fa-list"></i> Quem resgatou cupom</h2>
                 <p class="form-modal-subtitle">Lista de resgates de cupons</p>
@@ -883,7 +1000,7 @@
                 <h2><i class="fas fa-user-cog"></i> Editar Gerência</h2>
                 <p>Altere o nível de gerência do usuário</p>
             </div>
-            
+
             <div class="user-info">
                 <img id="editUserAvatar" src="" alt="Avatar" class="user-avatar">
                 <div class="user-details">
@@ -891,7 +1008,7 @@
                     <p id="editUserEmail"></p>
                 </div>
             </div>
-            
+
             <form id="editGerenciaForm">
                 <div class="form-group">
                     <label for="editGerenciaSelect">Nível de Gerência:</label>
@@ -903,7 +1020,7 @@
                         <option value="admin">ADMIN</option>
                     </select>
                 </div>
-                
+
                 <div class="modal-actions">
                     <button type="button" class="btn btn-cancel" onclick="closeEditGerenciaModal()">
                         <i class="fas fa-times"></i> Cancelar
@@ -920,4 +1037,5 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="../js/pag_adm.js"></script>
 </body>
+
 </html>

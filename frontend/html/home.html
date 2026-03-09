@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,11 +36,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -52,7 +53,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -61,32 +62,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
 
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -109,21 +117,34 @@
                         </linearGradient>
                     </defs>
                     <g class="bullet-group-1">
-                        <line x1="0" y1="10" x2="100" y2="15" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="0" y1="25" x2="100" y2="30" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="0" y1="40" x2="100" y2="45" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="0" y1="55" x2="100" y2="60" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="0" y1="70" x2="100" y2="75" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="0" y1="85" x2="100" y2="90" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
+                        <line x1="0" y1="10" x2="100" y2="15" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="0" y1="25" x2="100" y2="30" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="0" y1="40" x2="100" y2="45" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="0" y1="55" x2="100" y2="60" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="0" y1="70" x2="100" y2="75" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="0" y1="85" x2="100" y2="90" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
                     </g>
                     <g class="bullet-group-2">
-                        <line x1="100" y1="5" x2="0" y2="10" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="100" y1="20" x2="0" y2="25" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="100" y1="35" x2="0" y2="40" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="100" y1="50" x2="0" y2="55" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="100" y1="65" x2="0" y2="70" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="100" y1="80" x2="0" y2="85" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
-                        <line x1="100" y1="95" x2="0" y2="100" stroke="url(#bulletGradient)" stroke-width="0.3" class="bullet-trail" />
+                        <line x1="100" y1="5" x2="0" y2="10" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="100" y1="20" x2="0" y2="25" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="100" y1="35" x2="0" y2="40" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="100" y1="50" x2="0" y2="55" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="100" y1="65" x2="0" y2="70" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="100" y1="80" x2="0" y2="85" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
+                        <line x1="100" y1="95" x2="0" y2="100" stroke="url(#bulletGradient)" stroke-width="0.3"
+                            class="bullet-trail" />
                     </g>
                 </svg>
             </div>
@@ -132,7 +153,10 @@
                     <h1 class="hero-title">MIXCAMP</h1>
                     <p class="hero-subtitle">Counter-Strike Tournament</p>
                     <p class="hero-description">
-                        O MIXCAMP nasceu como uma 'pelada' de CS entre amigos e evoluiu para um campeonato com transmissão ao vivo, HUD, premiações e muita emoção. Agora, no CS2, estamos prontos para trazer de volta essa experiência única de competição, amizade e diversão — onde cada edição é mais intensa que a anterior!
+                        O MIXCAMP nasceu como uma 'pelada' de CS entre amigos e evoluiu para um campeonato com
+                        transmissão ao vivo, HUD, premiações e muita emoção. Agora, no CS2, estamos prontos para trazer
+                        de volta essa experiência única de competição, amizade e diversão — onde cada edição é mais
+                        intensa que a anterior!
                     </p>
                     <div class="hero-buttons">
                         <button class="btn-primary" onclick="scrollToSection('sobre')">Sobre</button>
@@ -155,7 +179,7 @@
                     <h2 class="section-title">SOBRE O MIXCAMP</h2>
                     <div class="title-underline"></div>
                 </div>
-                
+
                 <div class="sobre-content">
                     <div class="sobre-info">
                         <div class="sobre-card">
@@ -163,30 +187,35 @@
                                 <i class="fas fa-gamepad"></i>
                             </div>
                             <h3>Nossa História</h3>
-                            <p>O MIXCAMP nasceu como uma simples 'pelada' de CS entre amigos apaixonados pelo jogo. Com o tempo, evoluiu para um campeonato profissional com transmissão ao vivo, HUD personalizado, premiações e muita emoção.</p>
+                            <p>O MIXCAMP nasceu como uma simples 'pelada' de CS entre amigos apaixonados pelo jogo. Com
+                                o tempo, evoluiu para um campeonato profissional com transmissão ao vivo, HUD
+                                personalizado, premiações e muita emoção.</p>
                         </div>
-                        
+
                         <div class="sobre-card">
                             <div class="sobre-icon">
                                 <i class="fas fa-trophy"></i>
                             </div>
                             <h3>Missão</h3>
-                            <p>Promover a competição saudável, amizade e diversão através do CS2, criando uma comunidade unida de jogadores apaixonados pelo esporte eletrônico.</p>
+                            <p>Promover a competição saudável, amizade e diversão através do CS2, criando uma comunidade
+                                unida de jogadores apaixonados pelo esporte eletrônico.</p>
                         </div>
-                        
+
                         <div class="sobre-card">
                             <div class="sobre-icon">
                                 <i class="fas fa-users"></i>
                             </div>
                             <h3>Comunidade</h3>
-                            <p>Construímos uma comunidade forte e unida, onde cada edição é mais intensa que a anterior, sempre focando na experiência única de competição.</p>
+                            <p>Construímos uma comunidade forte e unida, onde cada edição é mais intensa que a anterior,
+                                sempre focando na experiência única de competição.</p>
                         </div>
                     </div>
-                    
+
                     <div class="sobre-highlight">
                         <div class="highlight-content">
                             <h3>Próxima Edição</h3>
-                            <p>Estamos preparando a edição mais épica do MIXCAMP! Com novas funcionalidades, premiações maiores e uma experiência ainda mais imersiva para todos os participantes.</p>
+                            <p>Estamos preparando a edição mais épica do MIXCAMP! Com novas funcionalidades, premiações
+                                maiores e uma experiência ainda mais imersiva para todos os participantes.</p>
                             <div class="highlight-features">
                                 <div class="feature-item">
                                     <i class="fas fa-broadcast-tower"></i>
@@ -201,31 +230,30 @@
                                     <span>HUD Personalizado</span>
                                 </div>
                             </div>
-                            <button class="btn-inscrever-agora" onclick="scrollToSection('campeonatos')">Inscrever-se Agora</button>
+                            <button class="btn-inscrever-agora" onclick="scrollToSection('campeonatos')">Inscrever-se
+                                Agora</button>
                         </div>
                         <div class="highlight-image">
                             <img src="../img/mixcamp4.png" alt="MIXCAMP" class="sobre-logo">
                         </div>
                     </div>
-                    
+
                     <div class="videos-section">
                         <h3>Confira Nossos Momentos Épicos</h3>
                         <p>Reviva os melhores momentos das edições anteriores do MIXCAMP</p>
                         <button class="btn-ver-videos" onclick="toggleVideos()">Ver Vídeos</button>
-                        
+
                         <div class="videos-container" id="videosContainer">
                             <div class="video-card">
                                 <div class="video-header">
                                     <h4>MIXCAMP 2024 - Final Épica</h4>
                                     <span class="video-duration">15:30</span>
                                 </div>
-                                <iframe width="560" height="315" 
-                                    src="https://www.youtube.com/embed/c9Y1m2O3pJE?si=XM2N-WmupNFEImYV&amp;start=1088" 
-                                    title="YouTube video player" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                    referrerpolicy="strict-origin-when-cross-origin" 
-                                    allowfullscreen>
+                                <iframe width="560" height="315"
+                                    src="https://www.youtube.com/embed/c9Y1m2O3pJE?si=XM2N-WmupNFEImYV&amp;start=1088"
+                                    title="YouTube video player" frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
                                 </iframe>
                             </div>
                             <div class="video-card">
@@ -233,13 +261,11 @@
                                     <h4>MIXCAMP 2023 - Melhores Jogadas</h4>
                                     <span class="video-duration">12:45</span>
                                 </div>
-                                <iframe width="560" height="315" 
-                                    src="https://www.youtube.com/embed/65HVycKMJAI?si=AVVBuwKKV4zqv1On&amp;start=214" 
-                                    title="YouTube video player" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                    referrerpolicy="strict-origin-when-cross-origin" 
-                                    allowfullscreen>
+                                <iframe width="560" height="315"
+                                    src="https://www.youtube.com/embed/65HVycKMJAI?si=AVVBuwKKV4zqv1On&amp;start=214"
+                                    title="YouTube video player" frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
                                 </iframe>
                             </div>
                         </div>
@@ -291,7 +317,7 @@
                     <h2 class="section-title">Campeonatos em Destaque</h2>
                     <div class="title-underline"></div>
                 </div>
-                
+
                 <div class="campeonatos-grid">
                     <!-- Próximo Torneio -->
                     <div class="camp-card proximo-torneio" data-aos="fade-right">
@@ -330,7 +356,7 @@
                         </div>
                         <div class="versus-container">
                             <div class="team-card">
-                                <img src="../img/legalize.png" alt="Time A" class="team-logo">
+                                <img src="" alt="Time A" class="team-logo">
                                 <span class="team-name">Time A</span>
                             </div>
                             <div class="versus-info">
@@ -342,7 +368,7 @@
                                 </div>
                             </div>
                             <div class="team-card">
-                                <img src="../img/legalize.png" alt="Time B" class="team-logo">
+                                <img src="" alt="Time B" class="team-logo">
                                 <span class="team-name">Time B</span>
                             </div>
                         </div>
@@ -366,11 +392,11 @@
                     <h2 class="section-title">Últimas Notícias</h2>
                     <div class="title-underline"></div>
                 </div>
-                
+
                 <div class="noticias-grid" id="noticiasGrid">
                     <!-- Notícias serão carregadas dinamicamente -->
                 </div>
-                
+
                 <div class="noticias-controls">
                     <button class="btn-carregar-mais" onclick="carregarMaisNoticias()">
                         <i class="fas fa-plus"></i>
@@ -425,19 +451,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -451,8 +477,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -464,19 +490,19 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
 
-    
+
 
 
 
@@ -497,7 +523,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -506,7 +532,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -520,7 +546,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -529,54 +555,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -603,7 +630,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -613,7 +641,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -656,4 +685,5 @@
     <script src="../js/utils.js"></script>
     <script src="../js/home.js"></script>
 </body>
+
 </html>

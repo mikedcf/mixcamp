@@ -19,11 +19,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -36,7 +36,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -45,32 +45,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
-    
+
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -84,32 +91,34 @@
         <section class="secao">
             <h2><i class="fas fa-users"></i> Informações do Time</h2>
             <p>Configure as informações básicas do seu time</p>
-            
+
             <label for="teamName"><i class="fas fa-tag"></i> Nome do Time</label>
             <input type="text" id="teamName" placeholder="Digite o nome do time">
-            
+
             <label for="teamTag"><i class="fas fa-hashtag"></i> Tag do Time</label>
             <input type="text" id="teamTag" placeholder="Ex: LGZ" maxlength="10">
-            
+
             <label for="teamDescription"><i class="fas fa-info-circle"></i> Sobre o Time</label>
-            <textarea id="teamDescription" placeholder="Conte mais sobre o time, estratégias, conquistas..." rows="4"></textarea>
+            <textarea id="teamDescription" placeholder="Conte mais sobre o time, estratégias, conquistas..."
+                rows="4"></textarea>
         </section>
 
         <!-- SECTION: Logo e Banner do Time -->
         <section class="secao">
             <h2><i class="fas fa-images"></i> Logo e Banner do Time</h2>
             <p>Personalize a aparência visual do seu time</p>
-            
+
             <label for="teamLogoUpload"><i class="fas fa-image"></i> Alterar Logo do Time</label>
             <div class="input-file">
                 <input type="file" id="inputTeamLogo" onchange="preReqUploudImg()" accept="image/*">
             </div>
-            
-            <label for="teamBannerUpload"><i class="fas fa-image"></i> Alterar Banner do Time <span class="label-recomendado">(recomendado: 1920 × 640 px)</span></label>
+
+            <label for="teamBannerUpload"><i class="fas fa-image"></i> Alterar Banner do Time <span
+                    class="label-recomendado">(recomendado: 1920 × 640 px)</span></label>
             <div class="input-file">
                 <input type="file" id="inputTeamBanner" onchange="preReqUploudImg()" accept="image/*">
             </div>
-            
+
             <label for="teamColorPicker"><i class="fas fa-palette"></i> Cor Principal do Time</label>
             <div class="color-picker-container">
                 <input type="color" id="teamColorPicker" value="#0096FF" onchange="atualizarCorTime()">
@@ -123,7 +132,7 @@
         <section class="secao secao-membros">
             <h2><i class="fas fa-users-cog"></i> Gerenciamento de Membros</h2>
             <p>Gerencie os membros do seu time e suas posições</p>
-            
+
             <div id="membersList" class="members-list">
                 <!-- Membros serão carregados dinamicamente aqui -->
             </div>
@@ -133,19 +142,19 @@
         <section class="secao">
             <h2><i class="fas fa-share-alt"></i> Redes Sociais do Time</h2>
             <p>Conecte o time com a comunidade gaming</p>
-            
+
             <label for="teamDiscordLink"><i class="fab fa-discord"></i> Discord do Time</label>
             <input type="url" id="teamDiscordLink" placeholder="https://discord.gg/time-servidor">
-            
+
             <label for="teamYoutubeLink"><i class="fab fa-youtube"></i> YouTube do Time</label>
             <input type="url" id="teamYoutubeLink" placeholder="https://youtube.com/@time-canal">
-            
+
             <label for="teamTwitchLink"><i class="fab fa-twitch"></i> Twitch do Time</label>
             <input type="url" id="teamTwitchLink" placeholder="https://twitch.tv/time-perfil">
-            
+
             <label for="teamTwitterLink"><i class="fab fa-twitter"></i> Twitter (X) do Time</label>
             <input type="url" id="teamTwitterLink" placeholder="https://x.com/time-perfil">
-            
+
             <label for="teamInstagramLink"><i class="fab fa-instagram"></i> Instagram do Time</label>
             <input type="url" id="teamInstagramLink" placeholder="https://instagram.com/time-perfil">
 
@@ -171,37 +180,45 @@
 
             <div class="games-grid">
                 <!-- CS2 -->
-                <input type="checkbox" id="game-cs2" name="teamGame" value="CS2" class="game-checkbox" onclick="escolherJogo()">
+                <input type="checkbox" id="game-cs2" name="teamGame" value="CS2" class="game-checkbox"
+                    onclick="escolherJogo()">
                 <label for="game-cs2" class="game-card" data-game="cs2">
                     <div class="game-thumb">
-                        <img src="https://cdn3.emoji.gg/emojis/11160-cs2.png" alt="CS2" onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
+                        <img src="https://cdn3.emoji.gg/emojis/11160-cs2.png" alt="CS2"
+                            onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
                         <div class="game-fallback">CS2</div>
                     </div>
                 </label>
 
                 <!-- Valorant -->
-                <input type="checkbox" id="game-valorant" name="teamGame" value="Valorant" class="game-checkbox" onclick="escolherJogo()">
+                <input type="checkbox" id="game-valorant" name="teamGame" value="Valorant" class="game-checkbox"
+                    onclick="escolherJogo()">
                 <label for="game-valorant" class="game-card" data-game="valorant">
                     <div class="game-thumb">
-                        <img src="https://cdn3.emoji.gg/emojis/54052-valorant.png" alt="Valorant" onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
+                        <img src="https://cdn3.emoji.gg/emojis/54052-valorant.png" alt="Valorant"
+                            onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
                         <div class="game-fallback">VAL</div>
                     </div>
                 </label>
 
                 <!-- Rainbow Six Siege -->
-                <input type="checkbox" id="game-r6" name="teamGame" value="R6" class="game-checkbox" onclick="escolherJogo()">
+                <input type="checkbox" id="game-r6" name="teamGame" value="R6" class="game-checkbox"
+                    onclick="escolherJogo()">
                 <label for="game-r6" class="game-card" data-game="r6">
                     <div class="game-thumb">
-                        <img src="https://cdn3.emoji.gg/emojis/60992-r6.png" alt="Rainbow Six" onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
+                        <img src="https://cdn3.emoji.gg/emojis/60992-r6.png" alt="Rainbow Six"
+                            onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
                         <div class="game-fallback">R6</div>
                     </div>
                 </label>
 
                 <!-- CrossFire AL -->
-                <input type="checkbox" id="game-cfal" name="teamGame" value="CFAL" class="game-checkbox" onclick="escolherJogo()">
+                <input type="checkbox" id="game-cfal" name="teamGame" value="CFAL" class="game-checkbox"
+                    onclick="escolherJogo()">
                 <label for="game-cfal" class="game-card" data-game="cfal">
                     <div class="game-thumb">
-                        <img src="https://cdn3.emoji.gg/emojis/84043-crossfire-logo.png" alt="CrossFire AL" onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
+                        <img src="https://cdn3.emoji.gg/emojis/84043-crossfire-logo.png" alt="CrossFire AL"
+                            onerror="this.style.display='none'; this.parentElement.querySelector('.game-fallback').style.display='flex';">
                         <div class="game-fallback">CFAL</div>
                     </div>
                 </label>
@@ -212,7 +229,7 @@
         <section class="secao">
             <h2><i class="fas fa-video"></i> Vídeo de Destaque</h2>
             <p>Configure o vídeo principal que será exibido no perfil do time</p>
-            
+
             <label for="teamVideoUrl"><i class="fas fa-link"></i> URL do Vídeo</label>
             <input type="url" id="teamVideoUrl" placeholder="https://youtube.com/watch?v=... ou https://vimeo.com/...">
         </section>
@@ -221,26 +238,28 @@
         <section class="secao">
             <h2><i class="fas fa-newspaper"></i> Notícias do Time</h2>
             <p>Configure as notícias e atualizações do seu time</p>
-            
+
             <label for="teamNewsTitle"><i class="fas fa-heading"></i> Título da Notícia</label>
             <input type="text" id="teamNewsTitle" placeholder="Digite o título da notícia" maxlength="120">
 
             <label for="teamNewsText"><i class="fas fa-align-left"></i> Texto das Notícias</label>
-            <textarea id="teamNewsText" placeholder="Digite as notícias e atualizações do time..." rows="6" maxlength="1000"></textarea>
+            <textarea id="teamNewsText" placeholder="Digite as notícias e atualizações do time..." rows="6"
+                maxlength="1000"></textarea>
         </section>
 
         <!-- SECTION: Troféus do Time -->
         <section class="secao secao-trofeus">
             <h2><i class="fas fa-trophy"></i> Troféus do Time</h2>
             <p>Configure os troféus e conquistas do seu time</p>
-            
+
             <div class="trofeus-container">
-                <div class="trofeu-slot"  data-slot="1">
+                <div class="trofeu-slot" data-slot="1">
                     <div class="trofeu-content">
                         <img src="../img/trophy.png" alt="Troféu" class="trofeu-img" id="teamConquistasImage">
                         <div class="trofeu-info">
                             <h4 id="teamConquistasNome">1°ED MIXCAMP</h4>
-                            <p id="teamConquistasDescricao">Campeonato de alto nível reunindo os melhores times da região.</p>
+                            <p id="teamConquistasDescricao">Campeonato de alto nível reunindo os melhores times da
+                                região.</p>
                             <span class="trofeu-position" id="teamConquistasCategoria">CAMPEÃO</span>
                             <span class="trofeu-data" id="teamConquistasData">16/10/2025</span>
                         </div>
@@ -278,12 +297,12 @@
         <section class="secao secao-admin">
             <h2><i class="fas fa-crown"></i> Transferir Liderança</h2>
             <p>Transfira a liderança do time para outro membro</p>
-            
+
             <label for="newLeaderSelect"><i class="fas fa-user-crown"></i> Novo Líder</label>
             <select id="newLeaderSelect">
                 <option value="">Selecione um membro</option>
             </select>
-            
+
             <button class="btn-admin" onclick="transferirLideranca()">
                 <i class="fas fa-exchange-alt"></i> Transferir Liderança
             </button>
@@ -293,10 +312,10 @@
         <section class="secao secao-danger">
             <h2><i class="fas fa-exclamation-triangle"></i> Zona de Perigo</h2>
             <p>Ações irreversíveis que afetam permanentemente o time</p>
-            
+
             <label for="confirmDelete"><i class="fas fa-trash-alt"></i> Confirmar Exclusão</label>
             <input type="text" id="confirmDelete" placeholder="Digite 'EXCLUIR' para confirmar" maxlength="10">
-            
+
             <button class="btn-danger" onclick="excluirTime()">
                 <i class="fas fa-trash-alt"></i> Excluir Time Permanentemente
             </button>
@@ -335,19 +354,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -361,8 +380,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -374,14 +393,14 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
@@ -396,7 +415,8 @@
                 <div class="modal-header-content">
                     <div class="modal-icon">
                         <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                         </svg>
                     </div>
                     <div class="modal-title-section">
@@ -406,7 +426,8 @@
                 </div>
                 <button class="modal-close-btn" onclick="closeModal()">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        <path
+                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                     </svg>
                 </button>
             </div>
@@ -433,7 +454,8 @@
                     <div class="info-card">
                         <div class="info-icon">
                             <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                             </svg>
                         </div>
                         <div class="info-content">
@@ -445,7 +467,8 @@
                     <div class="info-card">
                         <div class="info-icon">
                             <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                             </svg>
                         </div>
                         <div class="info-content">
@@ -457,7 +480,8 @@
                     <div class="info-card">
                         <div class="info-icon">
                             <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                <path
+                                    d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
                             </svg>
                         </div>
                         <div class="info-content">
@@ -511,7 +535,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -520,7 +544,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -534,7 +558,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -543,54 +567,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1920 × 640 px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -638,7 +663,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -648,7 +674,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -664,7 +691,7 @@
         </div>
     </div>
 
-    
+
     <script src="../js/utils.js"></script>
     <script src="../js/config_time.js"></script>
 </body>

@@ -7,6 +7,7 @@
   <title>Vetos de Mapas - MIXCAMP</title>
   <link rel="stylesheet" href="../css/chaveamento.css">
   <link rel="stylesheet" href="../css/ultils.css">
+  <link rel="stylesheet" href="../css/header.css">
   <style>
     body {
       background: #0a0a0a;
@@ -47,11 +48,11 @@
       box-sizing: border-box;
       min-width: 0;
     }
-    
+
     .vetos-team.left {
       justify-content: flex-start;
     }
-    
+
     .vetos-team.right {
       justify-content: flex-end;
       flex-direction: row;
@@ -150,7 +151,8 @@
 
     .mapas-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      /* Responsivo: quantidade de colunas se adapta ao espaço */
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 15px;
       margin-bottom: 30px;
       width: 100%;
@@ -228,7 +230,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: none; /* Cor normal por padrão */
+      filter: none;
+      /* Cor normal por padrão */
     }
 
     .mapa-overlay {
@@ -323,9 +326,12 @@
     }
 
     @keyframes pulsar-faca {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: scale(1);
       }
+
       50% {
         transform: scale(1.1);
       }
@@ -341,11 +347,14 @@
     }
 
     @keyframes pulsar-vs {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: scale(1);
         opacity: 1;
         text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
       }
+
       50% {
         transform: scale(1.2);
         opacity: 0.9;
@@ -385,24 +394,28 @@
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       25% {
         border-top-color: #00a8ff;
         border-right-color: #00a8ff;
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       50% {
         border-top-color: #00a8ff;
         border-right-color: #00a8ff;
         border-bottom-color: #00a8ff;
         border-left-color: transparent;
       }
+
       75% {
         border-top-color: #00a8ff;
         border-right-color: #00a8ff;
         border-bottom-color: #00a8ff;
         border-left-color: #00a8ff;
       }
+
       100% {
         border-top-color: #00a8ff;
         border-right-color: transparent;
@@ -443,24 +456,28 @@
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       25% {
         border-top-color: #ffd700;
         border-right-color: #ff6b00;
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       50% {
         border-top-color: #ffd700;
         border-right-color: #ff6b00;
         border-bottom-color: #ffd700;
         border-left-color: transparent;
       }
+
       75% {
         border-top-color: #ffd700;
         border-right-color: #ff6b00;
         border-bottom-color: #ffd700;
         border-left-color: #ff6b00;
       }
+
       100% {
         border-top-color: #ffd700;
         border-right-color: transparent;
@@ -501,24 +518,28 @@
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       25% {
         border-top-color: #ff6b6b;
         border-right-color: #ff6b6b;
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       50% {
         border-top-color: #ff6b6b;
         border-right-color: #ff6b6b;
         border-bottom-color: #ff6b6b;
         border-left-color: transparent;
       }
+
       75% {
         border-top-color: #ff6b6b;
         border-right-color: #ff6b6b;
         border-bottom-color: #ff6b6b;
         border-left-color: #ff6b6b;
       }
+
       100% {
         border-top-color: #ff6b6b;
         border-right-color: transparent;
@@ -656,24 +677,28 @@
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       25% {
         border-top-color: #ffd700;
         border-right-color: #ffd700;
         border-bottom-color: transparent;
         border-left-color: transparent;
       }
+
       50% {
         border-top-color: #ffd700;
         border-right-color: #ffd700;
         border-bottom-color: #ffd700;
         border-left-color: transparent;
       }
+
       75% {
         border-top-color: #ffd700;
         border-right-color: #ffd700;
         border-bottom-color: #ffd700;
         border-left-color: #ffd700;
       }
+
       100% {
         border-top-color: #ffd700;
         border-right-color: transparent;
@@ -1088,6 +1113,231 @@
       font-size: 2rem;
       letter-spacing: 3px;
     }
+
+    /* =========================================================
+       RESPONSIVIDADE
+       ========================================================= */
+
+    /* Tablets / telas médias */
+    @media (max-width: 1200px) {
+      .vetos-times-header {
+        width: 100%;
+      }
+
+      .mapas-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .mapa-card {
+        height: 340px;
+      }
+
+      .mapa-imagem-container {
+        min-height: 240px;
+      }
+    }
+
+    /* Tablets pequenos e landscape mobile */
+    @media (max-width: 900px) {
+      body {
+        padding: 15px;
+      }
+
+      .vetos-container {
+        padding: 10px;
+      }
+
+      .vetos-times-header {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      /* Ordem garantida: left (topo) → vs → right */
+      .vetos-team.left {
+        order: 1;
+      }
+
+      .vetos-vs {
+        order: 2;
+      }
+
+      .vetos-team.right {
+        order: 3;
+      }
+
+      .vetos-team {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .vetos-team.left,
+      .vetos-team.right {
+        border-radius: 8px;
+      }
+
+      .vetos-team-logo {
+        width: 48px;
+        height: 48px;
+      }
+
+      .vetos-team-name {
+        font-size: 16px;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      .vetos-vs {
+        min-width: unset;
+        width: 100%;
+        margin: 5px 0;
+        font-size: 22px;
+        padding: 10px 20px;
+      }
+
+      .vetos-header h1 {
+        font-size: 1.6rem;
+      }
+
+      .vetos-header .formato {
+        font-size: 1rem;
+      }
+
+      .turno-texto {
+        font-size: 0.95rem;
+      }
+
+      .mapas-grid {
+        /* Uma coluna em telas até 900px (mapas em coluna) */
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .mapa-card {
+        height: 320px;
+      }
+
+      .mapa-imagem-container {
+        min-height: 210px;
+      }
+
+      .mapa-nome {
+        font-size: 14px;
+      }
+
+      .mapa-status-text {
+        font-size: 12px;
+      }
+
+      .roleta-container {
+        width: 260px;
+        height: 260px;
+      }
+
+      .roleta-avatar {
+        width: 90px;
+        height: 90px;
+      }
+
+      .roleta-status {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .status-item {
+        width: 100%;
+      }
+
+      .cttr-buttons {
+        flex-direction: column;
+      }
+
+      .btn-cttr {
+        padding: 20px 24px;
+        font-size: 1.2rem;
+      }
+
+      .btn-ir-partida,
+      .btn-roleta {
+        width: 100%;
+        max-width: 100%;
+        padding: 12px 24px;
+        font-size: 1rem;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      .vetos-container {
+        padding: 8px;
+      }
+
+      .vetos-times-header {
+        flex-direction: column;
+      }
+
+      .vetos-team.left {
+        order: 1;
+      }
+
+      .vetos-vs {
+        order: 2;
+      }
+
+      .vetos-team.right {
+        order: 3;
+      }
+
+      .vetos-header h1 {
+        font-size: 1.4rem;
+      }
+
+      .mapas-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mapa-card {
+        height: 300px;
+      }
+
+      .mapa-imagem-container {
+        min-height: 190px;
+      }
+
+      .mapa-logo-time {
+        width: 80px;
+        height: 80px;
+      }
+
+      .modal-roleta,
+      .modal-cttr {
+        padding: 24px;
+      }
+
+      .roleta-container {
+        width: 220px;
+        height: 220px;
+      }
+
+      .roleta-avatar {
+        width: 80px;
+        height: 80px;
+      }
+
+      .resultado-roleta {
+        padding: 20px;
+      }
+
+      .btn-cttr {
+        padding: 18px 20px;
+        font-size: 1.1rem;
+      }
+    }
   </style>
 </head>
 
@@ -1141,7 +1391,8 @@
   <div id="modalCTTR" class="modal-cttr-overlay" style="display: none;">
     <div class="modal-cttr">
       <h2 class="modal-cttr-title">Escolha o Lado Inicial</h2>
-      <p class="modal-cttr-subtitle">Escolha se seu time começa como CT ou TR no mapa <span id="modalMapaNome"></span></p>
+      <p class="modal-cttr-subtitle">Escolha se seu time começa como CT ou TR no mapa <span id="modalMapaNome"></span>
+      </p>
       <div class="cttr-buttons">
         <button id="btnEscolherCT" class="btn-cttr btn-ct">
           <span class="cttr-icon">🛡️</span>
@@ -1198,6 +1449,25 @@
       </button>
     </div>
 
+  </div>
+
+
+  <div id="confirmModal" class="confirm-modal team2-confirm">
+    <div class="confirm-modal-content">
+      <div class="confirm-modal-header">
+        <h3 id="confirmModalTitle">Confirmação</h3>
+        <span class="confirm-modal-close" onclick="closeConfirmModal(false)">&times;</span>
+      </div>
+      <div class="confirm-modal-body">
+        <p id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+      </div>
+      <div class="confirm-modal-footer">
+        <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)"><i class="fas fa-times"></i>
+          Cancelar</button>
+        <button class="btn-confirm-ok" onclick="closeConfirmModal(true)"><i class="fas fa-check"></i>
+          Confirmar</button>
+      </div>
+    </div>
   </div>
 
   <script src="../js/utils.js"></script>

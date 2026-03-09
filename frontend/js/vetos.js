@@ -623,6 +623,7 @@ window.realizarAcao = async function realizarAcao(mapa, acao) {
     if (!sessaoVetos || !sessaoVetos.sessao || !sessaoVetos.sessao.pode_jogar) {
         console.log('❌ Não é o turno do jogador');
         alert('Não é o seu turno!');
+        showNotification('error', 'Não é o seu turno!');
         return;
     }
 
@@ -635,13 +636,14 @@ window.realizarAcao = async function realizarAcao(mapa, acao) {
     
     if (acao !== acaoEsperada) {
         alert(`Ação incorreta! Você deve fazer ${acaoEsperada === 'pick' ? 'PICK' : 'VETO'} agora.`);
+        showNotification('error', `Ação incorreta! Você deve fazer ${acaoEsperada === 'pick' ? 'PICK' : 'VETO'} agora.`);
         return;
     }
 
     const textoAcao = acao === 'pick' ? 'PICKAR' : 'VETAR';
-    if (!confirm(`Tem certeza que deseja ${textoAcao} o mapa ${mapa.toUpperCase()}?`)) {
-        return;
-    }
+    
+    const confirmou = await showConfirmModal(`Tem certeza que deseja ${textoAcao} o mapa ${mapa.toUpperCase()}?`)
+    if (!confirmou) return;
 
     try {
         console.log('📤 Enviando ação para o backend:', { token, mapa, acao });
@@ -674,7 +676,9 @@ window.realizarAcao = async function realizarAcao(mapa, acao) {
 
         const data = await response.json();
         console.log('✅ Ação realizada com sucesso:', data);
+
         console.log('📊 Próximo turno:', data.proximo_turno);
+        showNotification('success', `Ação realizada com sucesso: ${textoAcao} o mapa ${mapa.toUpperCase()}`);
 
         // Atualizar sessão imediatamente para pegar o novo turno
         await atualizarSessao();
@@ -1060,6 +1064,7 @@ async function girarRoleta(vencedor) {
             
             if (textoVencedor) {
                 textoVencedor.textContent = `🏆 ${vencedor === 'time_a' ? 'Time A' : 'Time B'} Venceu!`;
+                
             }
             
             if (avatarVencedorImg && timeVencedor) {
@@ -1077,6 +1082,7 @@ async function girarRoleta(vencedor) {
             
             if (textoVencedorInfo) {
                 textoVencedorInfo.textContent = 'Este time começa a vetar primeiro!';
+                showNotification('success', `Este time começa a vetar primeiro ${vencedor === 'time_a' ? 'Time A' : 'Time B'}!`);
             }
             
             resultadoRoleta.style.display = 'block';

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,11 +36,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -52,7 +53,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -61,32 +62,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
-    
+
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -110,43 +118,44 @@
         <!-- Lista de Campeonatos -->
         <section class="campeonatos-section">
             <div class="campeonatos-layout">
-                <aside class="promocoes-ativas-sidebar" id="promocoesAtivasSidebar" aria-label="Promoções ativas" hidden>
+                <aside class="promocoes-ativas-sidebar" id="promocoesAtivasSidebar" aria-label="Promoções ativas"
+                    hidden>
                     <h3 class="promocoes-ativas-title"><i class="fas fa-bullhorn"></i> Promoções ativas</h3>
                     <div class="promocoes-ativas-list" id="promocoesAtivasList">
                         <!-- Mini cards gerados via JS -->
                     </div>
                 </aside>
                 <div class="campeonatos-main">
-            <div class="section-header">
-                <h2><i class="fas fa-list"></i> Meus Campeonatos</h2>
-                <div class="filtros">
-                    <select id="filtroStatus" onchange="filtrarCampeonatos()">
-                        <option value="todos">Todos os Status</option>
-                        <option value="em breve">Em Breve</option>
-                        <option value="disponivel">Disponível</option>
-                        <option value="andamento">Em Andamento</option>
-                        <option value="encerrado">Encerrado</option>
-                        <option value="cancelado">Cancelado</option>
-                    </select>
-                </div>
-            </div>
+                    <div class="section-header">
+                        <h2><i class="fas fa-list"></i> Meus Campeonatos</h2>
+                        <div class="filtros">
+                            <select id="filtroStatus" onchange="filtrarCampeonatos()">
+                                <option value="todos">Todos os Status</option>
+                                <option value="em breve">Em Breve</option>
+                                <option value="disponivel">Disponível</option>
+                                <option value="andamento">Em Andamento</option>
+                                <option value="encerrado">Encerrado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
 
-            <div class="campeonatos-grid" id="campeonatosGrid">
-                <!-- Cards serão gerados via JS -->
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Carregando seus campeonatos...</p>
-                </div>
-            </div>
+                    <div class="campeonatos-grid" id="campeonatosGrid">
+                        <!-- Cards serão gerados via JS -->
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Carregando seus campeonatos...</p>
+                        </div>
+                    </div>
 
-            <div class="empty-state" id="emptyState" style="display: none;">
-                <i class="fas fa-trophy"></i>
-                <h3>Nenhum campeonato criado ainda</h3>
-                <p>Comece criando seu primeiro campeonato!</p>
-                <button class="btn-criar-campeonato" onclick="abrirModalCriar()">
-                    <i class="fas fa-plus"></i> Criar Primeiro Campeonato
-                </button>
-            </div>
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <i class="fas fa-trophy"></i>
+                        <h3>Nenhum campeonato criado ainda</h3>
+                        <p>Comece criando seu primeiro campeonato!</p>
+                        <button class="btn-criar-campeonato" onclick="abrirModalCriar()">
+                            <i class="fas fa-plus"></i> Criar Primeiro Campeonato
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -161,16 +170,16 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <form id="formCampeonato" class="form-campeonato">
                 <input type="hidden" id="campeonatoId" name="id">
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="titulo"><i class="fas fa-heading"></i> Título do Campeonato *</label>
                         <input type="text" id="titulo" name="titulo" required placeholder="Ex: MIXCAMP 1º Edição">
                     </div>
-                    
+
                     <div class="form-group" id="tipoGroup">
                         <label for="tipo"><i class="fas fa-tag"></i> Tipo *</label>
                         <select id="tipo" name="tipo" required>
@@ -182,18 +191,22 @@
 
                 <div class="form-group">
                     <label for="descricao"><i class="fas fa-align-left"></i> Descrição *</label>
-                    <textarea id="descricao" name="descricao" rows="4" required placeholder="Descreva seu campeonato..."></textarea>
+                    <textarea id="descricao" name="descricao" rows="4" required
+                        placeholder="Descreva seu campeonato..."></textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="preco_inscricao"><i class="fas fa-dollar-sign"></i> Preço de Inscrição (R$) *</label>
-                        <input type="number" id="preco_inscricao" name="preco_inscricao" step="0.01" min="0" required placeholder="0.00">
+                        <label for="preco_inscricao"><i class="fas fa-dollar-sign"></i> Preço de Inscrição (R$)
+                            *</label>
+                        <input type="number" id="preco_inscricao" name="preco_inscricao" step="0.01" min="0" required
+                            placeholder="0.00">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="premiacao"><i class="fas fa-trophy"></i> Premiação (R$) *</label>
-                        <input type="number" id="premiacao" name="premiacao" step="0.01" min="0" required placeholder="0.00">
+                        <input type="number" id="premiacao" name="premiacao" step="0.01" min="0" required
+                            placeholder="0.00">
                     </div>
                 </div>
 
@@ -205,18 +218,21 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="link_convite"><i class="fas fa-link"></i> Link de Convite da Hub *</label>
-                        <input type="url" id="link_convite" name="link_convite" required placeholder="https://www.faceit.com/pt/hub/...">
+                        <input type="url" id="link_convite" name="link_convite" required
+                            placeholder="https://www.faceit.com/pt/hub/...">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="url_hub"><i class="fas fa-globe"></i> URL da Hub *</label>
-                        <input type="url" id="url_hub" name="url_hub" required placeholder="https://www.faceit.com/pt/hub/...">
+                        <input type="url" id="url_hub" name="url_hub" required
+                            placeholder="https://www.faceit.com/pt/hub/...">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="link_whatsapp"><i class="fab fa-whatsapp"></i> Link do WhatsApp</label>
-                    <input type="url" id="link_whatsapp" name="link_whatsapp" placeholder="https://chat.whatsapp.com/...">
+                    <input type="url" id="link_whatsapp" name="link_whatsapp"
+                        placeholder="https://chat.whatsapp.com/...">
                 </div>
 
                 <div class="form-row" id="trofeuMedalhaGroup">
@@ -224,7 +240,7 @@
                         <label for="trofeu_id"><i class="fas fa-medal"></i> ID do Troféu *</label>
                         <input type="number" id="trofeu_id" name="trofeu_id" placeholder="1">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="medalha_id"><i class="fas fa-award"></i> ID da Medalha *</label>
                         <input type="number" id="medalha_id" name="medalha_id" placeholder="1">
@@ -234,7 +250,8 @@
                 <div class="form-group">
                     <label for="chave"><i class="fas fa-sitemap"></i> Formato da Chave *</label>
                     <select id="chave" name="chave" required>
-                        <option value="Single Elimination (B01 até final BO3)">Single Elimination (B01 até final BO3)</option>
+                        <option value="Single Elimination (B01 até final BO3)">Single Elimination (B01 até final BO3)
+                        </option>
                         <option value="Single Elimination (todos BO3)" selected>Single Elimination (todos BO3)</option>
                         <option value="CS2 Major (playoffs BO3)">CS2 Major (playoffs BO3)</option>
                         <option value="Double Elimination">Double Elimination</option>
@@ -244,9 +261,10 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="edicao_campeonato"><i class="fas fa-calendar-alt"></i> Edição</label>
-                        <input type="text" id="edicao_campeonato" name="edicao_campeonato" placeholder="Ex: Edição 2025">
+                        <input type="text" id="edicao_campeonato" name="edicao_campeonato"
+                            placeholder="Ex: Edição 2025">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="qnt_times"><i class="fas fa-users"></i> Quantidade de Times *</label>
                         <select id="qnt_times" name="qnt_times" required>
@@ -267,7 +285,7 @@
                         <label for="plataforma"><i class="fas fa-gamepad"></i> Plataforma</label>
                         <input type="text" id="plataforma" name="plataforma" value="FACEIT" placeholder="FACEIT">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="game"><i class="fas fa-gamepad"></i> Jogo</label>
                         <input type="text" id="game" name="game" value="CS2" placeholder="CS2">
@@ -279,7 +297,7 @@
                         <label for="nivel"><i class="fas fa-star"></i> Nível</label>
                         <input type="text" id="nivel" name="nivel" value="1-10" placeholder="1-10">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="formato"><i class="fas fa-users"></i> Formato</label>
                         <input type="text" id="formato" name="formato" value="5v5" placeholder="5v5">
@@ -304,7 +322,8 @@
 
                 <div class="form-group">
                     <label for="regras"><i class="fas fa-book"></i> Regras *</label>
-                    <textarea id="regras" name="regras" rows="6" required placeholder="Descreva as regras do campeonato..."></textarea>
+                    <textarea id="regras" name="regras" rows="6" required
+                        placeholder="Descreva as regras do campeonato..."></textarea>
                 </div>
 
                 <div class="form-actions">
@@ -326,7 +345,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="detalhes-content" id="detalhesContent">
                 <!-- Conteúdo será preenchido via JS -->
             </div>
@@ -401,7 +420,7 @@
 
                 <div class="promover-footer">
                     <p class="promover-aviso">
-                        Em breve, o pagamento dos pacotes será feito via Mercado Pago. 
+                        Em breve, o pagamento dos pacotes será feito via Mercado Pago.
                         Neste espaço ficará a integração de checkout e o registro da promoção no banco de dados.
                     </p>
                     <button type="button" class="btn-salvar" onclick="iniciarPagamentoPromocao()">
@@ -437,19 +456,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -463,8 +482,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -476,14 +495,14 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
@@ -504,7 +523,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -513,7 +532,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -527,7 +546,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -536,54 +555,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -634,7 +654,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -644,7 +665,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -660,9 +682,9 @@
         </div>
     </div>
 
-    
+
     <script src="../js/utils.js"></script>
     <script src="../js/gerenciar_campeonato.js"></script>
 </body>
-</html>
 
+</html>

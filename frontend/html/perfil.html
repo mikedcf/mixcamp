@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 </head>
 
 <body class="claro">
@@ -38,11 +41,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -55,7 +58,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -64,32 +67,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
 
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -104,17 +114,18 @@
             <!-- Banner com Carta Dentro -->
             <div class="hero-banner" id="heroBanner">
                 <div class="banner-gradient"></div>
-                
+
                 <!-- Profile Card Dentro do Banner -->
                 <div class="profile-card-inside">
                     <!-- Botão Menu com Ações em Cascata -->
                     <div class="card-menu-container">
-                        
+
                         <div class="admin-badge" id="adminBadge" style="display: none;" title="Admin">
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <div class="mx-basic-icon" id="mxBasicIcon">
-                            <img src="../img/mxplus.png" alt="MX Basic" id="mxBasicImg" class="mx-basic-img" title="MX Basic">
+                            <img src="../img/mxplus.png" alt="MX Basic" id="mxBasicImg" class="mx-basic-img"
+                                title="MX Basic">
                         </div>
                         <div class="apoiador-icon" id="apoiadorIcon" title="Apoiador">
                             <i class="fas fa-hand-holding-heart"></i>
@@ -137,26 +148,26 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="card-avatar-wrapper">
-                    <div class="card-avatar-container" onclick="rotateAvatar()">
-                        <div class="card-avatar-inner" id="cardAvatarInner">
-                            <div class="card-avatar-front">
-                                <img src="" alt="Avatar" class="card-avatar-img" id="cardAvatarImg">
-                                <div class="card-avatar-bg" id="cardAvatarBg"></div>
+                        <div class="card-avatar-container" onclick="rotateAvatar()">
+                            <div class="card-avatar-inner" id="cardAvatarInner">
+                                <div class="card-avatar-front">
+                                    <img src="" alt="Avatar" class="card-avatar-img" id="cardAvatarImg">
+                                    <div class="card-avatar-bg" id="cardAvatarBg"></div>
+                                </div>
+                                <div class="card-avatar-back">
+                                    <img src="" alt="Avatar Back" class="card-avatar-img">
+                                    <div class="card-avatar-bg-back" id="cardAvatarBgBack"></div>
+                                </div>
                             </div>
-                            <div class="card-avatar-back">
-                                <img src="" alt="Avatar Back" class="card-avatar-img">
-                                <div class="card-avatar-bg-back" id="cardAvatarBgBack"></div>
-                            </div>
-                        </div>
                         </div>
                     </div>
-                    
+
                     <div class="profile-positions" id="profilePositions">
                         <!-- Imagens de posições serão inseridas via JS -->
                     </div>
-                    
+
                     <div class="card-user-info">
                         <div class="card-username-wrap">
                             <h2 class="card-username" id="profileUsername">Nome do Usuário</h2>
@@ -178,7 +189,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Conteúdo do Banner -->
                 <div class="banner-overlay-content">
                     <div class="banner-actions-bottom">
@@ -337,7 +348,8 @@
                     <div class="stats-content">
                         <!-- Tabs de Estatísticas -->
                         <div class="stats-tabs">
-                            <button class="stats-tab active" data-stats="desempenho" onclick="showStatsTab('desempenho')">
+                            <button class="stats-tab active" data-stats="desempenho"
+                                onclick="showStatsTab('desempenho')">
                                 <i class="fas fa-chart-line"></i>
                                 <span>Desempenho</span>
                             </button>
@@ -458,7 +470,7 @@
                                     <i class="fas fa-chart-bar"></i>
                                     <h3>Dashboard de Desempenho</h3>
                                 </div>
-                                
+
                                 <div class="dashboard-charts-wrapper">
                                     <div class="dashboard-chart-card">
                                         <div class="chart-card-header">
@@ -473,7 +485,7 @@
                                             <canvas id="winsLossesChart"></canvas>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="dashboard-chart-card">
                                         <div class="chart-card-header">
                                             <i class="fas fa-crosshairs"></i>
@@ -526,35 +538,43 @@
                         <div class="stats-panel-content" id="statsArmas">
                             <div class="weapons-header">
                                 <div class="weapons-filters">
-                                    <button class="weapon-filter-btn active" data-filter="all" onclick="filterWeapons('all')">
+                                    <button class="weapon-filter-btn active" data-filter="all"
+                                        onclick="filterWeapons('all')">
                                         <i class="fas fa-globe"></i>
                                         <span>Geral</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="rifles" onclick="filterWeapons('rifles')">
+                                    <button class="weapon-filter-btn" data-filter="rifles"
+                                        onclick="filterWeapons('rifles')">
                                         <i class="fas fa-crosshairs"></i>
                                         <span>Rifles</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="snipers" onclick="filterWeapons('snipers')">
+                                    <button class="weapon-filter-btn" data-filter="snipers"
+                                        onclick="filterWeapons('snipers')">
                                         <i class="fas fa-bullseye"></i>
                                         <span>Snipers</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="pistolas" onclick="filterWeapons('pistolas')">
+                                    <button class="weapon-filter-btn" data-filter="pistolas"
+                                        onclick="filterWeapons('pistolas')">
                                         <i class="fas fa-handgun"></i>
                                         <span>Pistolas</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="smgs" onclick="filterWeapons('smgs')">
+                                    <button class="weapon-filter-btn" data-filter="smgs"
+                                        onclick="filterWeapons('smgs')">
                                         <i class="fas fa-spray-can"></i>
                                         <span>SMGs</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="escopetas" onclick="filterWeapons('escopetas')">
+                                    <button class="weapon-filter-btn" data-filter="escopetas"
+                                        onclick="filterWeapons('escopetas')">
                                         <i class="fas fa-bomb"></i>
                                         <span>Escopetas</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="metralhadoras" onclick="filterWeapons('metralhadoras')">
+                                    <button class="weapon-filter-btn" data-filter="metralhadoras"
+                                        onclick="filterWeapons('metralhadoras')">
                                         <i class="fas fa-fire"></i>
                                         <span>Metralhadoras</span>
                                     </button>
-                                    <button class="weapon-filter-btn" data-filter="utilitarios" onclick="filterWeapons('utilitarios')">
+                                    <button class="weapon-filter-btn" data-filter="utilitarios"
+                                        onclick="filterWeapons('utilitarios')">
                                         <i class="fas fa-tools"></i>
                                         <span>Utilitários</span>
                                     </button>
@@ -669,10 +689,10 @@
                                         <span class="event-badge nivel">Nível 5</span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="event-card-content">
                                     <h3 class="event-card-title">MIXCAMP 1º Edição</h3>
-                                    
+
                                     <div class="event-card-info">
                                         <div class="event-info-item">
                                             <i class="fas fa-users"></i>
@@ -681,7 +701,7 @@
                                                 <span class="event-info-value">0/6</span>
                                             </span>
                                         </div>
-                                        
+
                                         <div class="event-info-item">
                                             <i class="fas fa-signal"></i>
                                             <span>
@@ -689,7 +709,7 @@
                                                 <span class="event-info-value">Nível 5</span>
                                             </span>
                                         </div>
-                                        
+
                                         <div class="event-info-item">
                                             <i class="fas fa-calendar-alt"></i>
                                             <span>
@@ -697,7 +717,7 @@
                                                 <span class="event-info-value">15/03/2025</span>
                                             </span>
                                         </div>
-                                        
+
                                         <div class="event-info-item">
                                             <i class="fas fa-calendar-check"></i>
                                             <span>
@@ -705,7 +725,7 @@
                                                 <span class="event-info-value">10/03/2025</span>
                                             </span>
                                         </div>
-                                        
+
                                         <div class="event-info-item">
                                             <i class="fas fa-sitemap"></i>
                                             <span>
@@ -713,7 +733,7 @@
                                                 <span class="event-info-value">Chave</span>
                                             </span>
                                         </div>
-                                        
+
                                         <div class="event-info-item">
                                             <i class="fas fa-gamepad"></i>
                                             <span>
@@ -722,9 +742,9 @@
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="event-card-divider"></div>
-                                    
+
                                     <div class="event-card-footer">
                                         <div class="event-premiacao">
                                             <i class="fas fa-trophy"></i>
@@ -735,7 +755,7 @@
                                             <span>CS2</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="event-card-actions">
                                         <a href="#" class="event-btn event-btn-ver">
                                             <i class="fas fa-eye"></i>
@@ -788,8 +808,10 @@
                                     <!-- Mensagens serão inseridas via JS -->
                                 </div>
                                 <div class="chat-input-area">
-                                    <input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" autocomplete="off">
-                                    <button type="button" class="chat-send-btn" id="chatSendBtn" aria-label="Enviar mensagem">
+                                    <input type="text" class="chat-input" id="chatInput"
+                                        placeholder="Digite sua mensagem..." maxlength="500" autocomplete="off">
+                                    <button type="button" class="chat-send-btn" id="chatSendBtn"
+                                        aria-label="Enviar mensagem">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
                                 </div>
@@ -825,19 +847,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -851,8 +873,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -864,14 +886,14 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
@@ -885,7 +907,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -895,7 +918,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -921,15 +945,15 @@
             <button class="medal-modal-close" onclick="closeMedalModal()" aria-label="Fechar modal">
                 <i class="fas fa-times"></i>
             </button>
-            
+
             <!-- Partículas de fundo animadas -->
             <div class="medal-modal-particles"></div>
-            
+
             <!-- Constelação SVG de fundo -->
             <svg class="medal-modal-constellation" id="medalModalConstellation" xmlns="http://www.w3.org/2000/svg">
                 <!-- Pontos e linhas serão gerados via JavaScript -->
             </svg>
-            
+
             <!-- Topo: Título e Data -->
             <div class="medal-modal-top">
                 <div class="medal-modal-title-wrapper">
@@ -951,7 +975,8 @@
                         <div class="medal-loading-spinner"></div>
                         <p>Carregando conteúdo...</p>
                     </div>
-                    <iframe id="medalModalIframe" class="medalha-iframe" src="" frameborder="0" allowfullscreen></iframe>
+                    <iframe id="medalModalIframe" class="medalha-iframe" src="" frameborder="0"
+                        allowfullscreen></iframe>
                 </div>
             </div>
 
@@ -986,7 +1011,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -995,7 +1020,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -1009,7 +1034,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -1018,54 +1043,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -1105,7 +1131,8 @@
     </div>
 
     <!-- Mini Modal de Cupom / Presentear -->
-    <div id="giftModalOverlay" class="gift-modal-overlay" aria-hidden="true" onclick="if(event.target === this) fecharModalPresente()">
+    <div id="giftModalOverlay" class="gift-modal-overlay" aria-hidden="true"
+        onclick="if(event.target === this) fecharModalPresente()">
         <div class="gift-modal" role="dialog" aria-modal="true" aria-labelledby="giftModalTitle">
             <button type="button" class="gift-modal-close" aria-label="Fechar" onclick="fecharModalPresente()">
                 <i class="fas fa-times"></i>
@@ -1134,4 +1161,5 @@
     <script src="../js/utils.js"></script>
     <script src="../js/perfil.js"></script>
 </body>
+
 </html>

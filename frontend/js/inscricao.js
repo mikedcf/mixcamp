@@ -781,13 +781,13 @@ async function atualizarTimesInscritos(cardId, totalTimes) {
 
             
             document.getElementById('inscricaoStatus').style.background = 'linear-gradient(135deg,rgb(255, 93, 53),rgb(255, 66, 66))';
-            if (notifyOff == true) {
+            if (notify == true) {
                 showNotification('success', 'Inscrição já foi encerrada!');
-                notifyOff = false;
+                notify = false;
             }
         }
         catch (error) {
-            console.error('Erro ao adicionar troféu:', error);
+            console.error('Erro ao encerrar inscrição:', error);
         }
     }
     return quantidade;

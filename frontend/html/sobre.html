@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="../css/ultils.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body class="claro">
     <!-- Overlay do menu mobile (abre ao clicar no hamburger) -->
     <div class="mobile-nav-overlay" id="mobileNavOverlay" aria-hidden="true">
@@ -35,11 +37,11 @@
         <div class="nav-brand" onclick="window.location.href='home.html'">
             <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
         </div>
-    
+
         <div class="center-content">
             <nav class="nav" id="navContainer">
                 <ul class="nav-menu">
-                    
+
                     <li class="has-dropdown">
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
@@ -52,7 +54,7 @@
                     <li><a href="sobre.html">Sobre</a></li>
                 </ul>
             </nav>
-            
+
             <div class="search-bar-container" id="searchBarContainer">
                 <input type="text" class="search-input" placeholder="Pesquisar...">
                 <!-- Container de resultados da busca -->
@@ -61,32 +63,39 @@
                 </div>
             </div>
         </div>
-    
+
         <div class="search-profile-area">
             <div class="user-auth hidden" id="userAuth">
-                <button class="auth-btn login-btn" onclick="window.location.href='login.html'"><span>Login</span></button>
-                <button class="auth-btn register-btn" onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
             </div>
 
             <div class="user-perfil hidden" id="userPerfil">
                 <button class="perfil-btn" onclick="abrirMenuSuspenso()">
-                    <img src="../img/legalize.png" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
                     <span class="perfil-nome" id="perfilnome"></span>
                     <i class="fas fa-chevron-down seta"></i>
                 </button>
                 <div class="menu-opcoes" id="menuOpcoes">
                     <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
-                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu Time</span></a>
-                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
                     <div class="menu-separator"></div>
-                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap" id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge" id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
                     <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
                     <div class="menu-separator"></div>
-                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">Modo Escuro</span></a>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
                     <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
                 </div>
             </div>
-        
+
             <div class="box-lupa">
                 <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
                     🔍
@@ -103,7 +112,7 @@
                 <span class="subtitle">O Campeonato que Evoluiu</span>
             </h1>
             <p class="hero-description">
-                De uma simples "pelada" entre amigos no CS:GO para um campeonato profissional 
+                De uma simples "pelada" entre amigos no CS:GO para um campeonato profissional
                 com premiações, transmissão ao vivo e estrutura completa até Discord.
             </p>
             <div class="hero-stats">
@@ -168,63 +177,63 @@
                     </div>
                     <div class="timeline-content">
                         <h3>O Início</h3>
-                        <p>Tudo começou como uma simples "pelada" entre amigos no CS:GO. 
-                        Jogadores se reuniam para se divertir e competir de forma amigável.</p>
+                        <p>Tudo começou como uma simples "pelada" entre amigos no CS:GO.
+                            Jogadores se reuniam para se divertir e competir de forma amigável.</p>
                     </div>
                 </div>
-                
+
                 <div class="timeline-item">
                     <div class="timeline-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div class="timeline-content">
                         <h3>O Crescimento</h3>
-                        <p>A comunidade começou a crescer. Mais jogadores se juntaram, 
-                        e a competição se tornou mais organizada e profissional.</p>
+                        <p>A comunidade começou a crescer. Mais jogadores se juntaram,
+                            e a competição se tornou mais organizada e profissional.</p>
                     </div>
                 </div>
-                
+
                 <div class="timeline-item">
                     <div class="timeline-icon">
                         <i class="fas fa-trophy"></i>
                     </div>
                     <div class="timeline-content">
                         <h3>Premiações</h3>
-                        <p>Implementamos sistema de premiações, HUD personalizado e 
-                        transmissões ao vivo para tornar o campeonato mais atrativo.</p>
+                        <p>Implementamos sistema de premiações, HUD personalizado e
+                            transmissões ao vivo para tornar o campeonato mais atrativo.</p>
                     </div>
                 </div>
-                
+
                 <div class="timeline-item">
                     <div class="timeline-icon">
                         <i class="fa-brands fa-discord"></i>
                     </div>
                     <div class="timeline-content">
                         <h3>Estrutura Discord</h3>
-                        <p>Criamos uma estrutura completa no Discord com rodadas, 
-                        chaveamento, resultados, MVP e estatísticas detalhadas.</p>
+                        <p>Criamos uma estrutura completa no Discord com rodadas,
+                            chaveamento, resultados, MVP e estatísticas detalhadas.</p>
                     </div>
                 </div>
-                
+
                 <div class="timeline-item">
                     <div class="timeline-icon">
                         <i class="fas fa-rocket"></i>
                     </div>
                     <div class="timeline-content">
                         <h3>Migração FACEIT</h3>
-                        <p>Migramos para a plataforma FACEIT para oferecer uma 
-                        experiência ainda mais profissional e organizada.</p>
+                        <p>Migramos para a plataforma FACEIT para oferecer uma
+                            experiência ainda mais profissional e organizada.</p>
                     </div>
                 </div>
-                
+
                 <div class="timeline-item">
                     <div class="timeline-icon">
                         <i class="fas fa-crown"></i>
                     </div>
                     <div class="timeline-content">
                         <h3>CS2</h3>
-                        <p>Agora estamos prontos para o CS2! Com toda a experiência 
-                        acumulada, vamos criar o melhor campeonato possível.</p>
+                        <p>Agora estamos prontos para o CS2! Com toda a experiência
+                            acumulada, vamos criar o melhor campeonato possível.</p>
                     </div>
                 </div>
             </div>
@@ -243,7 +252,7 @@
                     <h3>1. Inscreva-se</h3>
                     <p>Crie sua conta, forme ou entre em um time e inscreva-se no campeonato.</p>
                 </div>
-                
+
                 <div class="funcionamento-card">
                     <div class="card-icon">
                         <i class="fas fa-calendar-alt"></i>
@@ -251,7 +260,7 @@
                     <h3>2. Agende</h3>
                     <p>Receba as datas dos jogos e prepare-se para as partidas.</p>
                 </div>
-                
+
                 <div class="funcionamento-card">
                     <div class="card-icon">
                         <i class="fas fa-gamepad"></i>
@@ -259,7 +268,7 @@
                     <h3>3. Jogue</h3>
                     <p>Participe das partidas na plataforma FACEIT com HUD personalizado.</p>
                 </div>
-                
+
                 <div class="funcionamento-card">
                     <div class="card-icon">
                         <i class="fas fa-chart-bar"></i>
@@ -267,7 +276,7 @@
                     <h3>4. Acompanhe</h3>
                     <p>Veja resultados, estatísticas e rankings atualizados no Discord.</p>
                 </div>
-                
+
                 <div class="funcionamento-card">
                     <div class="card-icon">
                         <i class="fas fa-trophy"></i>
@@ -275,7 +284,7 @@
                     <h3>5. Conquiste</h3>
                     <p>Suba no ranking, seja MVP e dispute as premiações finais.</p>
                 </div>
-                
+
                 <div class="funcionamento-card">
                     <div class="card-icon">
                         <i class="fas fa-users"></i>
@@ -301,7 +310,7 @@
                         <p>Partidas transmitidas com comentários profissionais e HUD personalizado.</p>
                     </div>
                 </div>
-                
+
                 <div class="recurso-card">
                     <div class="recurso-icon">
                         <i class="fas fa-chart-line"></i>
@@ -311,7 +320,7 @@
                         <p>Análise completa de performance com rankings e métricas avançadas.</p>
                     </div>
                 </div>
-                
+
                 <div class="recurso-card">
                     <div class="recurso-icon">
                         <i class="fas fa-medal"></i>
@@ -321,7 +330,7 @@
                         <p>Reconhecimento para os melhores jogadores de cada partida e edição.</p>
                     </div>
                 </div>
-                
+
                 <div class="recurso-card">
                     <div class="recurso-icon">
                         <i class="fas fa-gift"></i>
@@ -331,7 +340,7 @@
                         <p>Prêmios em dinheiro e itens para os campeões e destaques.</p>
                     </div>
                 </div>
-                
+
                 <div class="recurso-card">
                     <div class="recurso-icon">
                         <i class="fa-brands fa-discord"></i>
@@ -341,7 +350,7 @@
                         <p>Estrutura organizada com canais para rodadas, resultados e interação.</p>
                     </div>
                 </div>
-                
+
                 <div class="recurso-card">
                     <div class="recurso-icon">
                         <i class="fas fa-shield-alt"></i>
@@ -361,19 +370,19 @@
             <div class="cta-content">
                 <h2>Pronto para Participar?</h2>
                 <p>Junte-se à comunidade MIXCAMP e faça parte da história do melhor campeonato de CS2!</p>
-                
+
                 <div class="cta-buttons">
                     <a href="campeonato.html" class="btn-primary">
                         <i class="fas fa-play"></i>
                         Ir para Campeonato
                     </a>
-                    
+
                     <a href="#" class="btn-secondary" onclick="downloadRegras(event)">
                         <i class="fas fa-download"></i>
                         Baixar Regras (PDF)
                     </a>
                 </div>
-                
+
                 <div class="cta-features">
                     <!-- <div class="feature">
                         <i class="fas fa-check"></i>
@@ -399,7 +408,8 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Para se inscrever, você precisa ter uma conta na FACEIT, formar ou entrar em uma line e seguir o processo de inscrição no nosso Site.</p>
+                        <p>Para se inscrever, você precisa ter uma conta na FACEIT, formar ou entrar em uma line e
+                            seguir o processo de inscrição no nosso Site.</p>
                     </div>
                 </div>
 
@@ -411,25 +421,29 @@
                     <div class="faq-answer">
 
                         <li>
-                            possuir uma conta na Faceit caso não tenha acesse a <a href="https://www.faceit.com/pt/" target="_blank" class="faq-link">Faceit</a>
+                            possuir uma conta na Faceit caso não tenha acesse a <a href="https://www.faceit.com/pt/"
+                                target="_blank" class="faq-link">Faceit</a>
                         </li>
                         <li>
-                            possuir o Anti-Cheat da Faceit instalado,caso não tenha acesse a <a href="https://www.faceit.com/pt/anti-cheat" target="_blank" class="faq-link">Faceit Anti-Cheat</a>
+                            possuir o Anti-Cheat da Faceit instalado,caso não tenha acesse a <a
+                                href="https://www.faceit.com/pt/anti-cheat" target="_blank" class="faq-link">Faceit
+                                Anti-Cheat</a>
                         </li>
 
                         <li>
-                            Estar em um time, caso não tenha, acesse a <a href="comunidade.html" target="_blank" class="faq-link">Comunidade</a> e seja integrante de um time.
+                            Estar em um time, caso não tenha, acesse a <a href="comunidade.html" target="_blank"
+                                class="faq-link">Comunidade</a> e seja integrante de um time.
                         </li>
 
                         <li>
                             Concordar com as regras do campeonato.
-                            
+
                         </li>
-                        
+
 
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <span>Como funcionam as premiações nos campeonatos oficiais?</span>
@@ -447,27 +461,30 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>As premiações de campeonatos de terceiros São definidas pelo o organizador do evento (novas alterações serão feitas em breve).</p>
+                        <p>As premiações de campeonatos de terceiros São definidas pelo o organizador do evento (novas
+                            alterações serão feitas em breve).</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <span>Posso participar sozinho?</span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Você pode acessar a <a href="comunidade.html" class="faq-link" target="_blank">Comunidade</a> e se conectar com outros jogadores para formar um time ou encontrar um time.</p>
+                        <p>Você pode acessar a <a href="comunidade.html" class="faq-link" target="_blank">Comunidade</a>
+                            e se conectar com outros jogadores para formar um time ou encontrar um time.</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <span>Como funciona o sistema de ranking?</span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>O ranking é baseado nos resultados das partidas, com pontos distribuídos por vitórias, derrotas e performance individual. O ranking é atualizado após cada rodada.</p>
+                        <p>O ranking é baseado nos resultados das partidas, com pontos distribuídos por vitórias,
+                            derrotas e performance individual. O ranking é atualizado após cada rodada.</p>
                     </div>
                 </div>
             </div>
@@ -499,19 +516,19 @@
                     </ul>
                 </div>
             </div>
-    
-    
+
+
             <div class="direitos">
                 <p>Todos os direitos reservados © 2026 MIXCAMP</p>
             </div>
-    
-    
+
+
             <div class="suporte">
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
                         <a href="https://discord.gg/nCnDFagmpe" target="_blank">
-                            
+
                             <img src="../img/discord2.svg" alt="">
                             <p>Discord</p>
                             </img>
@@ -525,8 +542,8 @@
                         </a>
                     </li>
                 </ul>
-    
-    
+
+
                 <div class="desenvolvedor">
                     <h3 class="desenvolvedor-title">Desenvolvedor</h3>
                     <ul>
@@ -538,14 +555,14 @@
                 </div>
             </div>
         </div>
-    
-    
+
+
         <div class="textoInfinito">
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
             <h3 class="animation">MIXCAMP</h3>
         </div>
-    
+
     </footer>
 
 
@@ -566,7 +583,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body-profissional">
                 <form id="formCriarTime" class="form-profissional">
                     <!-- Seção de Imagens -->
@@ -575,7 +592,7 @@
                             <i class="fas fa-image"></i>
                             Imagens do Time
                         </h3>
-                        
+
                         <div class="image-upload-grid">
                             <!-- Logo do Time -->
                             <div class="image-upload-item">
@@ -589,7 +606,7 @@
                                     <div class="image-preview" id="logoPreview"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Banner do Time -->
                             <div class="image-upload-item">
                                 <div class="upload-area" id="bannerUploadArea">
@@ -598,54 +615,55 @@
                                         <span class="upload-text">Banner do Time</span>
                                         <span class="upload-specs">Recomendado: 1200x400px</span>
                                     </div>
-                                    <input type="file" id="bannerTime" name="banner" accept="image/*" class="file-input">
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
                                     <div class="image-preview" id="bannerPreview"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Seção de Informações -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="fas fa-info-circle"></i>
                             Informações do Time
                         </h3>
-                        
+
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="nomeTime" class="form-label">
                                     <i class="fas fa-tag"></i>
                                     Nome do Time
                                 </label>
-                                <input type="text" id="nomeTime" name="nome" required maxlength="100" 
-                                       placeholder="Ex: LEGALIZE" class="form-input">
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
                                 <div class="input-hint">Nome completo do seu time</div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="tagTime" class="form-label">
                                     <i class="fas fa-hashtag"></i>
                                     Tag do Time
                                 </label>
-                                <input type="text" id="tagTime" name="tag" required maxlength="10" 
-                                       placeholder="Ex: LGZ" class="form-input">
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
                                 <div class="input-hint">Tag curta para identificação</div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="sobreTime" class="form-label">
                                 <i class="fas fa-align-left"></i>
                                 Sobre o Time
                             </label>
-                            <textarea id="sobreTime" name="sobre_time" maxlength="500" 
-                                      placeholder="Descreva a história, objetivos e características do seu time..." 
-                                      class="form-textarea"></textarea>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
                             <div class="input-hint">Conte um pouco sobre seu time (opcional)</div>
                         </div>
                     </div>
-                    
+
                     <!-- Botões de Ação -->
                     <div class="form-actions-profissional">
                         <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime">
@@ -694,7 +712,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -704,7 +723,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -723,4 +743,5 @@
     <script src="../js/utils.js"></script>
     <script src="../js/sobre.js"></script>
 </body>
+
 </html>

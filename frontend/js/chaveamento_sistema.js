@@ -7559,19 +7559,23 @@ window.addEventListener('load', () => {
 
     if (copiarUrlA) {
         copiarUrlA.addEventListener('click', () => {
+            
             if (urlTimeA && urlTimeA.value) {
                 navigator.clipboard.writeText(urlTimeA.value)
-                    .then(() => alert('Link do Time A copiado!'))
+                    // .then(() => alert('Link do Time A copiado!'))
+                    .then(() => showNotification('success', 'Link do Time A copiado!'))
                     .catch((err) => console.error('Erro ao copiar URL do Time A:', err));
             }
         });
+        showNotification('success', 'Link do Time A copiado!')
     }
 
     if (copiarUrlB) {
         copiarUrlB.addEventListener('click', () => {
             if (urlTimeB && urlTimeB.value) {
                 navigator.clipboard.writeText(urlTimeB.value)
-                    .then(() => alert('Link do Time B copiado!'))
+                    // .then(() => alert('Link do Time B copiado!'))
+                    .then(() => showNotification('success', 'Link do Time B copiado!'))
                     .catch((err) => console.error('Erro ao copiar URL do Time B:', err));
             }
         });
@@ -7581,7 +7585,8 @@ window.addEventListener('load', () => {
         copiarUrlSpectator.addEventListener('click', () => {
             if (urlSpectator && urlSpectator.value) {
                 navigator.clipboard.writeText(urlSpectator.value)
-                    .then(() => alert('Link de Espectador copiado!'))
+                    // .then(() => alert('Link de Espectador copiado!'))
+                    .then(() => showNotification('success', 'Link de Espectador copiado!'))
                     .catch((err) => console.error('Erro ao copiar URL de Espectador:', err));
             }
         });
