@@ -1553,7 +1553,7 @@ async function atualizarBracketComDadosDoBanco(dadosChaveamento) {
                 // Sincronizar os controles de UI com o valor vindo do backend
                 const selectEl = window.teamCountSelect || document.getElementById('teamCountSelect');
                 if (selectEl && String(selectEl.value) !== String(quantidadeTimes)) {
-                    selectEl.value = String(quantidadeTimes.quantidade_times);
+                    selectEl.value = String(quantidadeTimes);
                 }
 
                 // Re-renderizar o bracket usando a quantidade real de times vinda do backend
