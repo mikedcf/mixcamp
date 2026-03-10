@@ -2520,6 +2520,9 @@ async function arrayCardEventos() {
         }
     }
 
+    console.log(arrayEventos)
+    
+
     document.getElementById('matchesCount').textContent = arrayEventos.length;
     criarCardsEventos(arrayEventos)
         
@@ -2620,7 +2623,8 @@ async function criarCardEvento(evento) {
         chaveamentobtn = 'none';
         
     }
-    console.log(statusTexto)
+    console.log(timesFormatado)
+    
     
 
     // Garantir que bannerUrl não seja undefined ou string 'undefined'

@@ -270,7 +270,7 @@ document.addEventListener('click', (event) => {
 
     // Segurança: apenas o dono/organizador do campeonato pode abrir os vetos pelo card
     if (window.isChampionshipOwner === false) {
-        console.warn('Apenas o organizador do campeonato pode abrir os vetos da partida.');
+        showNotification('error', 'Apenas o organizador do campeonato pode abrir os vetos da partida.');
         return;
     }
 
