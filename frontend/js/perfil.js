@@ -2463,6 +2463,20 @@ function showEventType(eventType) {
 
 // ===== CRIAR CARDS DE EVENTOS =====
 
+
+async function buscarTimesDoEventos(){
+    const response = await fetch(`${API_URL}/inscricoes/times`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+    });
+    const data = await response.json();
+    
+    return data;
+}
+
+
+
 async function arrayCardEventos() {
 
     const timesInscritos = [];
@@ -2476,6 +2490,10 @@ async function arrayCardEventos() {
     
 
     const dadosInscricoes = await buscarTimesInscritos(userId);
+
+    const timesEventos = await buscarTimesDoEventos();
+
+    
    
  
     for (const historico of dadosInscricoes.historico) {
@@ -2483,13 +2501,23 @@ async function arrayCardEventos() {
             
             for (const evento of dadosCard.inscricoes) {
                 if (historico.campeonato_id == evento.id) {
+                    
                    
                     
                     const dataInscricao = await formatarDataBR(historico.data_criacao);
                     const dataInicio = await formatarDataBR(evento.previsao_data_inicio);
+                    
+                    
                     for(const hostorico of dadosInscricoes.historico){
                         if(hostorico.campeonato_id == evento.id){
-                            timesInscritos.push(historico.time_id);
+                            // timesInscritos.push(historico.time_id);
+                            for (qntTimes of timesEventos.inscricoes ){
+                                if(qntTimes.inscricao_id == evento.id){
+                                    timesInscritos.push(qntTimes.time_id);
+                                    
+                                }
+                            }
+                            
                         }
                     }
                     const uniqueList = [...new Set(timesInscritos)];
