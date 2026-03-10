@@ -2469,13 +2469,11 @@ async function arrayCardEventos() {
     const arrayEventos = [];
 
     const auth_dados = await autenticacao();
-    if (!auth_dados.logado) {
-        return;
-    }
-
-
     const dadosCard = await getCardDados();
-    const userId = auth_dados.usuario.id;
+
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
+    
 
     const dadosInscricoes = await buscarTimesInscritos(userId);
    
