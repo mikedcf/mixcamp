@@ -288,23 +288,36 @@ app.delete(process.env.ROUTE_DEL_SOLICITACOES, deletarSolicitacao);
 // ==================================== [API MEDALHAS] =============================================
 
 // ----- MEDALHAS GET
-app.get(process.env.ROUTE_MEDALHAS_ID, getMedalhas);
+if (process.env.ROUTE_MEDALHAS_ID) {
+    app.get(process.env.ROUTE_MEDALHAS_ID, getMedalhas);
+}
 // Admin: listar todas as medalhas
-app.get(process.env.ROUTE_MEDALHAS_LISTAR_TODAS, listarTodasMedalhas);
+if (process.env.ROUTE_MEDALHAS_LISTAR_TODAS) {
+    app.get(process.env.ROUTE_MEDALHAS_LISTAR_TODAS, listarTodasMedalhas);
+}
 
-app.get(process.env.ROUTE_MEDALHAS_USUARIO_ID, getMedalhasUsuario)
+if (process.env.ROUTE_MEDALHAS_USUARIO_ID) {
+    app.get(process.env.ROUTE_MEDALHAS_USUARIO_ID, getMedalhasUsuario);
+}
 
 // ----- MEDALHAS POST
+if (process.env.ROUTE_MEDALHAS_CRIAR) {
+    app.post(process.env.ROUTE_MEDALHAS_CRIAR, criarMedalhas);
+}
 
-app.post(process.env.ROUTE_MEDALHAS_CRIAR, criarMedalhas)
-
-app.post(process.env.ROUTE_MEDALHAS_ADICIONAR, addMedalhasuser)
+if (process.env.ROUTE_MEDALHAS_ADICIONAR) {
+    app.post(process.env.ROUTE_MEDALHAS_ADICIONAR, addMedalhasuser);
+}
 
 // ----- MEDALHAS DELETE
-app.delete(process.env.ROUTE_MEDALHAS_DELETAR_ID, deletarMedalhas)
+if (process.env.ROUTE_MEDALHAS_DELETAR_ID) {
+    app.delete(process.env.ROUTE_MEDALHAS_DELETAR_ID, deletarMedalhas);
+}
 
 // ----- MEDALHAS UPDATE
-app.put(process.env.ROUTE_MEDALHAS_ATUALIZAR_DADOS_ID, atualizarMedalhas)
+if (process.env.ROUTE_MEDALHAS_ATUALIZAR_DADOS_ID) {
+    app.put(process.env.ROUTE_MEDALHAS_ATUALIZAR_DADOS_ID, atualizarMedalhas);
+}
 
 
 // ===============================================================================================
