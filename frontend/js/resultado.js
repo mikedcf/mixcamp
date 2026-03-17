@@ -978,7 +978,7 @@ function calcularMVP(allPlayers) {
     
     return {
         nome: mvpNome,
-        avatar: mvp.avatar || '../img/avatar.jpg',
+        avatar: mvp.avatar || '',
         rating: parseFloat(mvp.stats?.rating || '0'),
         highlights: highlights
     };
@@ -1129,7 +1129,7 @@ function integrarStatsFaceitComMixcamp(dadosMixCamp, statsData) {
             const avatarFaceit = avatarFaceitFromMix || avatarFaceitFromMatch || '';
 
             // avatar principal: preferir avatar Mixcamp, depois avatarFaceit (Mixcamp ou Faceit), depois padrão
-            const avatar = mixPlayer?.avatar || avatarFaceit || '../img/avatar.jpg';
+            const avatar = mixPlayer?.avatar || avatarFaceit || '';
             
             return {
                 // Guardar dados de identificação para usar na tabela
@@ -1201,7 +1201,7 @@ function integrarStatsFaceitComMixcamp(dadosMixCamp, statsData) {
                 const username = p.nickname || 'Player';
                 
                 // Buscar avatar do matchInfoData se disponível
-                let avatar = '../img/avatar.jpg';
+                let avatar = '';
                 if (matchInfoData?.teams) {
                     const allRosters = [
                         ...(matchInfoData.teams.faction1?.roster || []),
@@ -1217,7 +1217,7 @@ function integrarStatsFaceitComMixcamp(dadosMixCamp, statsData) {
                     nickname: username,
                     username: username,
                     nicknameFaceit: p.nickname || '',
-                    avatarFaceit: avatar !== '../img/avatar.jpg' ? avatar : '',
+                    avatarFaceit: avatar !== '' ? avatar : '',
                     avatar: avatar,
                     faceitid: p.player_id,
                     stats: {
@@ -1526,7 +1526,7 @@ async function usarDadosExemplo() {
             players: [
                 {
                     nome: 'EduBalaaa',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.424,
                     rws: 0,
                     kills: 32,
@@ -1545,7 +1545,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'casca--',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.163,
                     rws: 0,
                     kills: 23,
@@ -1564,7 +1564,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'Insanityl',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.023,
                     rws: 0,
                     kills: 22,
@@ -1583,7 +1583,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'LangBST',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.007,
                     rws: 0,
                     kills: 21,
@@ -1602,7 +1602,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'Tiger_dlll',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 1.548,
                     rws: 0,
                     kills: 16,
@@ -1629,7 +1629,7 @@ async function usarDadosExemplo() {
             players: [
                 {
                     nome: 'rosseti',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.471,
                     rws: 0,
                     kills: 34,
@@ -1648,7 +1648,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'keppq',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.761,
                     rws: 0,
                     kills: 35,
@@ -1667,7 +1667,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'ronaldobalan',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.451,
                     rws: 0,
                     kills: 27,
@@ -1686,7 +1686,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'TH--',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.620,
                     rws: 0,
                     kills: 25,
@@ -1705,7 +1705,7 @@ async function usarDadosExemplo() {
                 },
                 {
                     nome: 'tg5-',
-                    avatar: '../img/avatar.jpg',
+                    avatar: '',
                     rating: 2.279,
                     rws: 0,
                     kills: 23,
@@ -1728,7 +1728,7 @@ async function usarDadosExemplo() {
         formato: 'Melhor de 3',
         mvp: {
             nome: 'keppq',
-            avatar: '../img/avatar.jpg',
+            avatar: '',
             rating: 2.781,
             highlights: {
                 kills: { player: 'keppq', value: 35 },
@@ -2078,7 +2078,7 @@ function renderizarJogadoresVs(data) {
                     playerAvatar = faceitPlayer.avatar || '';
                 }
             }
-            playerAvatar = playerAvatar || '../img/avatar.jpg';
+            playerAvatar = playerAvatar || '';
             
             // Nome: nicknameFaceit (usernameMixcamp) - nickname fora, username dentro
             const nicknameFaceit = player.nicknameFaceit || player.nickname || 'Player';
@@ -2117,7 +2117,8 @@ function renderizarJogadoresVs(data) {
             playerItem.innerHTML = `
                 <div class="player-vs-avatar-container">
                     <div class="player-vs-avatar-wrapper">
-                        <img src="${playerAvatar}" alt="${nicknameFaceit}" class="player-vs-avatar" onerror="this.src='../img/avatar.jpg'">
+                        <img src="${playerAvatar}" alt="${nicknameFaceit}" class="player-vs-avatar" onerror="this.src='
+                            '">
                     </div>
                 </div>
                 <div class="player-vs-info">
@@ -2214,7 +2215,7 @@ function renderizarJogadoresFaceit(faction1data, faction2data, teams) {
             
             // Modo padrão (Faceit): mostrar dados do Mixcamp
             // Avatar: do Mixcamp (player.avatar)
-            const playerAvatar = player.avatar || '../img/avatar.jpg';
+            const playerAvatar = player.avatar || '';
             
             // Nome: usernameMixcamp (nicknameFaceit) - username fora, nickname dentro
             // player.username = username do Mixcamp
@@ -2231,7 +2232,8 @@ function renderizarJogadoresFaceit(faction1data, faction2data, teams) {
             playerItem.innerHTML = `
                 <div class="player-vs-avatar-container">
                     <div class="player-vs-avatar-wrapper">
-                        <img src="${playerAvatar}" alt="${nicknameFaceit}" class="player-vs-avatar" onerror="this.src='../img/avatar.jpg'">
+                        <img src="${playerAvatar}" alt="${nicknameFaceit}" class="player-vs-avatar" onerror="this.src='
+                            '">
                     </div>
                 </div>
                 <div class="player-vs-info">
@@ -2517,7 +2519,8 @@ function criarTabelaTime(faction, teamClass) {
         row.innerHTML = `
             <td>
                 <div class="player-cell">
-                    <img src="${player.avatar || '../img/avatar.jpg'}" alt="${player.nickname}" class="player-avatar" onerror="this.src='../img/avatar.jpg'">
+                    <img src="${player.avatar || ''}" alt="${player.nickname}" class="player-avatar" onerror="this.src='
+                            '">
                     <span class="player-name">
                         ${displayName}
                         ${nicknameFaceit ? `
@@ -3491,7 +3494,8 @@ function criarTabelaUtility(faction, teamClass) {
         row.innerHTML = `
             <td>
                 <div class="player-cell">
-                    <img src="${player.avatar || '../img/avatar.jpg'}" alt="${player.nickname}" class="player-avatar" onerror="this.src='../img/avatar.jpg'">
+                    <img src="${player.avatar || ''}" alt="${player.nickname}" class="player-avatar" onerror="this.src='
+                            '">
                     <span class="player-name">
                         ${displayName}
                         ${nicknameFaceit ? `
@@ -3629,7 +3633,8 @@ function criarTabelaDuels(faction, teamClass) {
         row.innerHTML = `
             <td>
                 <div class="player-cell">
-                    <img src="${player.avatar || '../img/avatar.jpg'}" alt="${player.nickname}" class="player-avatar" onerror="this.src='../img/avatar.jpg'">
+                    <img src="${player.avatar || ''}" alt="${player.nickname}" class="player-avatar" onerror="this.src='
+                            '">
                     <span class="player-name">
                         ${displayName}
                         ${nicknameFaceit ? `
@@ -3747,7 +3752,8 @@ function criarTabelaArmas(faction, teamClass) {
         row.innerHTML = `
             <td>
                 <div class="player-cell">
-                    <img src="${player.avatar || '../img/avatar.jpg'}" alt="${player.nickname}" class="player-avatar" onerror="this.src='../img/avatar.jpg'">
+                    <img src="${player.avatar || ''}" alt="${player.nickname}" class="player-avatar" onerror="this.src='
+                            '">
                     <span class="player-name">
                         ${displayName}
                         ${nicknameFaceit ? `
@@ -3786,7 +3792,7 @@ function renderizarMVP(data) {
     const mvp = data.mvp;
     
     document.getElementById('mvpName').textContent = mvp.nome;
-    document.getElementById('mvpAvatar').src = mvp.avatar || '../img/avatar.jpg';
+    document.getElementById('mvpAvatar').src = mvp.avatar || '';
     document.getElementById('mvpRating').textContent = `10 ${mvp.rating.toFixed(3)}`;
     
     if (mvp.highlights) {

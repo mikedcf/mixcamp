@@ -263,6 +263,484 @@ function obterResultadosLocais() {
     }
 }
 
+async function carregarRankingPlayersCache() {
+    try {
+        const response = await fetch(`${API_URL}/ranking/players`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            return [];
+        }
+        const data = await response.json();
+        const lista = Array.isArray(data?.ranking_players) ? data.ranking_players : [];
+        return lista;
+    } catch (error) {
+        console.error('Erro ao carregar ranking players:', error);
+        return [];
+    }
+}
+
+async function obterRankingAtualUsuario(usuarioId) {
+    const lista = await carregarRankingPlayersCache();
+    return lista.find(item => String(item.usuario_id) === String(usuarioId)) || null;
+}
+
+// ====== RANKING DE TIMES (TABLE ranking_times_atual) ======
+async function carregarRankingTimesCache() {
+    try {
+        const response = await fetch(`${API_URL}/ranking/times`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            return [];
+        }
+        const data = await response.json();
+        const lista = Array.isArray(data?.ranking_times) ? data.ranking_times : [];
+        return lista;
+    } catch (error) {
+        console.error('Erro ao carregar ranking times:', error);
+        return [];
+    }
+}
+
+async function obterRankingAtualTime(timeId) {
+    const lista = await carregarRankingTimesCache();
+    return lista.find(item => String(item.time_id) === String(timeId)) || null;
+}
+
+async function buscarIdsMembrosDoTime(timeId) {
+    try {
+        if (!timeId) return [];
+        const response = await fetch(`${API_URL}/times/${timeId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            return [];
+        }
+        const data = await response.json();
+        const possiveisArrays = [
+            data.membros,
+            data.jogadores,
+            data.players,
+            data.integrantes,
+            data.time?.membros
+        ].filter(Array.isArray);
+        if (possiveisArrays.length === 0) return [];
+        const membros = possiveisArrays[0];
+        const ids = membros
+            .map(m => m.usuario_id || m.user_id || m.id)
+            .filter(id => id !== undefined && id !== null);
+        return Array.from(new Set(ids));
+    } catch (error) {
+        console.error('Erro ao buscar membros do time:', error);
+        return [];
+    }
+}
+
+function calcularPontosPorPartida(campeonato, vencedor) {
+    const tipoCampeonato = normalizarTipoCampeonato(campeonato);
+    const mixcamp = (campeonato?.mixcamp || '').toString().trim().toLowerCase();
+    const ehOficialBase = tipoCampeonato === 'oficial';
+    const ehMxLeague = mixcamp === 'mx league';
+    const ehMxExtreme = mixcamp === 'mx extreme';
+    const ehOficial = ehOficialBase || ehMxLeague || ehMxExtreme;
+
+    if (ehOficial) {
+        return vencedor ? 15 : 4;
+    }
+    return vencedor ? 10 : 2;
+}
+
+function calcularBonusFinal(campeonato, venceu) {
+    if (!venceu) return 0;
+
+    const tipoCampeonato = normalizarTipoCampeonato(campeonato);
+    const mixcamp = (campeonato?.mixcamp || '').toString().trim().toLowerCase();
+    const ehOficialBase = tipoCampeonato === 'oficial';
+    const ehMxLeague = mixcamp === 'mx league';
+    const ehMxExtreme = mixcamp === 'mx extreme';
+    const ehOficial = ehOficialBase || ehMxLeague || ehMxExtreme;
+
+    if (!ehOficial) {
+        // Campeonato comum: bônus fixo de 200 pontos para o campeão
+        return 200;
+    }
+
+    // Campeonatos oficiais MixCamp
+    if (ehMxExtreme) {
+        return 400;
+    }
+    if (ehMxLeague) {
+        return 300;
+    }
+
+    // Oficial genérico (caso exista): por enquanto, nenhum bônus extra específico
+    return 0;
+}
+
+async function atualizarRankingUsuarioComIncrementos(usuarioId, venceu, campeonato, ehFinal = false) {
+    try {
+        const rankingAtual = await obterRankingAtualUsuario(usuarioId);
+        const base = rankingAtual || {};
+
+        const total_partidas_atual = parseInt(base.total_partidas ?? 0, 10) || 0;
+        const vitorias_atual = parseInt(base.vitorias ?? 0, 10) || 0;
+        const derrotas_atual = parseInt(base.derrotas ?? 0, 10) || 0;
+        const pontos_atual = parseInt(base.pontos ?? 0, 10) || 0;
+
+        const pontosPartida = calcularPontosPorPartida(campeonato, venceu);
+        const bonusFinal = ehFinal ? calcularBonusFinal(campeonato, venceu) : 0;
+
+        // Incrementos de contagem de campeonatos (comum / oficiais / mx league / mx extreme)
+        const tipoCampeonato = normalizarTipoCampeonato(campeonato);
+        const mixcamp = (campeonato?.mixcamp || '').toString().trim().toLowerCase();
+        const ehMxLeague = mixcamp === 'mx league';
+        const ehMxExtreme = mixcamp === 'mx extreme';
+        const ehOficialBase = tipoCampeonato === 'oficial';
+        const ehOficial = ehOficialBase || ehMxLeague || ehMxExtreme;
+
+        // API/DB usam: campeonatos_comuns, campeonatos_mx_extreme
+        const campeonatos_comum_atual = parseInt(base.campeonatos_comuns ?? 0, 10) || 0;
+        const campeonatos_oficiais_atual = parseInt(base.campeonatos_oficiais ?? 0, 10) || 0;
+        const campeonatos_mxextreme_atual = parseInt(base.campeonatos_mx_extreme ?? 0, 10) || 0;
+        const campeonatos_mx_league_atual = parseInt(base.campeonatos_mx_league ?? 0, 10) || 0;
+
+        let campeonatos_comum_novo = campeonatos_comum_atual;
+        let campeonatos_oficiais_novo = campeonatos_oficiais_atual;
+        let campeonatos_mxextreme_novo = campeonatos_mxextreme_atual;
+        let campeonatos_mx_league_novo = campeonatos_mx_league_atual;
+
+        if (!ehOficial) {
+            // Campeonato comum
+            campeonatos_comum_novo = campeonatos_comum_atual + 1;
+        } else {
+            // Campeonato oficial (inclui mx league / mx extreme)
+            campeonatos_oficiais_novo = campeonatos_oficiais_atual + 1;
+            if (ehMxLeague) {
+                campeonatos_mx_league_novo = campeonatos_mx_league_atual + 1;
+            }
+            if (ehMxExtreme) {
+                campeonatos_mxextreme_novo = campeonatos_mxextreme_atual + 1;
+            }
+        }
+
+        // Chaves devem ser os nomes das colunas da API: campeonatos_comuns, campeonatos_mx_extreme
+        const novosValores = {
+            total_partidas: total_partidas_atual + 1,
+            vitorias: vitorias_atual + (venceu ? 1 : 0),
+            derrotas: derrotas_atual + (venceu ? 0 : 1),
+            pontos: pontos_atual + pontosPartida + bonusFinal,
+            campeonatos_comuns: campeonatos_comum_novo,
+            campeonatos_oficiais: campeonatos_oficiais_novo,
+            campeonatos_mx_extreme: campeonatos_mxextreme_novo,
+            campeonatos_mx_league: campeonatos_mx_league_novo
+        };
+
+        const colunasParaAtualizar = [
+            'total_partidas',
+            'vitorias',
+            'derrotas',
+            'pontos',
+            'campeonatos_comuns',
+            'campeonatos_oficiais',
+            'campeonatos_mx_extreme',
+            'campeonatos_mx_league'
+        ];
+
+        // IMPORTANTE:
+        // Enviar as atualizações de coluna SEQUENCIALMENTE para evitar
+        // que múltiplas requisições simultâneas criem linhas duplicadas
+        // para o mesmo usuario_id no backend (condição de corrida na checagem de existência).
+        for (const coluna of colunasParaAtualizar) {
+            const valor = novosValores[coluna];
+            const body = { usuario_id: usuarioId, coluna, valor };
+            try {
+                const response = await fetch(`${API_URL}/ranking/players/atualizar`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(body)
+                });
+                if (!response.ok) {
+                    console.warn('Falha ao atualizar ranking player', coluna, 'usuario', usuarioId);
+                }
+            } catch (reqError) {
+                console.error('Erro na requisição de atualização de ranking:', coluna, 'usuario', usuarioId, reqError);
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar ranking do usuário:', error);
+    }
+}
+
+// Atualiza ranking do TIME em ranking_times_atual (mesma lógica de pontos dos players)
+async function atualizarRankingTimeComIncrementos(timeId, venceu, campeonato, ehFinal = false) {
+    try {
+        const rankingAtual = await obterRankingAtualTime(timeId);
+        const base = rankingAtual || {};
+
+        const total_partidas_atual = parseInt(base.total_partidas ?? 0, 10) || 0;
+        const vitorias_atual = parseInt(base.vitorias ?? 0, 10) || 0;
+        const derrotas_atual = parseInt(base.derrotas ?? 0, 10) || 0;
+        const pontos_atual = parseInt(base.pontos ?? 0, 10) || 0;
+
+        const pontosPartida = calcularPontosPorPartida(campeonato, venceu);
+        const bonusFinal = ehFinal ? calcularBonusFinal(campeonato, venceu) : 0;
+
+        const tipoCampeonato = normalizarTipoCampeonato(campeonato);
+        const mixcamp = (campeonato?.mixcamp || '').toString().trim().toLowerCase();
+        const ehMxLeague = mixcamp === 'mx league';
+        const ehMxExtreme = mixcamp === 'mx extreme';
+        const ehOficialBase = tipoCampeonato === 'oficial';
+        const ehOficial = ehOficialBase || ehMxLeague || ehMxExtreme;
+
+        const campeonatos_comum_atual = parseInt(base.campeonatos_comuns ?? 0, 10) || 0;
+        const campeonatos_oficiais_atual = parseInt(base.campeonatos_oficiais ?? 0, 10) || 0;
+        const campeonatos_mxextreme_atual = parseInt(base.campeonatos_mx_extreme ?? 0, 10) || 0;
+        const campeonatos_mx_league_atual = parseInt(base.campeonatos_mx_league ?? 0, 10) || 0;
+
+        let campeonatos_comum_novo = campeonatos_comum_atual;
+        let campeonatos_oficiais_novo = campeonatos_oficiais_atual;
+        let campeonatos_mxextreme_novo = campeonatos_mxextreme_atual;
+        let campeonatos_mx_league_novo = campeonatos_mx_league_atual;
+
+        if (!ehOficial) {
+            campeonatos_comum_novo = campeonatos_comum_atual + 1;
+        } else {
+            campeonatos_oficiais_novo = campeonatos_oficiais_atual + 1;
+            if (ehMxLeague) {
+                campeonatos_mx_league_novo = campeonatos_mx_league_atual + 1;
+            }
+            if (ehMxExtreme) {
+                campeonatos_mxextreme_novo = campeonatos_mxextreme_atual + 1;
+            }
+        }
+
+        const novosValores = {
+            total_partidas: total_partidas_atual + 1,
+            vitorias: vitorias_atual + (venceu ? 1 : 0),
+            derrotas: derrotas_atual + (venceu ? 0 : 1),
+            pontos: pontos_atual + pontosPartida + bonusFinal,
+            campeonatos_comuns: campeonatos_comum_novo,
+            campeonatos_oficiais: campeonatos_oficiais_novo,
+            campeonatos_mx_extreme: campeonatos_mxextreme_novo,
+            campeonatos_mx_league: campeonatos_mx_league_novo
+        };
+
+        const colunasParaAtualizar = [
+            'total_partidas',
+            'vitorias',
+            'derrotas',
+            'pontos',
+            'campeonatos_comuns',
+            'campeonatos_oficiais',
+            'campeonatos_mx_extreme',
+            'campeonatos_mx_league'
+        ];
+
+        for (const coluna of colunasParaAtualizar) {
+            const valor = novosValores[coluna];
+            const body = { time_id: timeId, coluna, valor };
+            try {
+                const response = await fetch(`${API_URL}/ranking/times/atualizar`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(body)
+                });
+                if (!response.ok) {
+                    console.warn('Falha ao atualizar ranking time', coluna, 'time', timeId);
+                }
+            } catch (reqError) {
+                console.error('Erro na requisição de atualização de ranking de time:', coluna, 'time', timeId, reqError);
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar ranking do time:', error);
+    }
+}
+
+async function atualizarRankingParaTime(timeId, venceu, ehFinal = false) {
+    try {
+        const campeonato = dadosCampeonatoAtual || window.campeonatoAtualDados;
+        if (!campeonato) return;
+        const membrosIds = await buscarIdsMembrosDoTime(timeId);
+        if (!Array.isArray(membrosIds) || membrosIds.length === 0) return;
+
+        await Promise.all(membrosIds.map(usuarioId =>
+            atualizarRankingUsuarioComIncrementos(usuarioId, venceu, campeonato, ehFinal)
+        ));
+    } catch (error) {
+        console.error('Erro ao atualizar ranking para time:', error);
+    }
+}
+
+async function registrarHistoricoMatchsUsuario(usuarioId, venceu) {
+    try {
+        const body = {
+            usuario_id: usuarioId,
+            resultado: venceu ? 'win' : 'lose'
+        };
+
+        const response = await fetch(`${API_URL}/historico/matchs/players/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            console.warn('Falha ao criar histórico de matchs para usuário', usuarioId);
+        }
+    } catch (error) {
+        console.error('Erro ao registrar histórico de matchs do usuário:', error);
+    }
+}
+
+async function registrarHistoricoMatchsParaTime(timeId, venceu) {
+    try {
+        const membrosIds = await buscarIdsMembrosDoTime(timeId);
+        if (!Array.isArray(membrosIds) || membrosIds.length === 0) return;
+
+        await Promise.all(
+            membrosIds.map(usuarioId => registrarHistoricoMatchsUsuario(usuarioId, venceu))
+        );
+    } catch (error) {
+        console.error('Erro ao registrar histórico de matchs para time:', error);
+    }
+}
+
+// Histórico de matchs para TIMES (tabela historico_matchs_times)
+async function registrarHistoricoMatchsTime(timeId, venceu) {
+    try {
+        const body = {
+            time_id: timeId,
+            resultado: venceu ? 'win' : 'lose'
+        };
+
+        const response = await fetch(`${API_URL}/historico/matchs/times/criar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            console.warn('Falha ao criar histórico de matchs para time', timeId);
+        }
+    } catch (error) {
+        console.error('Erro ao registrar histórico de matchs do time:', error);
+    }
+}
+
+// Tabelas de bônus por posição na classificação final (ao clicar em Conceder Premiação)
+const BONUS_POR_POSICAO = {
+    comum: {
+        6: { 1: 200, 2: 120, 3: 80, 4: 50, 5: 30, 6: 15 },
+        8: { 1: 200, 2: 120, 3: 80, 4: 50, 5: 30, 6: 20, 7: 10, 8: 5 },
+        12: { 1: 250, 2: 150, 3: 100, 4: 70, 5: 50, 6: 35, 7: 25, 8: 15, 9: 10, 10: 8, 11: 5, 12: 3 },
+        14: { 1: 280, 2: 170, 3: 110, 4: 80, 5: 55, 6: 40, 7: 28, 8: 18, 9: 12, 10: 8, 11: 5, 12: 3, 13: 2, 14: 1 },
+        16: { 1: 300, 2: 180, 3: 120, 4: 85, 5: 60, 6: 42, 7: 30, 8: 20, 9: 14, 10: 10, 11: 7, 12: 5, 13: 3, 14: 2, 15: 1, 16: 1 },
+        18: { 1: 320, 2: 190, 3: 130, 4: 90, 5: 65, 6: 45, 7: 32, 8: 22, 9: 15, 10: 11, 11: 8, 12: 5, 13: 4, 14: 3, 15: 2, 16: 1, 17: 1, 18: 1 },
+        20: { 1: 350, 2: 200, 3: 140, 4: 95, 5: 70, 6: 48, 7: 34, 8: 24, 9: 17, 10: 12, 11: 9, 12: 6, 13: 4, 14: 3, 15: 2, 16: 1, 17: 1, 18: 1, 19: 1, 20: 1 }
+    },
+    mx_league: {
+        6: { 1: 300, 2: 180, 3: 120, 4: 70, 5: 40, 6: 20 },
+        8: { 1: 300, 2: 180, 3: 120, 4: 70, 5: 40, 6: 25, 7: 15, 8: 8 },
+        12: { 1: 380, 2: 220, 3: 150, 4: 100, 5: 70, 6: 50, 7: 35, 8: 22, 9: 14, 10: 10, 11: 6, 12: 4 },
+        14: { 1: 420, 2: 250, 3: 165, 4: 115, 5: 80, 6: 55, 7: 40, 8: 26, 9: 16, 10: 11, 11: 7, 12: 4, 13: 3, 14: 2 },
+        16: { 1: 450, 2: 270, 3: 180, 4: 125, 5: 88, 6: 62, 7: 44, 8: 28, 9: 18, 10: 12, 11: 8, 12: 5, 13: 3, 14: 2, 15: 1, 16: 1 },
+        18: { 1: 480, 2: 285, 3: 190, 4: 132, 5: 95, 6: 66, 7: 47, 8: 30, 9: 19, 10: 13, 11: 9, 12: 6, 13: 4, 14: 3, 15: 2, 16: 1, 17: 1, 18: 1 },
+        20: { 1: 500, 2: 300, 3: 200, 4: 140, 5: 100, 6: 70, 7: 50, 8: 32, 9: 20, 10: 14, 11: 10, 12: 7, 13: 5, 14: 3, 15: 2, 16: 1, 17: 1, 18: 1, 19: 1, 20: 1 }
+    },
+    mx_extreme: {
+        6: { 1: 400, 2: 240, 3: 160, 4: 95, 5: 55, 6: 28 },
+        8: { 1: 400, 2: 240, 3: 160, 4: 95, 5: 55, 6: 35, 7: 20, 8: 10 },
+        12: { 1: 500, 2: 290, 3: 195, 4: 130, 5: 90, 6: 65, 7: 45, 8: 28, 9: 18, 10: 12, 11: 8, 12: 5 },
+        14: { 1: 550, 2: 330, 3: 218, 4: 150, 5: 105, 6: 72, 7: 52, 8: 34, 9: 21, 10: 14, 11: 9, 12: 6, 13: 4, 14: 2 },
+        16: { 1: 600, 2: 360, 3: 240, 4: 165, 5: 115, 6: 80, 7: 57, 8: 36, 9: 23, 10: 15, 11: 10, 12: 6, 13: 4, 14: 3, 15: 2, 16: 1 },
+        18: { 1: 640, 2: 380, 3: 252, 4: 174, 5: 122, 6: 85, 7: 60, 8: 38, 9: 24, 10: 16, 11: 11, 12: 7, 13: 5, 14: 3, 15: 2, 16: 1, 17: 1, 18: 1 },
+        20: { 1: 700, 2: 400, 3: 265, 4: 182, 5: 128, 6: 90, 7: 64, 8: 41, 9: 26, 10: 17, 11: 12, 12: 8, 13: 5, 14: 4, 15: 2, 16: 1, 17: 1, 18: 1, 19: 1, 20: 1 }
+    }
+};
+
+// Aplica bônus por posição e +1 nas colunas de campeonato ao clicar em "Conceder Premiação" (comum e oficial)
+async function aplicarBônusEPremiacaoConceder() {
+    const campeonato = dadosCampeonatoAtual || window.campeonatoAtualDados;
+    if (!campeonato) return;
+
+    const tipoCampeonato = normalizarTipoCampeonato(campeonato);
+    const mixcamp = (campeonato?.mixcamp || '').toString().trim().toLowerCase();
+    const ehOficial = tipoCampeonato === 'oficial';
+    const ehMxLeague = mixcamp === 'mx league';
+    const ehMxExtreme = mixcamp === 'mx extreme';
+    const numTeams = window.numTeams || window.dadosChaveamento?.quantidade_times || 8;
+    const quantidadeTimes = [6, 8, 12, 14, 16, 18, 20].find(n => n >= numTeams) || 8;
+
+    const cards = document.querySelectorAll('.standing-card[data-position][data-time-id]');
+    if (!cards.length) return;
+
+    const tipoBonus = ehOficial ? (ehMxLeague ? 'mx_league' : 'mx_extreme') : 'comum';
+    const tabelaBonus = BONUS_POR_POSICAO[tipoBonus] && BONUS_POR_POSICAO[tipoBonus][quantidadeTimes]
+        ? BONUS_POR_POSICAO[tipoBonus][quantidadeTimes]
+        : BONUS_POR_POSICAO.comum[8];
+
+    for (const card of Array.from(cards)) {
+        const pos = parseInt(card.getAttribute('data-position'), 10);
+        const timeId = card.getAttribute('data-time-id');
+        if (!pos || !timeId) continue;
+
+        const bonusPontos = tabelaBonus[pos] != null ? tabelaBonus[pos] : 0;
+        const membrosIds = await buscarIdsMembrosDoTime(parseInt(timeId, 10));
+        if (!Array.isArray(membrosIds) || membrosIds.length === 0) continue;
+
+        for (const usuarioId of membrosIds) {
+            try {
+                const base = await obterRankingAtualUsuario(usuarioId) || {};
+                const pontosAtual = parseInt(base.pontos ?? 0, 10) || 0;
+                const pontosNovo = pontosAtual + bonusPontos;
+
+                const campeonatos_comuns_atual = parseInt(base.campeonatos_comuns ?? 0, 10) || 0;
+                const campeonatos_oficiais_atual = parseInt(base.campeonatos_oficiais ?? 0, 10) || 0;
+                const campeonatos_mx_league_atual = parseInt(base.campeonatos_mx_league ?? 0, 10) || 0;
+                const campeonatos_mx_extreme_atual = parseInt(base.campeonatos_mx_extreme ?? 0, 10) || 0;
+
+                const colunasValores = { pontos: pontosNovo };
+                if (ehOficial) {
+                    colunasValores.campeonatos_oficiais = campeonatos_oficiais_atual + 1;
+                    colunasValores.campeonatos_mx_league = campeonatos_mx_league_atual + (ehMxLeague ? 1 : 0);
+                    colunasValores.campeonatos_mx_extreme = campeonatos_mx_extreme_atual + (ehMxExtreme ? 1 : 0);
+                } else {
+                    colunasValores.campeonatos_comuns = campeonatos_comuns_atual + 1;
+                }
+
+                for (const coluna of Object.keys(colunasValores)) {
+                    const valor = colunasValores[coluna];
+                    try {
+                        const res = await fetch(`${API_URL}/ranking/players/atualizar`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ usuario_id: usuarioId, coluna, valor })
+                        });
+                        if (!res.ok) console.warn('Falha ao atualizar ranking', coluna, 'usuario', usuarioId);
+                    } catch (e) {
+                        console.error('Erro ao atualizar ranking:', coluna, usuarioId, e);
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao aplicar bônus para usuário', usuarioId, err);
+            }
+        }
+    }
+}
+
 // Delegação de evento para o botão de hover "Vetos" acima do card de partida no chaveamento
 document.addEventListener('click', (event) => {
     const btn = event.target.closest('.match-box-hover-button');
@@ -1734,20 +2212,7 @@ async function atualizarChampionBox(partidas) {
                             ehUltimoRound = false;
                         }
 
-                        if (ehUltimoRound && partidaFinalCandidata.time1_id && !partidaFinalCandidata.time2_id) {
-                            // Caso especial: final com apenas um time (walkover, bye, etc.)
-                            partidaFinal = {
-                                match_id: partidaFinalCandidata.match_id,
-                                status: 'finalizada',
-                                time_vencedor_id: partidaFinalCandidata.time1_id,
-                                time1_id: partidaFinalCandidata.time1_id,
-                                time2_id: null
-                            };
-                            logChampionDebug('final-assumida-time1-unico', {
-                                matchId: partidaFinalCandidata.match_id,
-                                vencedorId: partidaFinalCandidata.time1_id
-                            });
-                        } else if (ehUltimoRound) {
+                        if (ehUltimoRound) {
                             // Tentar buscar o vencedor diretamente do DOM
                             const matchBox = document.querySelector(`[data-match-id="${partidaFinalCandidata.match_id}"]`);
                             logChampionDebug('buscando-matchbox-dom', {
@@ -2517,8 +2982,9 @@ async function atualizarChampionBox(partidas) {
             temWindowCampeonatoAtualDados: Boolean(window.campeonatoAtualDados)
         });
 
-        // O botão só aparece se: campeonato oficial, tem premiação configurada E usuário é dono
-        if (campeonato && ehOficial && (medalhaId || trofeuId) && isOwner) {
+        // Botão aparece para: dono do campeonato; se oficial, exige premiação configurada; se comum, sempre mostra
+        const premiaçãoOk = ehOficial ? (medalhaId || trofeuId) : true;
+        if (campeonato && isOwner && premiaçãoOk) {
             // Remover botão anterior se existir
             const btnPremiacaoExistente = championBox.querySelector('#btnConcederPremiacao');
             if (btnPremiacaoExistente) {
@@ -2554,11 +3020,32 @@ async function atualizarChampionBox(partidas) {
                 this.style.boxShadow = 'none';
             };
             btnPremiacao.addEventListener('click', async () => {
-                await concederPremiacoesOficiais(partidaFinal);
+                // Oficial: modal + entrega medalhas/troféu; comum: retorna true para seguir
+                const aplicado = await concederPremiacoesOficiais(partidaFinal);
+                if (aplicado === false) return;
+                // Comum e oficial: bônus por posição + +1 em campeonatos_comuns ou oficial/mx_league/mx_extreme
+                await aplicarBônusEPremiacaoConceder();
+                const campeonatoId = obterCampeonatoIdContextual();
+                if (campeonatoId) {
+                    try {
+                        const response = await fetch(`${API_URL}/inscricoes/campeonato/atualizar`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ id: campeonatoId, status: 'encerrado' })
+                        });
+                        if (response.ok && typeof showNotification === 'function') {
+                            showNotification('success', 'Campeonato encerrado com sucesso!');
+                        }
+                    } catch (err) {
+                        console.error('Erro ao atualizar status do campeonato para encerrado:', err);
+                    }
+                }
+                bloquearControlesPosPremiacao();
             });
 
             championBox.appendChild(btnPremiacao);
-            logChampionDebug('botao-premiacao-criado', { medalhaId, trofeuId });
+            logChampionDebug('botao-premiacao-criado', { ehOficial, medalhaId, trofeuId });
         } else {
             // Garantir que o botão não permaneça se as condições não forem atendidas
             const btnPremiacaoExistente = championBox.querySelector('#btnConcederPremiacao');
@@ -2569,12 +3056,10 @@ async function atualizarChampionBox(partidas) {
             // Logs específicos sobre por que o botão não foi criado
             if (!campeonato) {
                 logChampionDebug('botao-premiacao-nao-criado', { motivo: 'campeonato-nao-encontrado' });
-            } else if (!ehOficial) {
-                logChampionDebug('botao-premiacao-nao-criado', { motivo: 'campeonato-nao-oficial', tipo: tipoCampeonato });
-            } else if (!medalhaId && !trofeuId) {
-                logChampionDebug('botao-premiacao-nao-criado', { motivo: 'premiacao-nao-configurada' });
             } else if (!isOwner) {
                 logChampionDebug('botao-premiacao-nao-criado', { motivo: 'usuario-nao-e-dono', isOwner });
+            } else if (!premiaçãoOk) {
+                logChampionDebug('botao-premiacao-nao-criado', { motivo: 'premiacao-nao-configurada-oficial' });
             }
         }
     } catch (error) {
@@ -2877,8 +3362,8 @@ async function inicializarChaveamentoDoCampeonato() {
         if (premiacaoJaConcedida) {
             premiacaoConcedida = true;
             // Aguardar um pouco para garantir que os elementos do DOM estão prontos
-    setTimeout(() => {
-                desabilitarEdicoesAposPremiacao();
+            setTimeout(() => {
+                bloquearControlesPosPremiacao();
             }, 1000);
         }
         
@@ -3314,7 +3799,7 @@ function esconderBotoesEdicao() {
 // Função para desabilitar edições após premiação ser concedida
 function desabilitarEdicoesAposPremiacao() {
     premiacaoConcedida = true;
-    
+
     // Esconder botão de resetar chaveamento
     const btnResetar = document.getElementById('resetChaveamento');
     if (btnResetar) {
@@ -3334,6 +3819,33 @@ function desabilitarEdicoesAposPremiacao() {
     const campeonatoId = urlParams.get('id');
     if (campeonatoId) {
         localStorage.setItem(`premiacao-concedida-${campeonatoId}`, 'true');
+    }
+}
+
+// Bloqueia Embaralhar times, Resetar chaveamento e selects (quantidade de times / formato) após Conceder Premiação
+function bloquearControlesPosPremiacao() {
+    desabilitarEdicoesAposPremiacao();
+
+    const btnEmbaralhar = document.getElementById('addExampleTeams');
+    if (btnEmbaralhar) {
+        btnEmbaralhar.disabled = true;
+        btnEmbaralhar.style.opacity = '0.6';
+        btnEmbaralhar.style.cursor = 'not-allowed';
+        btnEmbaralhar.title = 'Premiação já concedida. Não é possível embaralhar novamente.';
+    }
+
+    const teamCountSelect = document.getElementById('teamCountSelect');
+    if (teamCountSelect) {
+        teamCountSelect.disabled = true;
+        teamCountSelect.style.opacity = '0.6';
+        teamCountSelect.style.cursor = 'not-allowed';
+    }
+
+    const formatSelect = document.getElementById('formatSelect');
+    if (formatSelect) {
+        formatSelect.disabled = true;
+        formatSelect.style.opacity = '0.6';
+        formatSelect.style.cursor = 'not-allowed';
     }
 }
 
@@ -3692,17 +4204,14 @@ function mostrarModalConfirmacaoPremiacao(timeCampeaoNome, timeSegundoNome) {
 
 async function concederPremiacoesOficiais(partidaFinal) {
     if (!partidaFinal || !partidaFinal.time_vencedor_id) {
-        return;
+        return true;
     }
-    
     if (premiacaoOficialEmAndamento) {
-        return;
+        return false;
     }
-
     const campeonato = dadosCampeonatoAtual || window.campeonatoAtualDados;
-    
     if (!campeonato) {
-        return;
+        return true;
     }
     
     const tipoCampeonato = normalizarTipoCampeonato(campeonato);
@@ -3716,12 +4225,12 @@ async function concederPremiacoesOficiais(partidaFinal) {
     });
     
     if (tipoCampeonato !== 'oficial') {
-        return;
+        return true;
     }
     
     if (!medalhaId && !trofeuId) {
         debugChaveamentoEtapa('premiacao-sem-medalha-trofeu');
-        return;
+        return false;
     }
 
     const timeVencedorId = partidaFinal.time_vencedor_id;
@@ -3766,7 +4275,7 @@ async function concederPremiacoesOficiais(partidaFinal) {
     if (premiacaoKey) {
         const ultimaPremiacao = localStorage.getItem(premiacaoKey);
         if (ultimaPremiacao && ultimaPremiacao === String(timeVencedorId)) {
-            return;
+            return true;
         }
     }
 
@@ -3797,7 +4306,7 @@ async function concederPremiacoesOficiais(partidaFinal) {
     debugChaveamentoEtapa('premiacao-confirmacao-usuario', { confirmou: confirmado === true });
 
     if (!confirmado) {
-        return;
+        return false;
     }
 
     premiacaoOficialEmAndamento = true;
@@ -3847,18 +4356,17 @@ async function concederPremiacoesOficiais(partidaFinal) {
             localStorage.setItem(premiacaoKey, String(timeVencedorId));
         }
 
-        // Desabilitar edições após premiação
         desabilitarEdicoesAposPremiacao();
-        
-        // Mostrar notificação de sucesso
         if (typeof showNotification === 'function') {
             showNotification('success', 'Premiações concedidas com sucesso! 🏆', 5000);
         }
+        return true;
     } catch (error) {
         console.error('Erro ao conceder premiações oficiais:', error);
         if (typeof showNotification === 'function') {
             showNotification('error', 'Erro ao conceder premiações. Tente novamente.', 5000);
         }
+        return false;
     } finally {
         premiacaoOficialEmAndamento = false;
         debugChaveamentoEtapa('premiacao-processo-finalizado');
@@ -6772,6 +7280,56 @@ window.addEventListener('load', () => {
                                         format: 'MD3'
                                     });
 
+                                    // Atualizar ranking e histórico dos players dos dois times
+                                    try {
+                                        const time1Row = matchBox.querySelector('.team-row[data-team="1"]');
+                                        const time2Row = matchBox.querySelector('.team-row[data-team="2"]');
+                                        const time1Id = time1Row ? time1Row.getAttribute('data-time-id') : null;
+                                        const time2Id = time2Row ? time2Row.getAttribute('data-time-id') : null;
+                                        const campeonato = dadosCampeonatoAtual || window.campeonatoAtualDados;
+
+                                        // Detectar se esta partida é a grande final ou a final do single elimination
+                                        let ehFinal = false;
+                                        if (campeonato && matchId) {
+                                            const isGrandFinalPartida = matchId === 'grand_final_1';
+                                            let isFinalSingleElimPartida = false;
+
+                                            if (!isGrandFinalPartida && matchId.startsWith('upper_')) {
+                                                const lowerBracketArea = document.getElementById('lowerBracketArea');
+                                                const isDoubleElimination = lowerBracketArea && lowerBracketArea.style.display !== 'none';
+
+                                                if (!isDoubleElimination) {
+                                                    const quantidadeTimes = window.dadosChaveamento?.quantidade_times || window.numTeams || 8;
+                                                    if (quantidadeTimes) {
+                                                        let bracketSize = 1;
+                                                        while (bracketSize < quantidadeTimes) bracketSize *= 2;
+                                                        const totalRounds = Math.log2(bracketSize);
+                                                        const matchParts = matchId.split('_');
+                                                        const roundNum = parseInt(matchParts[1]) || 0;
+                                                        isFinalSingleElimPartida = (roundNum === totalRounds);
+                                                    }
+                                                }
+                                            }
+
+                                            ehFinal = isGrandFinalPartida || isFinalSingleElimPartida;
+                                        }
+
+                                        if (time1Id) {
+                                            await atualizarRankingParaTime(time1Id, winner === 1, ehFinal);              // players
+                                            await registrarHistoricoMatchsParaTime(time1Id, winner === 1);              // players
+                                            await atualizarRankingTimeComIncrementos(time1Id, winner === 1, campeonato, ehFinal); // times
+                                            await registrarHistoricoMatchsTime(time1Id, winner === 1);                  // times
+                                        }
+                                        if (time2Id) {
+                                            await atualizarRankingParaTime(time2Id, winner === 2, ehFinal);              // players
+                                            await registrarHistoricoMatchsParaTime(time2Id, winner === 2);              // players
+                                            await atualizarRankingTimeComIncrementos(time2Id, winner === 2, campeonato, ehFinal); // times
+                                            await registrarHistoricoMatchsTime(time2Id, winner === 2);                  // times
+                                        }
+                                    } catch (rankingError) {
+                                        console.error('Erro ao processar ranking/histórico para partida MD3:', rankingError);
+                                    }
+
                                     // Atualizar card
                                     atualizarCardResultado(matchBox, { winner, score1, score2, format: 'MD3' });
 
@@ -6792,7 +7350,8 @@ window.addEventListener('load', () => {
                                         }, 1500);
                                     }
                                 } else {
-                                    alert('Placar inválido! Deve ser 2x0 ou 2x1.');
+                                    
+                                    showNotification("error", "Placar inválido! Deve ser 2x0 ou 2x1.");
                                 }
                             } catch (e) {
                                 console.warn('Erro ao processar confirmação MD3:', e);
@@ -6838,7 +7397,8 @@ window.addEventListener('load', () => {
                                     if (typeof showNotification === 'function') {
                                         showNotification('info', 'A premiação já foi concedida. Não é possível editar resultados.', 3000);
                                     } else {
-                                        alert('A premiação já foi concedida. Não é possível editar resultados.');
+                                        
+                                        showNotification("error", "A premiação já foi concedida. Não é possível editar resultados.", 3000);
                                     }
                                     return;
                                 }
@@ -6850,7 +7410,8 @@ window.addEventListener('load', () => {
                                 // Verificar se é dono (variável global definida pela função verificarPermissoesChaveamento)
                                 if (window.isChampionshipOwner === false) {
                                     // Se não for dono, mostrar mensagem e não abrir modal
-                                    alert('Apenas o organizador do campeonato pode editar resultados.');
+                                    
+                                    showNotification('error', 'Apenas o organizador do campeonato pode editar resultados.', 3000);
                                     return;
                                 }
                             }
@@ -7094,7 +7655,8 @@ window.addEventListener('load', () => {
             const stored = JSON.parse(localStorage.getItem('cs2-teams') || '[]');
 
             if (stored.length === 0) {
-                alert('Não há times para embaralhar. Adicione times primeiro.');
+                
+                showNotification("error", "Não há times para embaralhar. Adicione times primeiro.");
                 return;
             }
 
@@ -7136,10 +7698,12 @@ window.addEventListener('load', () => {
                 window.renderBracket(n, format);
             }
 
-            alert('Times embaralhados com sucesso!');
+            
+            showNotification("success", "Times embaralhados com sucesso!");
         } catch (error) {
             console.error('Erro ao embaralhar times:', error);
-            alert('Erro ao embaralhar times.');
+            
+            showNotification("error", "Erro ao embaralhar times.");
         }
     });
     } else {
@@ -7206,8 +7770,9 @@ window.addEventListener('load', () => {
                 modalListarTimes.style.display = 'block';
             }
         } catch (error) {
-            console.error('Erro ao listar times:', error);
-            alert('Erro ao carregar lista de times.');
+            
+            showNotification("error", "Erro ao carregar lista de times.");
+
         }
     };
 
@@ -7417,7 +7982,8 @@ window.addEventListener('load', () => {
         const formato = document.querySelector('input[name="formatoVeto"]:checked')?.value;
         
         if (!formato) {
-            alert('Selecione um formato (BO1, BO3 ou BO5)');
+            
+            showNotification("error", "Selecione um formato (BO1, BO3 ou BO5)");
             return;
         }
 
@@ -7425,12 +7991,13 @@ window.addEventListener('load', () => {
         atualizarMapasSelecionados();
 
         if (mapasSelecionados.length === 0) {
-            alert('Selecione pelo menos um mapa');
+            showNotification("error", "Selecione pelo menos um mapa");
+
             return;
         }
 
         if (mapasSelecionados.length !== 7) {
-            alert(`Por favor, selecione exatamente 7 mapas. Você selecionou ${mapasSelecionados.length} mapa(s).`);
+            showNotification("error", `Por favor, selecione exatamente 7 mapas. Você selecionou ${mapasSelecionados.length} mapa(s).`);
             return;
         }
 
@@ -7496,11 +8063,12 @@ window.addEventListener('load', () => {
                     })
                 });
             } else {
-                alert('Erro ao criar sessão de vetos: ' + (data.message || 'Erro desconhecido'));
+                showNotification("error", "Erro ao criar sessão de vetos: " + (data.message || "Erro desconhecido"));
             }
         } catch (error) {
             console.error('Erro ao aplicar vetos:', error);
-            alert('Erro ao criar sessão de vetos');
+            showNotification("error", "Erro ao criar sessão de vetos");
+
         }
     }
 
@@ -7567,7 +8135,7 @@ window.addEventListener('load', () => {
                     .catch((err) => console.error('Erro ao copiar URL do Time A:', err));
             }
         });
-        showNotification('success', 'Link do Time A copiado!')
+        // showNotification('success', 'Link do Time A copiado!')
     }
 
     if (copiarUrlB) {
@@ -7651,7 +8219,7 @@ window.addEventListener('load', () => {
 
                     } catch (error) {
                         console.error('Erro ao resetar chaveamento:', error);
-                        alert('Erro ao resetar chaveamento. Tente novamente.');
+                        showNotification("error", "Erro ao resetar chaveamento. Tente novamente.");
                         btnConfirmarReset.disabled = false;
                         btnConfirmarReset.textContent = 'Sim, Resetar';
                         return;
@@ -7682,7 +8250,7 @@ window.addEventListener('load', () => {
                 window.location.reload();
             } catch (error) {
                 console.error('Erro ao resetar chaveamento:', error);
-                alert('Erro ao resetar chaveamento. Tente novamente.');
+                showNotification("error", "Erro ao resetar chaveamento. Tente novamente.");
                 btnConfirmarReset.disabled = false;
                 btnConfirmarReset.textContent = 'Sim, Resetar';
             }

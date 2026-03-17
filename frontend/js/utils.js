@@ -209,7 +209,6 @@ async function verificarNovasNotificacoes(){
         if(notificao.user_id === userId){
             if(notificao.lida === 0){
                 contador+=1;
-                console.log(contador);
                 if (dotnumber) {
                     dotnumber.style.display = 'flex';
                     dotnumber.textContent = contador;

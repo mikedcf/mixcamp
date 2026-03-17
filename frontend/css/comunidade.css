@@ -916,6 +916,81 @@ body::before {
     position: relative;
 }
 
+.results-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.75));
+    z-index: 3;
+    pointer-events: none;
+}
+
+.results-loading-spinner {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    border: 4px solid rgba(255, 255, 255, 0.18);
+    border-top-color: #ff6b35;
+    border-right-color: #00d4ff;
+    animation: comunidade-spinner 0.7s linear infinite;
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.8);
+}
+
+.results-loading-text {
+    font-family: "Oswald", sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+@keyframes comunidade-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Loader estilo ranking (usado na comunidade) */
+.ranking__loader {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 16px;
+    gap: 22px;
+    min-height: 260px;
+}
+
+.ranking__spinner {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    border: 5px solid rgba(255, 255, 255, 0.12);
+    border-top-color: #f97316;
+    border-right-color: #3b82f6;
+    animation: ranking-spinner 0.7s linear infinite;
+    box-shadow: 0 0 22px rgba(0, 0, 0, 0.7);
+}
+
+.ranking__loaderText {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(233, 236, 255, .72);
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+
+@keyframes ranking-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .main-section::before {
     content: '';
     position: absolute;

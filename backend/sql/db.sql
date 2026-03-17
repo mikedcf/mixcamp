@@ -534,6 +534,7 @@ CREATE TABLE IF NOT EXISTS chaveamentos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================ TABELAS DO SISTEMA DE CHAVEAMENTO =============================
+DROP TABLE partidas
 
 -- Tabela de partidas do chaveamento
 CREATE TABLE IF NOT EXISTS partidas (
@@ -559,6 +560,9 @@ CREATE TABLE IF NOT EXISTS partidas (
     INDEX idx_round (round_num, bracket_type),
     UNIQUE KEY unique_match (chaveamento_id, match_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+DROP TABLE resultados_partidas
 
 -- Resultados detalhados das partidas (por mapa)
 CREATE TABLE IF NOT EXISTS resultados_partidas (
@@ -594,6 +598,8 @@ CREATE TABLE IF NOT EXISTS posicoes_times (
     INDEX idx_bracket (bracket_type, round_atual),
     UNIQUE KEY unique_time_chaveamento (chaveamento_id, time_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 
 -- Histórico de movimentações dos times no chaveamento
 CREATE TABLE IF NOT EXISTS historico_movimentacoes (
@@ -690,25 +696,44 @@ CREATE TABLE IF NOT EXISTS vetos_acoes (
 
 -- ============================ SISTEMA DE RANKING  =============================
 
-
-CREATE TABLE IF NOT EXISTS ranking_times_atual (
+CREATE TABLE IF NOT EXISTS ranking_players_atual (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    time_id INT NOT NULL,
-
-    pontos INT NOT NULL DEFAULT 0,
+    usuario_id INT NOT NULL,
     ranking_atual INT NOT NULL DEFAULT 0,
-
-    trofeus INT NOT NULL DEFAULT 0,
     total_partidas INT NOT NULL DEFAULT 0,
     vitorias INT NOT NULL DEFAULT 0,
     derrotas INT NOT NULL DEFAULT 0,
     wo INT NOT NULL DEFAULT 0,
 
-    campeonatos_premier_cup INT NOT NULL DEFAULT 0,
-    campeonatos_liga_prime INT NOT NULL DEFAULT 0,
+    campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
+    campeonatos_mx_league INT NOT NULL DEFAULT 0,
     campeonatos_oficiais INT NOT NULL DEFAULT 0,
     campeonatos_comuns INT NOT NULL DEFAULT 0,
 
+    medalhas INT NOT NULL DEFAULT 0,
+    pontos INT NOT NULL DEFAULT 0,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE IF NOT EXISTS ranking_times_atual (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    time_id INT NOT NULL,
+    ranking_atual INT NOT NULL DEFAULT 0,
+    trofeus INT NOT NULL DEFAULT 0,
+    total_partidas INT NOT NULL DEFAULT 0,
+    vitorias INT NOT NULL DEFAULT 0,
+    derrotas INT NOT NULL DEFAULT 0,
+    wo INT NOT NULL DEFAULT 0,
+    campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
+    campeonatos_mx_league INT NOT NULL DEFAULT 0,
+    campeonatos_oficiais INT NOT NULL DEFAULT 0,
+    campeonatos_comuns INT NOT NULL DEFAULT 0,
+    pontos INT NOT NULL DEFAULT 0,
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -866,3 +891,74 @@ CREATE TABLE cupons_resgatados (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (cupom_id) REFERENCES cupons(id) ON DELETE CASCADE
 );
+
+
+
+
+CREATE TABLE IF NOT EXISTS divulgar_links_picksbans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    time_id_a INT NOT NULL,
+    time_id_b INT NOT NULL,
+    link_espectador VARCHAR(255) NOT NULL,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (time_id_a) REFERENCES times(id) ON DELETE CASCADE,
+    FOREIGN KEY (time_id_b) REFERENCES times(id) ON DELETE CASCADE
+);
+
+ALTER TABLE historico_matchs_players
+DROP COLUMN vitorias;
+
+ALTER TABLE historico_matchs_players
+ADD COLUMN resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
+
+
+CREATE TABLE IF NOT EXISTS historico_matchs_players(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo',
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+)
+
+ALTER TABLE historico_matchs_times
+DROP COLUMN derrotas;
+ALTER TABLE historico_matchs_times
+ADD COLUMN resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
+
+
+ALTER TABLE historico_matchs_times
+ADD COLUMN resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
+
+CREATE TABLE IF NOT EXISTS historico_matchs_times(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    time_id INT NOT NULL,
+    resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo',
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (time_id) REFERENCES times(id) ON DELETE CASCADE
+)
+
+
+
+-- ============================== AMBIENTE TESTE ==============================
+
+
+ALTER TABLE times ENGINE=InnoDB;
+
+
+
+
+USE mixcamp;
+
+SELECT *
+FROM inscricoes_campeonato
+WHERE id = 3;
+
+
+SHOW CREATE TABLE inscricoes_campeonato\G
+
+SHOW CREATE TABLE chaveamentos\G

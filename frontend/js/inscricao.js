@@ -776,7 +776,7 @@ async function atualizarTimesInscritos(cardId, totalTimes) {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ id: cardId, status: "encerrado" })
+                body: JSON.stringify({ id: cardId, status: "andamento" })
             });
 
             

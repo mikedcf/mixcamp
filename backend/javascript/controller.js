@@ -69,7 +69,7 @@ async function setupDatabase() {
         sobre TEXT,
         time_id INT NULL,
         posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT '',
-        gerencia ENUM('admin','moderador','gerente','user') DEFAULT 'user',
+        gerencia ENUM('admin','moderador','streammer','apoiador','user') DEFAULT 'user',
         organizador ENUM('premium','simples') DEFAULT NULL,
         cores_perfil VARCHAR(50) DEFAULT '#ffffff80',
         cfg_cs VARCHAR(255)
@@ -441,15 +441,21 @@ async function setupDatabase() {
     CREATE TABLE IF NOT EXISTS cupons (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(20) UNIQUE NOT NULL,
-        nome VARCHAR(100) NOT NULL,
+        tipo VARCHAR(100) NOT NULL,
         descricao TEXT NULL,
-        desconto_percentual DECIMAL(5, 2) NOT NULL,
+        desconto_percentual DECIMAL(5, 2) NULL,
+        id_item INT NULL,
+        id_trofeu INT NULL,
+        id_medalha INT NULL,
         usos_maximos INT DEFAULT 1,
         usos_restantes INT DEFAULT 1,
-        data_expiracao DATETIME NOT NULL,
+        data_expiracao DATETIME NULL,
         ativo BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (id_trofeu) REFERENCES trofeus(id) ON DELETE SET NULL,
+        FOREIGN KEY (id_medalha) REFERENCES medalhas(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
@@ -458,9 +464,10 @@ async function setupDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT NOT NULL,
         cupom_id INT NOT NULL,
-        data_resgate DATETIME NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_usuario_cupom (usuario_id, cupom_id)
+        data_resgate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+        FOREIGN KEY (cupom_id) REFERENCES cupons(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
@@ -642,43 +649,76 @@ async function setupDatabase() {
     */
 
     await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS ranking_times_atual (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
+    CREATE TABLE IF NOT EXISTS ranking_players_atual (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        usuario_id INT NOT NULL,
+        ranking_atual INT NOT NULL DEFAULT 0,
+        total_partidas INT NOT NULL DEFAULT 0,
+        vitorias INT NOT NULL DEFAULT 0,
+        derrotas INT NOT NULL DEFAULT 0,
+        wo INT NOT NULL DEFAULT 0,
+
+        campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
+        campeonatos_mx_league INT NOT NULL DEFAULT 0,
+        campeonatos_oficiais INT NOT NULL DEFAULT 0,
+        campeonatos_comuns INT NOT NULL DEFAULT 0,
+
+        medalhas INT NOT NULL DEFAULT 0,
         pontos INT NOT NULL DEFAULT 0,
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
+
+
+
+    await conexao.execute(`
+        CREATE TABLE IF NOT EXISTS ranking_times_atual (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        time_id INT NOT NULL,
         ranking_atual INT NOT NULL DEFAULT 0,
         trofeus INT NOT NULL DEFAULT 0,
         total_partidas INT NOT NULL DEFAULT 0,
         vitorias INT NOT NULL DEFAULT 0,
         derrotas INT NOT NULL DEFAULT 0,
         wo INT NOT NULL DEFAULT 0,
-        campeonatos_premier_cup INT NOT NULL DEFAULT 0,
-        campeonatos_liga_prime INT NOT NULL DEFAULT 0,
+        campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
+        campeonatos_mx_league INT NOT NULL DEFAULT 0,
         campeonatos_oficiais INT NOT NULL DEFAULT 0,
         campeonatos_comuns INT NOT NULL DEFAULT 0,
+        pontos INT NOT NULL DEFAULT 0,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (time_id) REFERENCES times(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
+
+
+
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS historico_matchs_players(
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
     await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS ranking_times_historico (
+    CREATE TABLE IF NOT EXISTS historico_matchs_times(
         id INT AUTO_INCREMENT PRIMARY KEY,
-        ranking_atual_id INT NOT NULL,
         time_id INT NOT NULL,
-        temporada INT NOT NULL,
-        pontos INT NOT NULL DEFAULT 0,
-        trofeus INT NOT NULL DEFAULT 0,
-        total_partidas INT NOT NULL DEFAULT 0,
-        vitorias INT NOT NULL DEFAULT 0,
-        derrotas INT NOT NULL DEFAULT 0,
-        wo INT NOT NULL DEFAULT 0,
-        campeonatos_premier_cup INT NOT NULL DEFAULT 0,
-        campeonatos_liga_prime INT NOT NULL DEFAULT 0,
-        campeonatos_oficiais INT NOT NULL DEFAULT 0,
-        campeonatos_comuns INT NOT NULL DEFAULT 0,
+        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (time_id) REFERENCES times(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
@@ -701,6 +741,30 @@ async function setupDatabase() {
     await conexao.execute(`
         CREATE INDEX idx_email ON email_verificacao(email);
     `).catch(() => { })
+
+
+    /*
+    =====================================================
+    1️⃣1️⃣ SISTEMA DE divulgar links picksbans
+    =====================================================
+    */
+
+    await conexao.execute(`
+        CREATE TABLE IF NOT EXISTS divulgar_links_picksbans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        time_id_a INT NOT NULL,
+        time_id_b INT NOT NULL,
+        link_espectador VARCHAR(255) NOT NULL,
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (time_id_a) REFERENCES times(id) ON DELETE CASCADE,
+        FOREIGN KEY (time_id_b) REFERENCES times(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
+
+
+
+
 
     /*
     =====================================================
@@ -1040,7 +1104,7 @@ async function CreatePreferencePromocao(req, res) {
             preference_url: data.init_point
         });
     } catch (error) {
-        if (conexao) await desconectar(conexao).catch(() => {});
+        if (conexao) await desconectar(conexao).catch(() => { });
         console.error('❌ Erro ao criar preferência de promoção:', error);
         return res.status(500).json({
             error: 'Erro ao criar preferência de promoção'
@@ -1358,20 +1422,110 @@ async function buscarStatusplayer(req, res) {
         if (error.response) {
             const status = error.response.status;
             const data = error.response.data;
-            const msg = (data && data.errors && data.errors[0] && data.errors[0].message) 
-                ? data.errors[0].message 
+            const msg = (data && data.errors && data.errors[0] && data.errors[0].message)
+                ? data.errors[0].message
                 : `FACEIT retornou erro ${status}`;
             console.error("Erro FACEIT stats:", status, msg);
-            return res.status(502).json({ 
+            return res.status(502).json({
                 message: 'Não foi possível obter as estatísticas CS2 da FACEIT. Tente novamente mais tarde.',
-                faceit_status: status 
+                faceit_status: status
             });
         }
         console.error("Erro de requisição FACEIT:", error.message);
-        return res.status(503).json({ 
-            message: 'Serviço FACEIT temporariamente indisponível. Tente novamente mais tarde.' 
+        return res.status(503).json({
+            message: 'Serviço FACEIT temporariamente indisponível. Tente novamente mais tarde.'
         });
     }
+}
+
+
+
+async function buscarEloNivelFaceit(link) {
+    const level = {
+        1: "https://cdn3.emoji.gg/emojis/50077-faceit-1lvl.png",
+        2: "https://cdn3.emoji.gg/emojis/50077-faceit-2lvl.png",
+        3: "https://cdn3.emoji.gg/emojis/35622-faceit-3lvl.png",
+        4: "https://cdn3.emoji.gg/emojis/63614-faceit-4lvl.png",
+        5: "https://cdn3.emoji.gg/emojis/95787-faceit-5lvl.png",
+        6: "https://cdn3.emoji.gg/emojis/68460-faceit-6lvl.png",
+        7: "https://cdn3.emoji.gg/emojis/67489-faceit-7lvl.png",
+        8: "https://cdn3.emoji.gg/emojis/58585-faceit-8lvl.png",
+        9: "https://cdn3.emoji.gg/emojis/60848-faceit-9level.png",
+        10: "https://cdn3.emoji.gg/emojis/84242-faceit-10lvl.png"
+    }
+
+   
+
+
+    try {
+        
+       
+        const nickname = link.split('/')[5];
+
+        if (!nickname) {
+            return 'Parâmetro "nickname" é obrigatório'
+        }
+
+
+        if (!apiKey) {
+            return null;
+        }
+
+        const url = `https://open.faceit.com/data/v4/players?nickname=${encodeURIComponent(nickname)}`;
+        const headers = { Authorization: `Bearer ${apiKey}` };
+
+        const response = await fetch(url, { headers });
+        if (!response.ok) {
+            const erro = await response.json().catch(() => ({}));
+            return null
+        }
+
+        const data = await response.json();
+        const skillLevel = data && data.games && data.games.cs2 && data.games.cs2.skill_level;
+        const nivel = level[skillLevel];
+
+
+        return  nivel,data;
+
+
+    } catch (error) {
+        console.error('Erro na rota /api/v1/faceit/player:', error);
+        return 'Erro interno ao consultar Faceit';
+    }
+}
+
+
+async function buscarStatusPlayerADR(faceitid){
+    
+
+    if (!faceitid) {
+        return null
+    }
+
+    const url = `https://open.faceit.com/data/v4/players/${faceitid}/stats/cs2`;
+
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                Authorization: `Bearer ${apiKey}`
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            const status = error.response.status;
+            const data = error.response.data;
+            const msg = (data && data.errors && data.errors[0] && data.errors[0].message)
+                ? data.errors[0].message
+                : `FACEIT retornou erro ${status}`;
+            console.error("Erro FACEIT stats:", status, msg);
+            return null
+        }
+        console.error("Erro de requisição FACEIT:", error.message);
+        return null
+    }
+
 }
 
 async function buscarDadosFaceitPlayer(req, res) {
@@ -5044,22 +5198,7 @@ async function criarInscricaoCampeonato(req, res) {
             medalhaIdValue = null;
         }
 
-        // DEBUG focado em premiação na criação de campeonatos
-        console.debug('[DEBUG PREMIAÇÃO BACKEND] criarInscricaoCampeonato', {
-            tipo,
-            titulo,
-            chave,
-            qnt_times,
-            trofeu_id_original: trofeu_id,
-            medalha_id_original: medalha_id,
-            trofeuIdValue,
-            medalhaIdValue,
-            id_organizador,
-            status,
-            link_hub,
-            link_convite,
-            link_whatsapp
-        });
+        // DEBUG focado em premiação na criação de campeonatos (desativado em produção)
 
         const valores = [
             tipo ?? null,
@@ -5733,6 +5872,14 @@ async function criarChaveamento(req, res) {
     try {
         const { campeonato_id, formato_chave, quantidade_times } = req.body;
 
+        console.log('[DEBUG criarChaveamento] body recebido:', {
+            campeonato_id,
+            formato_chave,
+            quantidade_times,
+            tipo_campeonato: req.body.tipo,
+            rawBody: req.body
+        });
+
         if (!campeonato_id || !formato_chave || !quantidade_times) {
             return res.status(400).json({
                 error: 'campeonato_id, formato_chave e quantidade_times são obrigatórios'
@@ -5740,6 +5887,13 @@ async function criarChaveamento(req, res) {
         }
 
         conexao = await conectar();
+
+        // Conferir se o campeonato existe na tabela inscricoes_campeonato
+        const [rowsCheck] = await conexao.execute(
+            'SELECT id, titulo, status FROM inscricoes_campeonato WHERE id = ?',
+            [campeonato_id]
+        );
+        console.log('[DEBUG criarChaveamento] existencia em inscricoes_campeonato:', rowsCheck);
 
         // Verificar se já existe chaveamento para este campeonato
         const [existentes] = await conexao.execute(
@@ -10086,6 +10240,19 @@ async function registrarCliqueRoleta(req, res) {
             turnoInicial = sorteio;
             vencedor = sorteio;
 
+            // Registrar link de espectador para divulgação desta sessão de vetos
+            if (sessao.time_a_id && sessao.time_b_id && sessao.token_spectator) {
+                const linkEspectador = `vetos.html?token=${sessao.token_spectator}`;
+                try {
+                    await conexao.execute(
+                        'INSERT INTO divulgar_links_picksbans (time_id_a, time_id_b, link_espectador) VALUES (?, ?, ?)',
+                        [sessao.time_a_id, sessao.time_b_id, linkEspectador]
+                    );
+                } catch (e) {
+                    console.error('Erro ao salvar divulgar_links_picksbans:', e);
+                }
+            }
+
             // Atualizar turno_atual, marcar sorteio como realizado E iniciar a sessão
             const querySorteio = `UPDATE vetos_sessoes 
                 SET turno_atual = ?, sorteio_realizado = TRUE, status = 'em_andamento' 
@@ -10112,204 +10279,713 @@ async function registrarCliqueRoleta(req, res) {
 
 
 // ===============================================================================================
-// ==================================== [API RANKING] ================================================
+// ==================================== [API RANKING PLAYERS] ================================================
+
+async function OrdenarArrayRankingPlayers(req, res) {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+
+        let query = `
+            SELECT
+                u.id,
+                u.username,
+                u.avatar_url,
+                u.banner_url,
+                u.time_id,
+                u.faceitid,
+                u.cores_perfil AS coresUsuario,
+                u.posicoes,
+
+                ru.faceit_url,
+    
+                rp.ranking_atual AS player_ranking_atual,
+                rp.total_partidas AS player_total_partidas,
+                rp.vitorias AS player_vitorias,
+                rp.derrotas AS player_derrotas,
+                rp.wo,
+                rp.campeonatos_mx_extreme,
+                rp.campeonatos_mx_league,
+                rp.campeonatos_oficiais,
+                rp.campeonatos_comuns,
+                rp.medalhas,
+                rp.pontos,
+    
+                t.nome AS time_nome,
+                t.tag AS time_tag,
+                t.avatar_time_url,
+                t.banner_time_url,
+                t.cores_perfil AS coresTime,
+    
+                rt.ranking_atual AS time_ranking_atual,
+                rt.trofeus,
+                rt.total_partidas AS time_total_partidas,
+    
+                h.ultimos_resultados
+    
+            FROM usuarios u
+            LEFT JOIN redes_sociais ru ON ru.usuario_id = u.id
+            LEFT JOIN ranking_players_atual rp ON rp.usuario_id = u.id
+            LEFT JOIN times t ON t.id = u.time_id
+            LEFT JOIN ranking_times_atual rt ON rt.time_id = t.id
+    
+            LEFT JOIN (
+                SELECT
+                    x.usuario_id,
+                    GROUP_CONCAT(
+                        x.resultado
+                        ORDER BY x.data_criacao DESC
+                        SEPARATOR ','
+                    ) AS ultimos_resultados
+                FROM (
+                    SELECT
+                        hmp.usuario_id,
+                        hmp.resultado,
+                        hmp.data_criacao,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY hmp.usuario_id
+                            ORDER BY hmp.data_criacao DESC
+                        ) AS rn
+                    FROM historico_matchs_players hmp
+                ) x
+                WHERE x.rn <= 8
+                GROUP BY x.usuario_id
+            ) h ON h.usuario_id = u.id
+    
+            ORDER BY COALESCE(rp.pontos, 0) DESC
+        `;
+
+        const [dadosRankingUsers] = await conexao.execute(query);
+        const dadosPlayers = [];
+        
+
+        for(const user of dadosRankingUsers){
+            const faceit_url = user.faceit_url;
+            const faceitid = user.faceitid;
 
 
-// --- GET RANKING
+            let faceitElo;
+            let faceitNivel;
+            let avgKd = 'N/A';
+    
+            if (faceit_url != '' & faceit_url != 'null' & faceit_url != null &faceit_url != undefined) {
+                
+                const statusPlayer = await buscarEloNivelFaceit(faceit_url);
+                faceitElo = statusPlayer.games.cs2.faceit_elo || 0;
+                faceitNivel = statusPlayer.games.cs2.skill_level || 0;
+            }
+            else {
+                
+                faceitElo = 0;
+                faceitNivel = 0;
+            }
+    
+    
+    
+            const faceitStatus = await buscarStatusPlayerADR(faceitid)
+            if(faceitStatus == null || faceitStatus == undefined || faceitStatus == ''){
+                avgKd = 'N/A';
+            }
+            else{
+    
+                avgKd = faceitStatus.lifetime?.["Average K/D Ratio"] || 'N/A';
+            }
+
+            dadosPlayers.push({
+                ...user,
+                ultimos_resultados: user.ultimos_resultados
+                    ? user.ultimos_resultados.split(',')
+                    : [],
+                faceitElo,
+                faceitNivel,
+                avgKd
+            });
+        }
+
+        res.status(200).json({ dadosPlayers });
+    }
+    catch (error) {
+        console.error('Erro ao ordenar array ranking players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+// --- GET RANKING PLAYERS
+async function getRankingPlayers(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+
+        const [ranking_players] = await conexao.execute('SELECT * FROM ranking_players_atual');
+        res.status(200).json({ ranking_players });
+    }
+    catch (error) {
+        console.error('Erro ao buscar ranking players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// --- POST RANKING PLAYERS
+async function criarRankingPlayers(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+
+        const { usuario_id, ranking_atual, total_partidas, vitorias, derrotas, wo, campeonatos_mx_extreme, campeonatos_mx_league, campeonatos_oficiais, campeonatos_comuns, medalhas, pontos } = req.body;
+
+        const [verificarUsuario] = await conexao.execute('SELECT * FROM ranking_players_atual WHERE usuario_id = ?', [usuario_id]);
+
+        if (verificarUsuario.length == 1) {
+            return res.status(400).json({ message: 'Usuario já possui ranking' });
+        }
+
+
+        await conexao.execute('INSERT INTO ranking_players_atual (usuario_id,ranking_atual,total_partidas,vitorias,derrotas,wo,campeonatos_mx_extreme,campeonatos_mx_league,campeonatos_oficiais,campeonatos_comuns,medalhas,pontos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [usuario_id, ranking_atual, total_partidas, vitorias, derrotas, wo, campeonatos_mx_extreme, campeonatos_mx_league, campeonatos_oficiais, campeonatos_comuns, medalhas, pontos]);
+        res.status(201).json({ message: 'Ranking do player criado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao criar ranking players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// --- PUT RANKING PLAYERS
+async function atualizarRankingPlayers(req, res) {
+
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { usuario_id, coluna, valor } = req.body;
+
+        const [verificarUsuario] = await conexao.execute('SELECT * FROM ranking_players_atual WHERE usuario_id = ?', [usuario_id]);
+
+        if (verificarUsuario.length == 0) {
+            await conexao.execute('INSERT INTO ranking_players_atual (usuario_id,ranking_atual,total_partidas,vitorias,derrotas,wo,campeonatos_mx_extreme,campeonatos_mx_league,campeonatos_oficiais,campeonatos_comuns,medalhas,pontos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [usuario_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        }
+
+        const querys = {
+            'ranking_atual': 'UPDATE ranking_players_atual SET ranking_atual = ? WHERE usuario_id = ?',
+            'total_partidas': 'UPDATE ranking_players_atual SET total_partidas = ? WHERE usuario_id = ?',
+            'vitorias': 'UPDATE ranking_players_atual SET vitorias = ? WHERE usuario_id = ?',
+            'derrotas': 'UPDATE ranking_players_atual SET derrotas = ? WHERE usuario_id = ?',
+            'wo': 'UPDATE ranking_players_atual SET wo = ? WHERE usuario_id = ?',
+            'campeonatos_mx_extreme': 'UPDATE ranking_players_atual SET campeonatos_mx_extreme = ? WHERE usuario_id = ?',
+            'campeonatos_mx_league': 'UPDATE ranking_players_atual SET campeonatos_mx_league = ? WHERE usuario_id = ?',
+            'campeonatos_oficiais': 'UPDATE ranking_players_atual SET campeonatos_oficiais = ? WHERE usuario_id = ?',
+            'campeonatos_comuns': 'UPDATE ranking_players_atual SET campeonatos_comuns = ? WHERE usuario_id = ?',
+            'medalhas': 'UPDATE ranking_players_atual SET medalhas = ? WHERE usuario_id = ?',
+            'pontos': 'UPDATE ranking_players_atual SET pontos = ? WHERE usuario_id = ?',
+        }
+
+        if (!querys[coluna]) {
+            return res.status(400).json({ message: 'Coluna inválida' });
+        }
+
+        await conexao.execute(querys[coluna], [valor, usuario_id]);
+        res.status(200).json({ message: 'Ranking do player atualizado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar ranking players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// --- DELETE RANKING PLAYERS
+async function deletarRankingPlayers(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { usuario_id } = req.params;
+
+        await conexao.execute('DELETE FROM ranking_players_atual WHERE usuario_id = ?', [usuario_id]);
+        res.status(200).json({ message: 'Ranking do player deletado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar ranking players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+// ===============================================================================================
+// ==================================== [API RANKING TIMES] ================================================
+
+async function OrdenarArrayRankingTimes(req, res) {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+
+        let query = `
+            SELECT
+                t.id,
+                t.nome,
+                t.tag,
+                t.avatar_time_url,
+                t.banner_time_url,
+                t.cores_perfil AS coresTime,
+
+                rt.ranking_atual,
+                rt.trofeus,
+                rt.total_partidas,
+                rt.vitorias,
+                rt.derrotas,
+                rt.wo,
+                rt.campeonatos_mx_extreme,
+                rt.campeonatos_mx_league,
+                rt.campeonatos_oficiais,
+                rt.campeonatos_comuns,
+                rt.pontos,
+
+                COALESCE(mt.qnt_membros, 0) AS qnt_membros,
+                mt.membros,
+
+                h.ultimos_resultados
+
+            FROM times t
+            LEFT JOIN ranking_times_atual rt ON rt.time_id = t.id
+
+            LEFT JOIN (
+                SELECT
+                    mt.time_id,
+                    COUNT(*) AS qnt_membros,
+                    GROUP_CONCAT(
+                        CONCAT(
+                            mt.usuario_id, '|',
+                            u.username, '|',
+                            u.avatar_url, '|',
+                            u.banner_url, '|',
+                            mt.funcao, '|',
+                            mt.posicao
+                        )
+                        SEPARATOR ';;'
+                    ) AS membros
+                FROM membros_time mt
+                LEFT JOIN usuarios u ON u.id = mt.usuario_id
+                GROUP BY mt.time_id
+            ) mt ON mt.time_id = t.id
+
+            LEFT JOIN (
+                SELECT
+                    x.time_id,
+                    GROUP_CONCAT(
+                        x.resultado
+                        ORDER BY x.data_criacao DESC
+                        SEPARATOR ','
+                    ) AS ultimos_resultados
+                FROM (
+                    SELECT
+                        hmt.time_id,
+                        hmt.resultado,
+                        hmt.data_criacao,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY hmt.time_id
+                            ORDER BY hmt.data_criacao DESC
+                        ) AS rn
+                    FROM historico_matchs_times hmt
+                ) x
+                WHERE x.rn <= 8
+                GROUP BY x.time_id
+            ) h ON h.time_id = t.id
+
+            ORDER BY COALESCE(rt.pontos, 0) DESC
+        `;
+
+        const [dadosRankingTimes] = await conexao.execute(query);
+        const listaFinal = dadosRankingTimes.map(time => ({
+            ...time,
+            ultimos_resultados: time.ultimos_resultados
+                ? time.ultimos_resultados.split(',')
+                : [],
+            membros: time.membros
+                ? time.membros.split(';;').map(membro => {
+                    const [usuario_id, username, avatar_url, banner_url, funcao, posicao] = membro.split('|');
+        
+                    return {
+                        usuario_id: Number(usuario_id),
+                        username,
+                        avatar_url,
+                        banner_url,
+                        funcao,
+                        posicao
+                    };
+                })
+                : []
+        }));
+
+        res.status(200).json({ listaFinal });
+
+        
+    }
+    catch(error){
+        console.error('Erro ao ordenar array ranking times:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally{
+        if(conexao) await desconectar(conexao);
+    }
+
+}
+
+
+
+// --- GET RANKING TIMES
 async function getRankingTimes(req, res) {
     let conexao;
     try {
         conexao = await conectar();
-        const [ranking] = await conexao.execute(
-            'SELECT * FROM ranking_times'
-        );
-        res.status(200).json({ ranking });
+
+        const [ranking_times] = await conexao.execute('SELECT * FROM ranking_times_atual');
+        res.status(200).json({ ranking_times });
     }
     catch (error) {
-        console.error('Erro ao buscar ranking de times:', error);
+        console.error('Erro ao buscar ranking times:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
-    } finally {
-        if (conexao) await desconectar(conexao);
     }
-
-}
-
-
-async function getRankingTimesHistorico(req, res) {
-    let conexao;
-    try {
-        conexao = await conectar();
-        const [ranking] = await conexao.execute(
-            'SELECT * FROM ranking_times_historico'
-        );
-        res.status(200).json({ ranking });
-    }
-    catch (error) {
-        console.error('Erro ao buscar ranking de times historico:', error);
-        res.status(500).json({ message: 'Erro interno no servidor' });
-    } finally {
+    finally {
         if (conexao) await desconectar(conexao);
     }
 }
 
-
-// --- POST RANKING
+// --- POST RANKING TIMES
 async function criarRankingTimes(req, res) {
-    const { time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns } = req.body;
-
-    if (!time_id || !pontos || !ranking_atual || !trofeus || !total_partidas || !vitorias || !derrotas || !wo || !campeonatos_premier_cup || !campeonatos_liga_prime || !campeonatos_oficiais || !campeonatos_comuns) {
-        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
-    }
-
-    let conexao;
-    try {
-
-        const query = `INSERT INTO ranking_times (time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`;
-        await conexao.execute(query, [time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns]);
-
-        res.status(200).json({ message: 'Ranking criado com sucesso' });
-    }
-    catch (error) {
-        console.error('Erro ao criar ranking de times:', error);
-        res.status(500).json({ message: 'Erro interno no servidor' });
-    } finally {
-        if (conexao) await desconectar(conexao);
-    }
-}
-
-
-async function criarRankingTimesHistorico(req, res) {
-    const { time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns } = req.body;
-    if (!time_id || !pontos || !ranking_atual || !trofeus || !total_partidas || !vitorias || !derrotas || !wo || !campeonatos_premier_cup || !campeonatos_liga_prime || !campeonatos_oficiais || !campeonatos_comuns) {
-        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
-    }
-
     let conexao;
     try {
         conexao = await conectar();
-        const query = `INSERT INTO ranking_times_historico (time_id,pontos,ranking_atual,trofeus,total_partidas,vitorias,derrotas,wo,campeonatos_premier_cup,campeonatos_liga_prime,campeonatos_oficiais,campeonatos_comuns) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`;
-        await conexao.execute(query, [time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns]);
-        res.status(200).json({ message: 'Ranking criado com sucesso' });
+
+        const { time_id, ranking_atual, total_partidas, vitorias, derrotas, wo, campeonatos_mx_extreme, campeonatos_mx_league, campeonatos_oficiais, campeonatos_comuns, medalhas, pontos } = req.body;
+
+        const [verificarTime] = await conexao.execute('SELECT * FROM ranking_times_atual WHERE time_id = ?', [time_id]);
+
+        if (verificarTime.length == 1) {
+            return res.status(400).json({ message: 'Time já possui ranking' });
+        }
+
+
+        await conexao.execute('INSERT INTO ranking_times_atual (time_id,ranking_atual,total_partidas,vitorias,derrotas,wo,campeonatos_mx_extreme,campeonatos_mx_league,campeonatos_oficiais,campeonatos_comuns,medalhas,pontos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [time_id, ranking_atual, total_partidas, vitorias, derrotas, wo, campeonatos_mx_extreme, campeonatos_mx_league, campeonatos_oficiais, campeonatos_comuns, medalhas, pontos]);
+        res.status(201).json({ message: 'Ranking do time criado com sucesso!' });
     }
     catch (error) {
-        console.error('Erro ao criar ranking de times:', error);
+        console.error('Erro ao criar ranking times:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
-    } finally {
+    }
+    finally {
         if (conexao) await desconectar(conexao);
     }
 }
 
-
-// --- PUT RANKING
-
+// --- PUT RANKING TIMES
 async function atualizarRankingTimes(req, res) {
-    const { time_id, pontos, ranking_atual, trofeus, total_partidas, vitorias, derrotas, wo, campeonatos_premier_cup, campeonatos_liga_prime, campeonatos_oficiais, campeonatos_comuns } = req.body;
-
-    // Apenas time_id é obrigatório
-    if (!time_id) {
-        return res.status(400).json({ message: 'time_id é obrigatório' });
-    }
 
     let conexao;
     try {
         conexao = await conectar();
+        const { time_id, coluna, valor } = req.body;
 
-        // Verificar se o registro existe
-        const [registroExistente] = await conexao.execute(
-            'SELECT * FROM ranking_times_atual WHERE time_id = ?',
-            [time_id]
-        );
+        const [verificarTime] = await conexao.execute('SELECT * FROM ranking_times_atual WHERE time_id = ?', [time_id]);
 
-        if (registroExistente.length === 0) {
-            return res.status(404).json({ message: 'Registro de ranking não encontrado para este time' });
+        if (verificarTime.length == 0) {
+            await conexao.execute('INSERT INTO ranking_times_atual (time_id,ranking_atual,total_partidas,vitorias,derrotas,wo,campeonatos_mx_extreme,campeonatos_mx_league,campeonatos_oficiais,campeonatos_comuns,trofeus,pontos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [time_id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
         }
 
-        // Construir dinamicamente os campos a serem atualizados
-        const updateFields = [];
-        const updateValues = [];
-
-        if (pontos !== undefined && pontos !== null) {
-            updateFields.push('pontos = ?');
-            updateValues.push(pontos);
-        }
-        if (ranking_atual !== undefined && ranking_atual !== null) {
-            updateFields.push('ranking_atual = ?');
-            updateValues.push(ranking_atual);
-        }
-        if (trofeus !== undefined && trofeus !== null) {
-            updateFields.push('trofeus = ?');
-            updateValues.push(trofeus);
-        }
-        if (total_partidas !== undefined && total_partidas !== null) {
-            updateFields.push('total_partidas = ?');
-            updateValues.push(total_partidas);
-        }
-        if (vitorias !== undefined && vitorias !== null) {
-            updateFields.push('vitorias = ?');
-            updateValues.push(vitorias);
-        }
-        if (derrotas !== undefined && derrotas !== null) {
-            updateFields.push('derrotas = ?');
-            updateValues.push(derrotas);
-        }
-        if (wo !== undefined && wo !== null) {
-            updateFields.push('wo = ?');
-            updateValues.push(wo);
-        }
-        if (campeonatos_premier_cup !== undefined && campeonatos_premier_cup !== null) {
-            updateFields.push('campeonatos_premier_cup = ?');
-            updateValues.push(campeonatos_premier_cup);
-        }
-        if (campeonatos_liga_prime !== undefined && campeonatos_liga_prime !== null) {
-            updateFields.push('campeonatos_liga_prime = ?');
-            updateValues.push(campeonatos_liga_prime);
-        }
-        if (campeonatos_oficiais !== undefined && campeonatos_oficiais !== null) {
-            updateFields.push('campeonatos_oficiais = ?');
-            updateValues.push(campeonatos_oficiais);
-        }
-        if (campeonatos_comuns !== undefined && campeonatos_comuns !== null) {
-            updateFields.push('campeonatos_comuns = ?');
-            updateValues.push(campeonatos_comuns);
+        const querys = {
+            'ranking_atual': 'UPDATE ranking_times_atual SET ranking_atual = ? WHERE time_id = ?',
+            'total_partidas': 'UPDATE ranking_times_atual SET total_partidas = ? WHERE time_id = ?',
+            'vitorias': 'UPDATE ranking_times_atual SET vitorias = ? WHERE time_id = ?',
+            'derrotas': 'UPDATE ranking_times_atual SET derrotas = ? WHERE time_id = ?',
+            'wo': 'UPDATE ranking_times_atual SET wo = ? WHERE time_id = ?',
+            'campeonatos_mx_extreme': 'UPDATE ranking_times_atual SET campeonatos_mx_extreme = ? WHERE time_id = ?',
+            'campeonatos_mx_league': 'UPDATE ranking_times_atual SET campeonatos_mx_league = ? WHERE time_id = ?',
+            'campeonatos_oficiais': 'UPDATE ranking_times_atual SET campeonatos_oficiais = ? WHERE time_id = ?',
+            'campeonatos_comuns': 'UPDATE ranking_times_atual SET campeonatos_comuns = ? WHERE time_id = ?',
+            'medalhas': 'UPDATE ranking_times_atual SET trofeus = ? WHERE time_id = ?',
+            'pontos': 'UPDATE ranking_times_atual SET pontos = ? WHERE time_id = ?',
         }
 
-        // Se não houver campos para atualizar, retornar erro
-        if (updateFields.length === 0) {
-            return res.status(400).json({ message: 'Nenhum campo fornecido para atualização' });
+        if (!querys[coluna]) {
+            return res.status(400).json({ message: 'Coluna inválida' });
         }
 
-        // Adicionar time_id no final para o WHERE
-        updateValues.push(time_id);
-
-        // Executar a atualização
-        await conexao.execute(
-            `UPDATE ranking_times_atual SET ${updateFields.join(', ')} WHERE time_id = ?`,
-            updateValues
-        );
-
-        res.status(200).json({ message: 'Ranking atualizado com sucesso!' });
-    } catch (error) {
-        console.error('Erro ao atualizar ranking:', error);
+        await conexao.execute(querys[coluna], [valor, time_id]);
+        res.status(200).json({ message: 'Ranking do time atualizado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar ranking times:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
-    } finally {
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// --- DELETE RANKING TIMES
+async function deletarRankingTimes(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { time_id } = req.params;
+
+        await conexao.execute('DELETE FROM ranking_times_atual WHERE time_id = ?', [time_id]);
+        res.status(200).json({ message: 'Ranking do time deletado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar ranking times:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// ===============================================================================================
+// ==================================== [API HISTORICO DE MATCHS PLAYERS] ================================================
+// ===============================================================================================
+
+// ---- GET HISTORICO DE MATCHS PLAYERS
+async function getHistoricoMatchsPlayers(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const [historico_matchs_players] = await conexao.execute('SELECT * FROM historico_matchs_players');
+        res.status(200).json({ historico_matchs_players });
+    }
+    catch (error) {
+        console.error('Erro ao buscar historico de matchs players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ---- POST HISTORICO DE MATCHS PLAYERS
+async function criarHistoricoMatchsPlayers(req, res) {
+    let conexao;
+    try {
+        const { usuario_id, resultado } = req.body || {}; // resultado: 'win' | 'lose' | 'wo'
+
+        // Evita enviar parâmetros undefined para o MySQL
+        if (usuario_id == null || resultado == null) {
+            return res.status(400).json({ message: 'usuario_id e resultado são obrigatórios.' });
+        }
+
+        conexao = await conectar();
+        await conexao.execute(
+            'INSERT INTO historico_matchs_players (usuario_id, resultado) VALUES (?, ?)',
+            [usuario_id, resultado]
+        );
+        res.status(201).json({ message: 'Historico de matchs players criado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao criar historico de matchs players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ---- PUT HISTORICO DE MATCHS PLAYERS
+async function atualizarHistoricoMatchsPlayers(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { usuario_id, resultado } = req.body;
+        await conexao.execute(
+            'UPDATE historico_matchs_players SET resultado = ? WHERE usuario_id = ?',
+            [resultado, usuario_id]
+        );
+        res.status(200).json({ message: 'Historico de matchs players atualizado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar historico de matchs players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ---- DELETE HISTORICO DE MATCHS PLAYERS
+async function deletarHistoricoMatchsPlayers(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { usuario_id } = req.params;
+        await conexao.execute('DELETE FROM historico_matchs_players WHERE usuario_id = ?', [usuario_id]);
+        res.status(200).json({ message: 'Historico de matchs players deletado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar historico de matchs players:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// -------------------[API VERIFICAR DETALHES DO RANKING PLAYERS]-------------------
+async function verificarDetalhesPlayers() {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+
+        const [DadosPlayers] = await conexao.execute('SELECT * FROM usuarios')
+
+        for (const players of DadosPlayers) {
+            let playerId = players.id;
+
+            const [medalhas] = await conexao.execute('SELECT * FROM usuario_medalhas WHERE usuario_id = ?', [playerId]);
+
+            let qntdMedalhas = medalhas.length;
+
+            await conexao.execute('UPDATE ranking_players_atual SET medalhas = ? WHERE usuario_id = ?', [qntdMedalhas, playerId]);
+        }
+    }
+    catch (error) {
+        console.error('Erro ao verificar detalhes do ranking times:', error);
+        return false;
+    }
+    finally {
         if (conexao) await desconectar(conexao);
     }
 }
 
 
+// -------------------[API RANKING TIMES]-------------------
 
-// --- DELETE RANKING
+// ---- GET HISTORICO DE MATCHS TIMES
+async function getHistoricoMatchsTimes(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const [historico_matchs_times] = await conexao.execute('SELECT * FROM historico_matchs_times');
+        res.status(200).json({ historico_matchs_times });
+    }
+    catch (error) {
+        console.error('Erro ao buscar historico de matchs times:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ---- POST HISTORICO DE MATCHS TIMES
+async function criarHistoricoMatchsTimes(req, res) {
+    let conexao;
+    try {
+        const { time_id, resultado } = req.body || {}; // resultado: 'win' | 'lose' | 'wo'
 
+        // Evita enviar parâmetros undefined para o MySQL
+        if (time_id == null || resultado == null) {
+            return res.status(400).json({ message: 'time_id e resultado são obrigatórios.' });
+        }
+
+        conexao = await conectar();
+        await conexao.execute(
+            'INSERT INTO historico_matchs_times (time_id, resultado) VALUES (?, ?)',
+            [time_id, resultado]
+        );
+        res.status(201).json({ message: 'Historico de matchs times criado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao criar historico de matchs times:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ---- PUT HISTORICO DE MATCHS TIMES
+async function atualizarHistoricoMatchsTimes(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { time_id, resultado } = req.body;
+        await conexao.execute(
+            'UPDATE historico_matchs_times SET resultado = ? WHERE time_id = ?',
+            [resultado, time_id]
+        );
+        res.status(200).json({ message: 'Historico de matchs times atualizado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar historico de matchs times:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// ---- DELETE HISTORICO DE MATCHS TIMES
+async function deletarHistoricoMatchsTimes(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { time_id } = req.params;
+        await conexao.execute('DELETE FROM historico_matchs_times WHERE time_id = ?', [time_id]);
+        res.status(200).json({ message: 'Historico de matchs do time deletado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar historico de matchs times:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+// -------------------[API VERIFICAR DETALHES DO RANKING TIMES]-------------------
+async function verificarDetalhesTimes() {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+
+        const [DadosTimes] = await conexao.execute('SELECT * FROM times')
+
+        for (const times of DadosTimes) {
+            let timeId = times.id;
+
+            const [trofeus] = await conexao.execute('SELECT * FROM time_conquistas WHERE time_id = ?', [timeId]);
+
+            let qntdTrofeus = trofeus.length;
+
+            await conexao.execute('UPDATE ranking_times_atual SET trofeus = ? WHERE time_id = ?', [qntdTrofeus, timeId]);
+        }
+
+
+    }
+    catch (error) {
+        console.error('Erro ao verificar detalhes do ranking times:', error);
+        return false;
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
 
 // ===============================================================================================
 // ==================================== [API PROMOVER BANNER] ================================================
 
 
 // --- GET PROMOVER BANNER
-async function getpromoverbanner(req, res){
+async function getpromoverbanner(req, res) {
     let conexao;
 
-    try{
+    try {
         conexao = await conectar();
         const [promover_banner] = await conexao.execute('SELECT * FROM promover_eventos');
         res.status(200).json({ promover_banner });
@@ -10399,9 +11075,9 @@ async function registrarPromocaoAposPagamento(conexao, body) {
     }
 }
 
-async function criarPromoverBanner(req, res){
+async function criarPromoverBanner(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         if (!req.body || !req.body.evento_id) {
             return res.status(400).json({ message: 'evento_id é obrigatório para criar promover banner.' });
@@ -10418,9 +11094,9 @@ async function criarPromoverBanner(req, res){
 }
 
 // --- PUT PROMOVER BANNER
-async function atualizarPromoverBanner(req, res){
+async function atualizarPromoverBanner(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const {
             id,
@@ -10454,9 +11130,9 @@ async function atualizarPromoverBanner(req, res){
 }
 
 // --- DELETE PROMOVER BANNER
-async function deletarPromoverBanner(req, res){
+async function deletarPromoverBanner(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const { id } = req.params;
         await conexao.execute('DELETE FROM promover_eventos WHERE id = ?', [id]);
@@ -10472,71 +11148,68 @@ async function deletarPromoverBanner(req, res){
 
 
 // --- FUNCTION VERIFICAR ATIVIDADE DO EVENTO SE EXPIROU OU NÃO
-async function verficarAtividadeDoEvento(){
+async function verficarAtividadeDoEvento() {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
 
-        
+
         const [eventos] = await conexao.execute('SELECT * FROM promover_eventos ')
-        for(const evento of eventos)
-            if(evento.data_encerramento < new Date()){
-                
+        for (const evento of eventos)
+            if (evento.data_encerramento < new Date()) {
+
                 await conexao.execute('UPDATE promover_eventos SET status_promover_evento = "encerrado" WHERE id = ?', [evento.id]);
 
                 const [inscricoes] = await conexao.execute('SELECT * FROM inscricoes_campeonato WHERE id = ?', [evento.evento_id]);
 
-                for(const inscricao of inscricoes){
+                for (const inscricao of inscricoes) {
                     const userId = inscricao.id_organizador;
 
                     const msg = `A sua assinatura para promover o evento ${evento.titulo} foi expirada.`;
 
-                    await conexao.execute('INSERT INTO notificacoes (user_id,texto) VALUES (?,?)', [userId,msg]);
+                    await conexao.execute('INSERT INTO notificacoes (user_id,texto) VALUES (?,?)', [userId, msg]);
                 }
-                
+
             }
 
-    }catch(error){
+    } catch (error) {
         console.error('Erro ao verificar atividade do evento:', error);
         return false;
-    }finally{
-        if(conexao) await desconectar(conexao);
+    } finally {
+        if (conexao) await desconectar(conexao);
     }
-    
+
 }
 
-cron.schedule('0 1 * * *', () => {
-    console.log("Executando função verificar atividade do evento diária:", new Date());
-    verficarAtividadeDoEvento();
-});
+
 
 
 // ===============================================================================================
 // ==================================== [API CUPOM] ================================================
 
 // --- GET CUPOM
-async function getcupom(req,res){
+async function getcupom(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const [cupons] = await conexao.execute('SELECT * FROM cupons');
         res.status(200).json({ cupons });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao buscar cupom:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 // --- POST CUPOM
-async function criarcupom(req,res){
+async function criarcupom(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
 
-        let { codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo } = req.body;
+        let { codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo } = req.body;
         descricao = descricao ?? null;
         desconto_percentual = desconto_percentual ?? null;
         id_item = id_item ?? null;
@@ -10546,29 +11219,29 @@ async function criarcupom(req,res){
         usos_restantes = usos_restantes ?? usos_maximos;
         ativo = ativo ?? true;
 
-        if(!codigo || !tipo || !usos_maximos){
+        if (!codigo || !tipo || !usos_maximos) {
             return res.status(400).json({ message: 'Confira os campos obrigatórios' });
         }
 
         await conexao.execute('INSERT INTO cupons (codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?)', [codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo]);
         res.status(201).json({ message: 'Cupom criado com sucesso!' });
-        
+
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao criar cupom:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 // --- PUT CUPOM
-async function atualizarcupom(req,res){
+async function atualizarcupom(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const { id } = req.params;
-        const { codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo } = req.body;
+        const { codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo } = req.body;
         descricao = descricao ?? null;
         desconto_percentual = desconto_percentual ?? null;
         id_item = id_item ?? null;
@@ -10577,46 +11250,46 @@ async function atualizarcupom(req,res){
         usos_maximos = usos_maximos ?? 1;
         usos_restantes = usos_restantes ?? usos_maximos;
         ativo = ativo ?? true;
-        console.log( codigo,tipo,descricao,desconto_percentual,id_item,id_trofeu,id_medalha,usos_maximos,usos_restantes,ativo)
+        console.log(codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo)
 
-        if(!codigo || !tipo || !usos_maximos){
+        if (!codigo || !tipo || !usos_maximos) {
             return res.status(400).json({ message: 'Confira os campos obrigatórios' });
         }
 
         await conexao.execute('UPDATE cupons SET codigo = ?, tipo = ?, descricao = ?, desconto_percentual = ?, id_item = ?, id_trofeu = ?, id_medalha = ?, usos_maximos = ?, usos_restantes = ?, ativo = ? WHERE id = ?', [codigo, tipo, descricao, desconto_percentual, id_item, id_trofeu, id_medalha, usos_maximos, usos_restantes, ativo, id]);
         res.status(200).json({ message: 'Cupom atualizado com sucesso!' });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao atualizar cupom:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 // --- DELETE CUPOM
-async function deletarcupom(req,res){
+async function deletarcupom(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const { id } = req.params;
         await conexao.execute('DELETE FROM cupons WHERE id = ?', [id]);
         res.status(200).json({ message: 'Cupom deletado com sucesso!' });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao deletar cupom:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 
 // ------------------------- API CUPOM RESGATADOS
 // --- GET CUPOM RESGATADOS (lista com usuário e cupom para exibição)
-async function getcupomresgatado(req,res){
+async function getcupomresgatado(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const [cupomresgatados] = await conexao.execute(`
             SELECT cr.id, cr.usuario_id, cr.cupom_id, cr.data_resgate,
@@ -10629,32 +11302,32 @@ async function getcupomresgatado(req,res){
         `);
         res.status(200).json({ cupomresgatados });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao buscar cupom resgatado:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 // --- POST CUPOM RESGATADOS
-async function criarcupomresgatado(req,res){
+async function criarcupomresgatado(req, res) {
     const { usuario_id, codigo } = req.body;
-    
-    
+
+
     let conexao;
-    try{
+    try {
         conexao = await conectar();
 
         const [selectCupom] = await conexao.execute('SELECT * FROM cupons WHERE codigo = ?', [codigo]);
-        if(selectCupom.length > 0){
-            if (selectCupom[0].ativo == 1){
-                if(selectCupom[0].usos_restantes > 0){
+        if (selectCupom.length > 0) {
+            if (selectCupom[0].ativo == 1) {
+                if (selectCupom[0].usos_restantes > 0) {
                     const cupom_id = selectCupom[0].id;
 
                     const [userVerificarUsoCupom] = await conexao.execute('SELECT * FROM cupons_resgatados', [usuario_id, cupom_id]);
-                    for (user of userVerificarUsoCupom){
-                        if(user.usuario_id == usuario_id && user.cupom_id == cupom_id){
+                    for (user of userVerificarUsoCupom) {
+                        if (user.usuario_id == usuario_id && user.cupom_id == cupom_id) {
                             return res.status(400).json({ message: 'Usuário já resgatou este cupom' });
                         }
                     }
@@ -10662,15 +11335,15 @@ async function criarcupomresgatado(req,res){
                     await conexao.execute('INSERT INTO cupons_resgatados (usuario_id, cupom_id) VALUES (?, ?)', [usuario_id, cupom_id]);
                     await conexao.execute('UPDATE cupons SET usos_restantes = usos_restantes - 1 WHERE id = ?', [cupom_id]);
 
-                    if(selectCupom[0].codigo.includes("MOR")){
+                    if (selectCupom[0].codigo.includes("MOR")) {
                         await conexao.execute(`UPDATE usuarios SET organizador = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
                     }
-                    else if(selectCupom[0].codigo.includes("MCARG")){
+                    else if (selectCupom[0].codigo.includes("MCARG")) {
                         await conexao.execute(`UPDATE usuarios SET gerencia = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
 
                     }
-                    else if(selectCupom[0].codigo.includes("MCONQ")){
-                        
+                    else if (selectCupom[0].codigo.includes("MCONQ")) {
+
                         await conexao.execute(`INSERT INTO usuario_medalhas (usuario_id, medalha_id,position_medalha) VALUES(?,?,?)`, [usuario_id, selectCupom[0].id_medalha, selectCupom[0].tipo]);
 
                     }
@@ -10678,64 +11351,244 @@ async function criarcupomresgatado(req,res){
                     //     await conexao.execute(`UPDATE usuarios SET gerencia = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
 
                     // }
-                    
+
 
 
                     return res.status(201).json({ message: 'Cupom resgatado com sucesso!' });
-                }else{
+                } else {
                     return res.status(400).json({ message: 'Cupom sem usos restantes' });
                 }
-            }else{
+            } else {
                 return res.status(400).json({ message: 'Cupom não está ativo' });
             }
 
         }
         return res.status(400).json({ message: 'Cupom não encontrado' });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao criar cupom resgatado:', error);
         if (!res.headersSent) res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 // --- PUT CUPOM RESGATADOS
-async function atualizarcupomresgatado(req,res){
+async function atualizarcupomresgatado(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const { id } = req.params;
         const { usuario_id, cupom_id } = req.body;
         await conexao.execute('UPDATE cupons_resgatados SET usuario_id = ?, cupom_id = ? WHERE id = ?', [usuario_id, cupom_id, id]);
         res.status(200).json({ message: 'Cupom resgatado atualizado com sucesso!' });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao atualizar cupom resgatado:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 // --- DELETE CUPOM RESGATADOS
-async function deletarcupomresgatado(req,res){
+async function deletarcupomresgatado(req, res) {
     let conexao;
-    try{
+    try {
         conexao = await conectar();
         const { id } = req.params;
         await conexao.execute('DELETE FROM cupons_resgatados WHERE id = ?', [id]);
         res.status(200).json({ message: 'Cupom resgatado deletado com sucesso!' });
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao deletar cupom resgatado:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
     }
-    finally{
-        if(conexao) await desconectar(conexao);
+    finally {
+        if (conexao) await desconectar(conexao);
     }
 }
+
+
+
 // ===============================================================================================
+// ==================================== [API DIVULGAR LINKS PICKSBANS] ================================================
+// ===============================================================================================
+
+// GET DIVULGAR LINKS PICKSBANS
+async function getDivulgarLinksPicksbans(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const [divulgarLinksPicksbans] = await conexao.execute('SELECT * FROM divulgar_links_picksbans');
+        res.status(200).json({ divulgarLinksPicksbans });
+    }
+    catch (error) {
+        console.error('Erro ao buscar divulgar links picksbans:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// POST DIVULGAR LINKS PICKSBANS
+async function criarDivulgarLinksPicksbans(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { time_id_a, time_id_b, link_espectador } = req.body;
+        await conexao.execute('INSERT INTO divulgar_links_picksbans (time_id_a, time_id_b, link_espectador) VALUES (?, ?, ?)', [time_id_a, time_id_b, link_espectador]);
+        res.status(200).json({ message: 'Divulgar links picksbans criado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao criar divulgar links picksbans:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// PUT DIVULGAR LINKS PICKSBANS
+async function atualizarDivulgarLinksPicksbans(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { id } = req.params;
+        const { time_id_a, time_id_b, link_espectador } = req.body;
+        await conexao.execute('UPDATE divulgar_links_picksbans SET time_id_a = ?, time_id_b = ?, link_espectador = ? WHERE id = ?', [time_id_a, time_id_b, link_espectador, id]);
+        res.status(200).json({ message: 'Divulgar links picksbans atualizado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar divulgar links picksbans:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+// DELETE DIVULGAR LINKS PICKSBANS
+async function deletarDivulgarLinksPicksbans(req, res) {
+    let conexao;
+    try {
+        conexao = await conectar();
+        const { id } = req.params;
+        await conexao.execute('DELETE FROM divulgar_links_picksbans WHERE id = ?', [id]);
+        res.status(200).json({ message: 'Divulgar links picksbans deletado com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar divulgar links picksbans:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+
+// =====================================================
+// ==================================== [VERIFICAÇÃO DE ATIVIDADES] ================================================
+
+async function verificarPosicaoRankingPlayers() {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+        let cont = 0;
+        const ordenarRanking = [];
+        const [ranking_players] = await conexao.execute('SELECT * FROM ranking_players_atual');
+
+
+        for (const playerRank of ranking_players) {
+            ordenarRanking.push(playerRank);
+        }
+
+        ranking_players.sort((a, b) => a.pontos - b.pontos);
+        ranking_players.reverse();
+
+        for (const playerRank of ranking_players) {
+            for (const playerOfOrdem of ordenarRanking) {
+                if (playerRank.usuario_id == playerOfOrdem.usuario_id) {
+                    if (playerRank.pontos == playerOfOrdem.pontos) {
+                        cont++;
+                        await conexao.execute('UPDATE ranking_players_atual SET ranking_atual = ? WHERE usuario_id = ?', [cont, playerRank.usuario_id]);
+
+                    }
+                }
+            }
+        }
+
+    }
+    catch (error) {
+        console.error('Erro ao verificar posicao ranking:', error);
+        return false;
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+async function verificarPosicaoRankingTimes() {
+    let conexao;
+
+    try {
+        conexao = await conectar();
+        let cont = 0;
+        const ordenarRanking = [];
+        const [ranking_times] = await conexao.execute('SELECT * FROM ranking_times_atual');
+
+
+        for (const timeRank of ranking_times) {
+            ordenarRanking.push(timeRank);
+        }
+
+        ranking_times.sort((a, b) => a.pontos - b.pontos);
+        ranking_times.reverse();
+
+        for (const timeRank of ranking_times) {
+            for (const timeOfOrdem of ordenarRanking) {
+                if (timeRank.time_id == timeOfOrdem.time_id) {
+                    if (timeRank.pontos == timeOfOrdem.pontos) {
+                        cont++;
+                        await conexao.execute('UPDATE ranking_times_atual SET ranking_atual = ? WHERE time_id = ?', [cont, timeRank.time_id]);
+                    }
+                }
+            }
+        }
+    }
+
+    catch (error) {
+        console.error('Erro ao verificar posicao ranking:', error);
+        return false;
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+
+cron.schedule('0 1 * * *', () => {
+    console.log("Executando função verificar atividade do evento diária:", new Date());
+    verficarAtividadeDoEvento();
+    verificarDetalhesTimes();
+    verificarDetalhesPlayers();
+    verificarPosicaoRankingPlayers();
+    verificarPosicaoRankingTimes();
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 module.exports = {
     getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar,
@@ -10746,6 +11599,6 @@ module.exports = {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference, CreatePreferencePromocao,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, atualizarRankingTimes, criarRankingTimes, criarRankingTimesHistorico, getRankingTimes, getRankingTimesHistorico, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
-    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao, getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
+    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,
 };

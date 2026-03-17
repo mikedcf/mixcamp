@@ -2548,7 +2548,7 @@ async function arrayCardEventos() {
         }
     }
 
-    console.log(arrayEventos)
+    
     
 
     document.getElementById('matchesCount').textContent = arrayEventos.length;
@@ -2651,7 +2651,7 @@ async function criarCardEvento(evento) {
         chaveamentobtn = 'none';
         
     }
-    console.log(timesFormatado)
+    
     
     
 

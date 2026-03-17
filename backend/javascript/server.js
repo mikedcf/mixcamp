@@ -15,10 +15,7 @@ const {
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato,     getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, getRankingTimes, criarRankingTimes, atualizarRankingTimes, getRankingTimesHistorico, criarRankingTimesHistorico,steamIdFromUrl,     buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout,
-    getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,
-    getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner,
-    CreatePreferencePromocao, getcupom, criarcupom, atualizarcupom, deletarcupom, getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros,steamIdFromUrl,buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,setupDatabase, autenticacao, logout,getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner,CreatePreferencePromocao, getcupom, criarcupom, atualizarcupom, deletarcupom, getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingPlayers, OrdenarArrayRankingTimes
 } = require('./controller');
 require('dotenv').config();
 
@@ -293,7 +290,7 @@ app.delete(process.env.ROUTE_DEL_SOLICITACOES, deletarSolicitacao);
 // ----- MEDALHAS GET
 app.get(process.env.ROUTE_MEDALHAS_ID, getMedalhas);
 // Admin: listar todas as medalhas
-app.get('/api/v1/admin/medalhas', listarTodasMedalhas);
+app.get(process.env.ROUTE_MEDALHAS_LISTAR_TODAS, listarTodasMedalhas);
 
 app.get(process.env.ROUTE_MEDALHAS_USUARIO_ID, getMedalhasUsuario)
 
@@ -429,21 +426,57 @@ app.post(process.env.ROUTE_CHAVEAMENTOS_ID_RESETAR, resetarChaveamento);
 
 
 // ===============================================================================================
-// ==================================== [API RANKING] ================================================
+// ==================================== [API RANKING PLAYERS] ================================================
 
-// ----- RANKING GET
+// ----- ORDENAR ARRAY RANKING PLAYERS
+app.get(process.env.ROUTE_ORDENAR_ARRAY_RANKING_PLAYERS, OrdenarArrayRankingPlayers);
+
+// ----- RANKING PLAYERS GET
+app.get(process.env.ROUTE_RANKING_PLAYERS, getRankingPlayers);
+
+// ----- RANKING PLAYERS POST
+app.post(process.env.ROUTE_RANKING_PLAYERS_CRIAR, criarRankingPlayers);
+// ----- RANKING PLAYERS UPDATE
+app.put(process.env.ROUTE_RANKING_PLAYERS_ATUALIZAR, atualizarRankingPlayers);
+// ----- RANKING PLAYERS DELETE
+app.delete(process.env.ROUTE_RANKING_PLAYERS_DELETAR, deletarRankingPlayers);
+
+
+// ------- [API HISTORICO DE MATCHS PLAYERS] 
+
+// ----- HISTORICO DE MATCHS PLAYERS GET
+app.get(process.env.ROUTE_HISTORICO_MATCHS_PLAYERS, getHistoricoMatchsPlayers);
+// ----- HISTORICO DE MATCHS PLAYERS POST
+app.post(process.env.ROUTE_HISTORICO_MATCHS_PLAYERS_CRIAR, criarHistoricoMatchsPlayers);
+// ----- HISTORICO DE MATCHS PLAYERS UPDATE
+app.put(process.env.ROUTE_HISTORICO_MATCHS_PLAYERS_ATUALIZAR, atualizarHistoricoMatchsPlayers);
+// ----- HISTORICO DE MATCHS PLAYERS DELETE
+app.delete(process.env.ROUTE_HISTORICO_MATCHS_PLAYERS_DELETAR, deletarHistoricoMatchsPlayers);
+
+// ===============================================================================================
+// ==================================== [API RANKING TIMES] ================================================
+
+// ----- ORDENAR ARRAY RANKING TIMES
+app.get(process.env.ROUTE_ORDENAR_ARRAY_RANKING_TIMES, OrdenarArrayRankingTimes);
+// ----- RANKING TIMES GET
 app.get(process.env.ROUTE_RANKING_TIMES, getRankingTimes);
+// ----- RANKING TIMES POST
+app.post(process.env.ROUTE_RANKING_TIMES_CRIAR, criarRankingTimes);
+// ----- RANKING TIMES UPDATE
+app.put(process.env.ROUTE_RANKING_TIMES_ATUALIZAR, atualizarRankingTimes);
+// ----- RANKING TIMES DELETE
+app.delete(process.env.ROUTE_RANKING_TIMES_DELETAR, deletarRankingTimes);
 
-app.get(process.env.ROUTE_RANKING_TIMES_HISTORICO, getRankingTimesHistorico);
+// ------- [API HISTORICO DE MATCHS TIMES] 
 
-// ----- RANKING POST
-app.post(process.env.ROUTE_RANKING_TIMES, criarRankingTimes);
-
-app.post(process.env.ROUTE_RANKING_TIMES_HISTORICO, criarRankingTimesHistorico);
-
-// ----- RANKING UPDATE
-app.put(process.env.ROUTE_RANKING_TIMES, atualizarRankingTimes);
-// ----- RANKING DELETE
+// ----- HISTORICO DE MATCHS TIMES GET
+app.get(process.env.ROUTE_HISTORICO_MATCHS_TIMES, getHistoricoMatchsTimes);
+// ----- HISTORICO DE MATCHS TIMES POST
+app.post(process.env.ROUTE_HISTORICO_MATCHS_TIMES_CRIAR, criarHistoricoMatchsTimes);
+// ----- HISTORICO DE MATCHS TIMES UPDATE
+app.put(process.env.ROUTE_HISTORICO_MATCHS_TIMES_ATUALIZAR, atualizarHistoricoMatchsTimes);
+// ----- HISTORICO DE MATCHS TIMES DELETE
+app.delete(process.env.ROUTE_HISTORICO_MATCHS_TIMES_DELETAR, deletarHistoricoMatchsTimes);
 
 // ===============================================================================================
 // ==================================== [API PROMOVER BANNER] ================================================
@@ -483,6 +516,19 @@ app.put(process.env.ROUTE_CUPOM_RESGATADOS_ATUALIZAR, atualizarcupomresgatado);
 // --- DELETE CUPOM RESGATADOS
 app.delete(process.env.ROUTE_CUPOM_RESGATADOS_DELETAR, deletarcupomresgatado);
 
+
+
+// ===============================================================================================
+// ==================================== [API DIVULGAR LINKS PICKSBANS] ================================================
+
+// ----- DIVULGAR LINKS PICKSBANS GET
+app.get(process.env.ROUTE_DIVULGAR_LINKS_PICKSBANS, getDivulgarLinksPicksbans);
+// ----- DIVULGAR LINKS PICKSBANS POST
+app.post(process.env.ROUTE_DIVULGAR_LINKS_PICKSBANS_CRIAR, criarDivulgarLinksPicksbans);
+// ----- DIVULGAR LINKS PICKSBANS PUT
+app.put(process.env.ROUTE_DIVULGAR_LINKS_PICKSBANS_ATUALIZAR, atualizarDivulgarLinksPicksbans);
+// ----- DIVULGAR LINKS PICKSBANS DELETE
+app.delete(process.env.ROUTE_DIVULGAR_LINKS_PICKSBANS_DELETAR, deletarDivulgarLinksPicksbans);
 
 
 // ===============================================================================================

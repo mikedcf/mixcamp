@@ -6,10 +6,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MIXCAMP — Ranking Oficial</title>
     <link rel="stylesheet" href="../css/ranking.css" />
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/ultils.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
-    <!-- SEM HEADER (você vai adicionar depois) -->
+    <!-- Header -->
+    <header class="header" id="mainHeader">
+        <button type="button" class="hamburger-btn" id="headerHamburger" aria-label="Abrir menu" aria-expanded="false">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        <div class="nav-brand" onclick="window.location.href='home.html'">
+            <img src="../img/MIXCAMP.svg" alt="MIXCAMP" class="logo-img">
+        </div>
+
+        <div class="center-content">
+            <nav class="nav" id="navContainer">
+                <ul class="nav-menu">
+
+                    <li class="has-dropdown">
+                        <a href="campeonato.html">Campeonato</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                            <li><a href="ranking.html"><i class="fas fa-trophy"></i> Ranking</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="comunidade.html">Comunidade</a></li>
+                    <li><a href="noticias.html">Notícias</a></li>
+                    <li><a href="apoiadores.html">Apoiadores</a></li>
+                    <li><a href="sobre.html">Sobre</a></li>
+                </ul>
+            </nav>
+
+            <div class="search-bar-container" id="searchBarContainer">
+                <input type="text" class="search-input" placeholder="Pesquisar...">
+                <!-- Container de resultados da busca -->
+                <div class="search-results" id="searchResults" style="display: none;">
+                    <!-- Resultados aparecem aqui -->
+                </div>
+            </div>
+        </div>
+
+        <div class="search-profile-area">
+            <div class="user-auth hidden" id="userAuth">
+                <button class="auth-btn login-btn"
+                    onclick="window.location.href='login.html'"><span>Login</span></button>
+                <button class="auth-btn register-btn"
+                    onclick="window.location.href='registro.html'"><span>Registrar</span></button>
+            </div>
+
+            <div class="user-perfil hidden" id="userPerfil">
+                <button class="perfil-btn" onclick="abrirMenuSuspenso()">
+                    <img src="" alt="Perfil" class="icon-perfil" id="ftPerfil">
+                    <span class="perfil-nome" id="perfilnome"></span>
+                    <i class="fas fa-chevron-down seta"></i>
+                </button>
+                <div class="menu-opcoes" id="menuOpcoes">
+                    <a href="#" id="menuPerfilLink"><i class="fas fa-user"></i> Meu Perfil</a>
+                    <a href="#" id="menuTimeLink"><i class="fas fa-users"></i> <span id="menuTimeText">Meu
+                            Time</span></a>
+                    <a href="#" id="gerenciarCamp"><i class="fa-solid fa-trophy"></i> <span
+                            id="gerenciarCampText">Gerenciar Campeonatos</span></a>
+                    <div class="menu-separator"></div>
+                    <a href="#" id="menuNotificacoesLink"><span class="menu-notification-wrap"
+                            id="menunotificationwrap"><i class="fas fa-bell"></i><span class="menu-notification-badge"
+                                id="menuNotificationBadge">0</span></span> Notificações</a>
+                    <a href="configuracao.html"><i class="fas fa-cog"></i> Configurações</a>
+                    <div class="menu-separator"></div>
+                    <a href="#" onclick="mudarTema()"><i class="fas fa-moon" id="themeIcon"></i> <span
+                            id="themeText">Modo Escuro</span></a>
+                    <a onclick="logout()" href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                </div>
+            </div>
+
+            <div class="box-lupa">
+                <button id="searchToggle" class="search-btn" onclick="abrirBarraPesquisa()">
+                    🔍
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Menu mobile (hamburguer) -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" aria-hidden="true">
+        <nav class="mobile-nav-panel" aria-label="Menu móvel principal">
+            <ul class="mobile-nav-menu">
+                <li>
+                    <a href="campeonato.html">
+                        <i class="fas fa-trophy"></i>
+                        Campeonato
+                    </a>
+                </li>
+                <li>
+                    <a href="matchs.html">
+                        <i class="fas fa-gamepad"></i>
+                        Matchs
+                    </a>
+                </li>
+                <li>
+                    <a href="ranking.html">
+                        <i class="fas fa-medal"></i>
+                        Ranking
+                    </a>
+                </li>
+                <li>
+                    <a href="comunidade.html">
+                        <i class="fas fa-users"></i>
+                        Comunidade
+                    </a>
+                </li>
+                <li>
+                    <a href="noticias.html">
+                        <i class="fas fa-newspaper"></i>
+                        Notícias
+                    </a>
+                </li>
+                <li>
+                    <a href="apoiadores.html">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        Apoiadores
+                    </a>
+                </li>
+                <li>
+                    <a href="sobre.html">
+                        <i class="fas fa-info-circle"></i>
+                        Sobre
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 
     <main class="page" role="main">
         <!-- HERO -->
@@ -20,23 +154,42 @@
                     <p class="hero__subtitle">Os melhores times e players da comunidade</p>
 
                     <div class="hero__controls" role="group" aria-label="Filtros de ranking">
-                        <button class="tab tab--active" type="button" aria-pressed="true">TIMES</button>
-                        <button class="tab" type="button" aria-pressed="false">PLAYERS</button>
+                        <button class="tab" type="button" data-tab="times" aria-pressed="false">TIMES</button>
+                        <button class="tab tab--active" type="button" data-tab="players" aria-pressed="true">PLAYERS</button>
                     </div>
                 </div>
 
-                <form class="search" role="search" aria-label="Buscar no ranking">
+                <form class="search" role="search" aria-label="Buscar no ranking" id="rankingSearchForm" action="javascript:void(0)" method="get">
                     <span class="search__icon" aria-hidden="true">⌕</span>
-                    <input class="search__input" type="search" name="q" placeholder="Buscar..." autocomplete="off" />
+                    <input class="search__input" id="rankingSearchInput" type="search" name="q" placeholder="Buscar por player ou time..." autocomplete="off" />
                 </form>
+
+                <!-- Filtro de temporada (visual de dropdown, fixo em "Temporada 1") -->
+                <div class="season-filter" aria-label="Temporada atual">
+                    <div class="season-filter__pill">
+                        <span class="season-filter__label">Temporada</span>
+                        <span class="season-filter__value">1</span>
+                        <span class="season-filter__icon" aria-hidden="true">▾</span>
+                    </div>
+                </div>
             </div>
         </section>
 
         <!-- RANKING LIST -->
         <section class="ranking" aria-label="Lista de ranking">
             <div class="wrap">
-                <div class="ranking__panel" role="region" aria-label="Tabela de ranking">
-                    <ol class="rankList">
+                <div class="ranking__panel" role="region" aria-label="Tabela de ranking" data-state="loading">
+                    <div class="ranking__loader" id="rankingLoader">
+                        <div class="ranking__spinner"></div>
+                        <p class="ranking__loaderText">Carregando ranking...</p>
+                    </div>
+                    <!-- Lista de ranking de times (preenchida por ranking.js) -->
+                    <div class="ranking__listWrap ranking__listWrap--times" id="rankingTimesWrap" hidden>
+                        <ol class="rankList" id="rankListTimes"></ol>
+                    </div>
+                    <!-- Lista de ranking de players -->
+                    <div class="ranking__listWrap" id="rankingPlayersWrap">
+                    <ol class="rankList" id="rankListPlayers">
                         <!-- TOP 1 -->
                         <li class="rankItem rankItem--gold">
                             <div class="rankItem__pos">#1</div>
@@ -44,8 +197,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -77,27 +234,96 @@
                             </dl>
 
                             <!-- Modal do Top 1 (aparece no hover) -->
-                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes do Top 1">
-                                <div class="rankItem__modalHead">
-                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
-                                    </div>
-                                </div>
-                                <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
-                                    <div class="rankItem__modalDots">
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                            <div class="rankItem__modal" role="dialog" aria-label="Resumo detalhado do Top 1">
+                                <div class="statsModal3">
+                                    <div class="statsModal3__cards">
+                                        <!-- CARD PERFIL -->
+                                        <section class="statsCard3 statsCard3--perfil">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">PERFIL</h2>
+                                            </header>
+                                            <div class="statsPerfil3__body">
+                                                <div class="statsPerfil3__donut">
+                                                    <div class="statsPerfil3__donutInner">
+                                                        <span class="statsPerfil3__value">0.00</span>
+                                                        <span class="statsPerfil3__label">K/D</span>
+                                                    </div>
+                                                </div>
+                                                <div class="statsPerfil3__footer">
+                                                    <span class="statsPerfil3__mvp">MVP - 0</span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CARD TEAM -->
+                                        <section class="statsCard3 statsCard3--team">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">TEAM</h2>
+                                            </header>
+                                            <div class="statsTeam3__body">
+                                                <div class="statsTeam3__logoBox"></div>
+
+                                                <div class="statsTeam3__line">
+                                                    <img class="statsTeam3__iconImg" src="" alt="Ícone do time (TEAM - TAG)">
+                                                    <span class="statsTeam3__text statsTeam3__text--primary">TEAM - TAG</span>
+                                                </div>
+
+                                                <div class="statsTeam3__line">
+                                                    <img class="statsTeam3__iconImg" src="" alt="Ícone ranking do time">
+                                                    <span class="statsTeam3__text statsTeam3__text--ranking">RANKING #1</span>
+                                                </div>
+
+                                                <div class="statsTeam3__block">
+                                                    <div class="statsTeam3__lineLabel">
+                                                        <img class="statsTeam3__iconImg statsTeam3__iconImg--square" src="" alt="Ícone de troféu do time">
+                                                        <span class="statsTeam3__label">TROFEUS</span>
+                                                    </div>
+                                                    <p class="statsTeam3__value">0 Troféus</p>
+                                                </div>
+
+                                                <div class="statsTeam3__block">
+                                                    <div class="statsTeam3__lineLabel">
+                                                        <img class="statsTeam3__iconImg" src="" alt="Ícone total de partidas">
+                                                        <span class="statsTeam3__label">TOTAL DE MATCHS</span>
+                                                    </div>
+                                                    <p class="statsTeam3__value">0 Matchs</p>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CARD HISTÓRICO DE PARTIDAS -->
+                                        <section class="statsCard3 statsCard3--history">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">HISTORICO DE PARTIDAS</h2>
+                                            </header>
+                                            <div class="statsHistory3__body">
+                                                <div class="statsHistory3__legends">
+                                                    <span class="statsHistory3__legend statsHistory3__legend--win">WIN</span>
+                                                    <span class="statsHistory3__legend statsHistory3__legend--loss">LOSS</span>
+                                                </div>
+                                                <div class="statsHistory3__circle"></div>
+                                                <p class="statsHistory3__subtitle">8 PARTIDAS PASSADAS</p>
+                                                <div class="statsHistory3__matchesCapsule">
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                </div>
+                                            </div>
+                                        </section>
                                     </div>
                                 </div>
                             </div>
@@ -109,8 +335,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -139,27 +369,96 @@
                                     <dd>PTS</dd>
                                 </div>
                             </dl>
-                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes do Top 2">
-                                <div class="rankItem__modalHead">
-                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
-                                    </div>
-                                </div>
-                                <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
-                                    <div class="rankItem__modalDots">
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                            <div class="rankItem__modal" role="dialog" aria-label="Resumo detalhado do Top 2">
+                                <div class="statsModal3">
+                                    <div class="statsModal3__cards">
+                                        <!-- CARD PERFIL -->
+                                        <section class="statsCard3 statsCard3--perfil">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">PERFIL</h2>
+                                            </header>
+                                            <div class="statsPerfil3__body">
+                                                <div class="statsPerfil3__donut">
+                                                    <div class="statsPerfil3__donutInner">
+                                                        <span class="statsPerfil3__value">0.00</span>
+                                                        <span class="statsPerfil3__label">K/D</span>
+                                                    </div>
+                                                </div>
+                                                <div class="statsPerfil3__footer">
+                                                    <span class="statsPerfil3__mvp">MVP - 0</span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CARD TEAM -->
+                                        <section class="statsCard3 statsCard3--team">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">TEAM</h2>
+                                            </header>
+                                            <div class="statsTeam3__body">
+                                                <div class="statsTeam3__logoBox"></div>
+
+                                                <div class="statsTeam3__line">
+                                                    <img class="statsTeam3__iconImg" src="" alt="Ícone do time (TEAM - TAG)">
+                                                    <span class="statsTeam3__text statsTeam3__text--primary">TEAM - TAG</span>
+                                                </div>
+
+                                                <div class="statsTeam3__line">
+                                                    <img class="statsTeam3__iconImg" src="" alt="Ícone ranking do time">
+                                                    <span class="statsTeam3__text statsTeam3__text--ranking">RANKING #1</span>
+                                                </div>
+
+                                                <div class="statsTeam3__block">
+                                                    <div class="statsTeam3__lineLabel">
+                                                        <img class="statsTeam3__iconImg statsTeam3__iconImg--square" src="" alt="Ícone de troféu do time">
+                                                        <span class="statsTeam3__label">TROFEUS</span>
+                                                    </div>
+                                                    <p class="statsTeam3__value">0 Troféus</p>
+                                                </div>
+
+                                                <div class="statsTeam3__block">
+                                                    <div class="statsTeam3__lineLabel">
+                                                        <img class="statsTeam3__iconImg" src="" alt="Ícone total de partidas">
+                                                        <span class="statsTeam3__label">TOTAL DE MATCHS</span>
+                                                    </div>
+                                                    <p class="statsTeam3__value">0 Matchs</p>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CARD HISTÓRICO DE PARTIDAS -->
+                                        <section class="statsCard3 statsCard3--history">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">HISTORICO DE PARTIDAS</h2>
+                                            </header>
+                                            <div class="statsHistory3__body">
+                                                <div class="statsHistory3__legends">
+                                                    <span class="statsHistory3__legend statsHistory3__legend--win">WIN</span>
+                                                    <span class="statsHistory3__legend statsHistory3__legend--loss">LOSS</span>
+                                                </div>
+                                                <div class="statsHistory3__circle"></div>
+                                                <p class="statsHistory3__subtitle">8 PARTIDAS PASSADAS</p>
+                                                <div class="statsHistory3__matchesCapsule">
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                </div>
+                                            </div>
+                                        </section>
                                     </div>
                                 </div>
                             </div>
@@ -171,8 +470,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -201,27 +504,96 @@
                                     <dd>PTS</dd>
                                 </div>
                             </dl>
-                            <div class="rankItem__modal" role="dialog" aria-label="Detalhes do Top 3">
-                                <div class="rankItem__modalHead">
-                                    <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
-                                    </div>
-                                </div>
-                                <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
-                                    <div class="rankItem__modalDots">
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
-                                        <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
+                            <div class="rankItem__modal" role="dialog" aria-label="Resumo detalhado do Top 3">
+                                <div class="statsModal3">
+                                    <div class="statsModal3__cards">
+                                        <!-- CARD PERFIL -->
+                                        <section class="statsCard3 statsCard3--perfil">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">PERFIL</h2>
+                                            </header>
+                                            <div class="statsPerfil3__body">
+                                                <div class="statsPerfil3__donut">
+                                                    <div class="statsPerfil3__donutInner">
+                                                        <span class="statsPerfil3__value">0.00</span>
+                                                        <span class="statsPerfil3__label">K/D</span>
+                                                    </div>
+                                                </div>
+                                                <div class="statsPerfil3__footer">
+                                                    <span class="statsPerfil3__mvp">MVP - 0</span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CARD TEAM -->
+                                        <section class="statsCard3 statsCard3--team">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">TEAM</h2>
+                                            </header>
+                                            <div class="statsTeam3__body">
+                                                <div class="statsTeam3__logoBox"></div>
+
+                                                <div class="statsTeam3__line">
+                                                    <img class="statsTeam3__iconImg" src="" alt="Ícone do time (TEAM - TAG)">
+                                                    <span class="statsTeam3__text statsTeam3__text--primary">TEAM - TAG</span>
+                                                </div>
+
+                                                <div class="statsTeam3__line">
+                                                    <img class="statsTeam3__iconImg" src="" alt="Ícone ranking do time">
+                                                    <span class="statsTeam3__text statsTeam3__text--ranking">RANKING #1</span>
+                                                </div>
+
+                                                <div class="statsTeam3__block">
+                                                    <div class="statsTeam3__lineLabel">
+                                                        <img class="statsTeam3__iconImg statsTeam3__iconImg--square" src="" alt="Ícone de troféu do time">
+                                                        <span class="statsTeam3__label">TROFEUS</span>
+                                                    </div>
+                                                    <p class="statsTeam3__value">0 Troféus</p>
+                                                </div>
+
+                                                <div class="statsTeam3__block">
+                                                    <div class="statsTeam3__lineLabel">
+                                                        <img class="statsTeam3__iconImg" src="" alt="Ícone total de partidas">
+                                                        <span class="statsTeam3__label">TOTAL DE MATCHS</span>
+                                                    </div>
+                                                    <p class="statsTeam3__value">0 Matchs</p>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <!-- CARD HISTÓRICO DE PARTIDAS -->
+                                        <section class="statsCard3 statsCard3--history">
+                                            <header class="statsCard3__header">
+                                                <div class="statsCard3__decorDots">
+                                                    <span></span><span></span>
+                                                </div>
+                                                <h2 class="statsCard3__title">HISTORICO DE PARTIDAS</h2>
+                                            </header>
+                                            <div class="statsHistory3__body">
+                                                <div class="statsHistory3__legends">
+                                                    <span class="statsHistory3__legend statsHistory3__legend--win">WIN</span>
+                                                    <span class="statsHistory3__legend statsHistory3__legend--loss">LOSS</span>
+                                                </div>
+                                                <div class="statsHistory3__circle"></div>
+                                                <p class="statsHistory3__subtitle">8 PARTIDAS PASSADAS</p>
+                                                <div class="statsHistory3__matchesCapsule">
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--loss"></span>
+                                                    <span class="statsHistory3__matchDot statsHistory3__matchDot--win"></span>
+                                                </div>
+                                            </div>
+                                        </section>
                                     </div>
                                 </div>
                             </div>
@@ -233,8 +605,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -264,15 +640,25 @@
                                 </div>
                             </dl>
                             <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 4">
-                                <div class="rankItem__modalHead">
+                                <div class="rankItem__modalTrophiesBox">
                                     <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    <p class="rankItem__modalName">team - tag</p>
+                                    <p class="rankItem__modalTag">
+                                        <img src="../img/cs2.png" alt="Logo do time" class="rankItem__modalTagLogo">
+                                    </p>
+                                    <div class="rankItem__modalTrophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon rankItem__trophyIcon--modal" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
                                     </div>
                                 </div>
                                 <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <span class="rankItem__modalHistoryLabel">
+                                        Histórico
+                                        <span class="rankItem__historyLegend">
+                                            <span class="rankItem__historyLegend--win">W</span>
+                                            <span class="rankItem__historyLegend--loss">L</span>
+                                        </span>
+                                    </span>
                                     <div class="rankItem__modalDots">
                                         <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
                                         <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
@@ -294,8 +680,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -325,15 +715,25 @@
                                 </div>
                             </dl>
                             <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 5">
-                                <div class="rankItem__modalHead">
+                                <div class="rankItem__modalTrophiesBox">
                                     <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    <p class="rankItem__modalName">team - tag</p>
+                                    <p class="rankItem__modalTag">
+                                        <img src="../img/cs2.png" alt="Logo do time" class="rankItem__modalTagLogo">
+                                    </p>
+                                    <div class="rankItem__modalTrophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon rankItem__trophyIcon--modal" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
                                     </div>
                                 </div>
                                 <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <span class="rankItem__modalHistoryLabel">
+                                        Histórico
+                                        <span class="rankItem__historyLegend">
+                                            <span class="rankItem__historyLegend--win">W</span>
+                                            <span class="rankItem__historyLegend--loss">L</span>
+                                        </span>
+                                    </span>
                                     <div class="rankItem__modalDots">
                                         <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
                                         <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
@@ -355,8 +755,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -386,15 +790,25 @@
                                 </div>
                             </dl>
                             <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 6">
-                                <div class="rankItem__modalHead">
+                                <div class="rankItem__modalTrophiesBox">
                                     <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    <p class="rankItem__modalName">team - tag</p>
+                                    <p class="rankItem__modalTag">
+                                        <img src="../img/cs2.png" alt="Logo do time" class="rankItem__modalTagLogo">
+                                    </p>
+                                    <div class="rankItem__modalTrophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon rankItem__trophyIcon--modal" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
                                     </div>
                                 </div>
                                 <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <span class="rankItem__modalHistoryLabel">
+                                        Histórico
+                                        <span class="rankItem__historyLegend">
+                                            <span class="rankItem__historyLegend--win">W</span>
+                                            <span class="rankItem__historyLegend--loss">L</span>
+                                        </span>
+                                    </span>
                                     <div class="rankItem__modalDots">
                                         <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
                                         <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
@@ -416,8 +830,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -447,15 +865,25 @@
                                 </div>
                             </dl>
                             <div class="rankItem__modal" role="dialog" aria-label="Detalhes posição 7">
-                                <div class="rankItem__modalHead">
+                                <div class="rankItem__modalTrophiesBox">
                                     <div class="rankItem__modalImg" aria-hidden="true"></div>
-                                    <div class="rankItem__modalInfo">
-                                        <p class="rankItem__modalName">USERNAME</p>
-                                        <p class="rankItem__modalTag">TM - Team</p>
+                                    <p class="rankItem__modalName">team - tag</p>
+                                    <p class="rankItem__modalTag">
+                                        <img src="../img/cs2.png" alt="Logo do time" class="rankItem__modalTagLogo">
+                                    </p>
+                                    <div class="rankItem__modalTrophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon rankItem__trophyIcon--modal" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
                                     </div>
                                 </div>
                                 <div class="rankItem__modalHistory">
-                                    <span class="rankItem__modalHistoryLabel">Histórico</span>
+                                    <span class="rankItem__modalHistoryLabel">
+                                        Histórico
+                                        <span class="rankItem__historyLegend">
+                                            <span class="rankItem__historyLegend--win">W</span>
+                                            <span class="rankItem__historyLegend--loss">L</span>
+                                        </span>
+                                    </span>
                                     <div class="rankItem__modalDots">
                                         <span class="rankItem__modalDot rankItem__modalDot--loss" title="Derrota"></span>
                                         <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
@@ -477,8 +905,12 @@
                             <div class="rankItem__identity">
                                 <div class="rankItem__avatar" aria-hidden="true"></div>
                                 <div class="rankItem__names">
-                                    <div class="rankItem__name">USERNAME</div>
-                                    <div class="rankItem__tag">TM - Team</div>
+                                    <div class="rankItem__name">team - tag</div>
+                                    <div class="rankItem__tag"></div>
+                                    <div class="rankItem__trophies" aria-label="Troféus">
+                                        <span class="rankItem__trophyIcon" aria-hidden="true"></span>
+                                        <span class="rankItem__trophyCount">0</span>
+                                    </div>
                                 </div>
                             </div>
                             <dl class="rankItem__stats">
@@ -509,32 +941,33 @@
                             </dl>
                         </li>
                     </ol>
+                    </div>
                 </div>
 
-                <nav class="pager" aria-label="Paginação do ranking">
-                    <button class="dot" aria-label="Página 1" aria-current="true"></button>
-                    <button class="dot" aria-label="Página 2"></button>
-                    <button class="dot" aria-label="Página 3"></button>
-                    <button class="dot" aria-label="Página 4"></button>
-                    <button class="dot" aria-label="Página 5"></button>
-                    <button class="dot" aria-label="Página 6"></button>
-                    <button class="dot" aria-label="Página 7"></button>
-                    <button class="dot" aria-label="Página 8"></button>
-                </nav>
             </div>
         </section>
     </main>
     <!-- Modal do #8 no final do body para ficar sempre na frente (posicionado via JS) -->
     <div id="modalLastRank" class="rankItem__modal rankItem__modal--floating" role="dialog" aria-label="Detalhes posição 8">
-        <div class="rankItem__modalHead">
+        <div class="rankItem__modalTrophiesBox">
             <div class="rankItem__modalImg" aria-hidden="true"></div>
-            <div class="rankItem__modalInfo">
-                <p class="rankItem__modalName">USERNAME</p>
-                <p class="rankItem__modalTag">TM - Team</p>
+            <p class="rankItem__modalName">team - tag</p>
+            <p class="rankItem__modalTag">
+                <img src="../img/cs2.png" alt="Logo do time" class="rankItem__modalTagLogo">
+            </p>
+            <div class="rankItem__modalTrophies" aria-label="Troféus">
+                <span class="rankItem__trophyIcon rankItem__trophyIcon--modal" aria-hidden="true"></span>
+                <span class="rankItem__trophyCount">0</span>
             </div>
         </div>
-        <div class="rankItem__modalHistory">
-            <span class="rankItem__modalHistoryLabel">Histórico</span>
+            <div class="rankItem__modalHistory">
+            <span class="rankItem__modalHistoryLabel">
+                Histórico
+                <span class="rankItem__historyLegend">
+                    <span class="rankItem__historyLegend--win">W</span>
+                    <span class="rankItem__historyLegend--loss">L</span>
+                </span>
+            </span>
             <div class="rankItem__modalDots">
                 <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
                 <span class="rankItem__modalDot rankItem__modalDot--win" title="Vitória"></span>
@@ -549,7 +982,6 @@
             </div>
         </div>
     </div>
-
 
     <footer>
         <div class="footer-container">
@@ -586,16 +1018,17 @@
                 <h3 class="suporte-title">Suporte</h3>
                 <ul>
                     <li>
-                        <a href="">
+                        <a href="https://discord.gg/nCnDFagmpe" target="_blank">
+
                             <img src="../img/discord2.svg" alt="">
-                                <p>Discord</p>
+                            <p>Discord</p>
                             </img>
                         </a>
                     </li>
                     <li>
                         <a href="">
                             <img src="../img/faq.svg" alt="">
-                                <p>FAQ</p>
+                            <p>FAQ</p>
                             </img>
                         </a>
                     </li>
@@ -607,7 +1040,7 @@
                     <ul>
                         <li>
                             <a href=""><img src="../img/md-logo.svg" alt="">
-                            </img></a>
+                                </img></a>
                         </li>
                     </ul>
                 </div>
@@ -625,6 +1058,106 @@
 
 
 
+    <div class="modal" id="modalCriarTime">
+        <div class="modal-content-profissional team2-modal-criar">
+            <div class="modal-header-profissional">
+                <div class="header-content">
+                    <div class="header-icon"><i class="fas fa-users"></i></div>
+                    <div class="header-text">
+                        <h2>Criar Novo Time</h2>
+                        <p>Preencha as informações para criar seu time</p>
+                    </div>
+                </div>
+                <button class="close-profissional" id="closeModalCriarTime"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body-profissional">
+                <form id="formCriarTime" class="form-profissional">
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-image"></i> Imagens do Time</h3>
+                        <div class="image-upload-grid">
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="logoUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-camera"></i>
+                                        <span class="upload-text">Logo do Time</span>
+                                        <span class="upload-specs">Recomendado: 200x200px</span>
+                                    </div>
+                                    <input type="file" id="logoTime" name="logo" accept="image/*" class="file-input">
+                                    <div class="image-preview" id="logoPreview"></div>
+                                </div>
+                            </div>
+                            <div class="image-upload-item">
+                                <div class="upload-area" id="bannerUploadArea">
+                                    <div class="upload-content">
+                                        <i class="fas fa-image"></i>
+                                        <span class="upload-text">Banner do Time</span>
+                                        <span class="upload-specs">Recomendado: 1200x400px</span>
+                                    </div>
+                                    <input type="file" id="bannerTime" name="banner" accept="image/*"
+                                        class="file-input">
+                                    <div class="image-preview" id="bannerPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fas fa-info-circle"></i> Informações do Time</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="nomeTime" class="form-label"><i class="fas fa-tag"></i> Nome do Time</label>
+                                <input type="text" id="nomeTime" name="nome" required maxlength="100"
+                                    placeholder="Ex: LEGALIZE" class="form-input">
+                                <div class="input-hint">Nome completo do seu time</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="tagTime" class="form-label"><i class="fas fa-hashtag"></i> Tag do
+                                    Time</label>
+                                <input type="text" id="tagTime" name="tag" required maxlength="10" placeholder="Ex: LGZ"
+                                    class="form-input">
+                                <div class="input-hint">Tag curta para identificação</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="sobreTime" class="form-label"><i class="fas fa-align-left"></i> Sobre o
+                                Time</label>
+                            <textarea id="sobreTime" name="sobre_time" maxlength="500"
+                                placeholder="Descreva a história, objetivos e características do seu time..."
+                                class="form-textarea"></textarea>
+                            <div class="input-hint">Opcional</div>
+                        </div>
+                    </div>
+                    <div class="form-actions-profissional">
+                        <button type="button" class="btn-cancel-profissional" id="cancelarCriarTime"><i
+                                class="fas fa-times"></i> Cancelar</button>
+                        <button type="submit" class="btn-primary-profissional"><i class="fas fa-plus"></i> Criar
+                            Time</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <div id="confirmModal" class="confirm-modal team2-confirm">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 id="confirmModalTitle">Confirmação</h3>
+                <span class="confirm-modal-close" onclick="closeConfirmModal(false)">&times;</span>
+            </div>
+            <div class="confirm-modal-body">
+                <p id="confirmModalMessage">Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="confirm-modal-footer">
+                <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)"><i class="fas fa-times"></i>
+                    Cancelar</button>
+                <button class="btn-confirm-ok" onclick="closeConfirmModal(true)"><i class="fas fa-check"></i>
+                    Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="modalNotificacoes" class="modal-notificacoes-overlay" aria-hidden="true">
         <div class="modal-notificacoes-box">
             <header class="modal-notificacoes-header">
@@ -634,7 +1167,8 @@
                 </button>
             </header>
             <div class="modal-notificacoes-tabs">
-                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas" id="tabNotifLidas">Lidas</button>
+                <button type="button" class="tab-notif tab-notif-active" data-tab="lidas"
+                    id="tabNotifLidas">Lidas</button>
                 <button type="button" class="tab-notif" data-tab="nao-lidas" id="tabNotifNaoLidas">Não lidas</button>
             </div>
             <div class="modal-notificacoes-body">
@@ -644,7 +1178,8 @@
                 </div>
                 <!-- Vista: mensagem expandida (oculta por padrão) -->
                 <div class="modal-notificacoes-detail" id="modalNotificacoesDetail" hidden>
-                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack" aria-label="Voltar">
+                    <button type="button" class="modal-notificacoes-back" id="modalNotificacoesBack"
+                        aria-label="Voltar">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <div class="notificacao-detail-content">
@@ -665,6 +1200,7 @@
 
 
 
+    
     <script>
         (function () {
             // Modal sempre abre abaixo do rankItem (#1–#7: CSS top: 100%; #8: posicionado via JS)
@@ -709,6 +1245,8 @@
             }
         })();
     </script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/ranking.js"></script>
 </body>
 
 </html>

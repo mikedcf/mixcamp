@@ -15,10 +15,11 @@
 <body class="claro">
     <!-- Overlay do menu mobile (abre ao clicar no hamburger) -->
     <div class="mobile-nav-overlay" id="mobileNavOverlay" aria-hidden="true">
-        <nav class="mobile-nav-panel">
+        <nav class="mobile-nav-panel" aria-label="Menu móvel principal">
             <ul class="mobile-nav-menu">
                 <li><a href="campeonato.html"><i class="fas fa-trophy"></i> Campeonato</a></li>
                 <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                <li><a href="ranking.html"><i class="fas fa-medal"></i> Ranking</a></li>
                 <li><a href="comunidade.html"><i class="fas fa-users"></i> Comunidade</a></li>
                 <li><a href="noticias.html"><i class="fas fa-newspaper"></i> Notícias</a></li>
                 <li><a href="apoiadores.html"><i class="fas fa-heart"></i> Apoiadores</a></li>
@@ -45,6 +46,7 @@
                         <a href="campeonato.html">Campeonato</a>
                         <ul class="dropdown-menu">
                             <li><a href="matchs.html"><i class="fas fa-gamepad"></i> Matchs</a></li>
+                            <li><a href="ranking.html"><i class="fas fa-trophy"></i> Ranking</a></li>
                         </ul>
                     </li>
                     <li><a href="comunidade.html">Comunidade</a></li>
@@ -104,6 +106,16 @@
     </header>
 
     <main class="matchs-container">
+        <!-- Carrossel de Vetos / Picks & Bans -->
+        <section class="picksbans-carousel-wrapper">
+            <div class="picksbans-carousel-header">
+                <h2 class="picksbans-title">Vetos recentes</h2>
+                <p class="picksbans-subtitle">Veja os confrontos que já estão com vetos configurados.</p>
+            </div>
+            <div class="picksbans-carousel" id="picksbansCarousel">
+                <!-- Cards de vetos serão inseridos dinamicamente via JS -->
+            </div>
+        </section>
         <section class="matchs-header">
             <div class="matchs-title-group">
                 <h1 class="matchs-title">Partidas</h1>

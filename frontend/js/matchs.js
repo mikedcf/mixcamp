@@ -492,6 +492,124 @@ window.addEventListener("scroll", function () {
 });
 
 // =============================================================
+// ====================== [ SISTEMA DE NOTIFICAÇÃO DE PICKS E BANS ] ======================
+
+async function buscarPicksEBans() {
+    try {
+        const response = await fetch(`${API_URL}/divulgar/links/picksbans`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Erro ao buscar picks e bans:', error);
+        return [];
+    }
+}
+
+
+async function renderizarPicksEBans() {
+    const container = document.getElementById('picksbansCarousel');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const listaPicksEBans = [];
+    const dataResp = await buscarPicksEBans();
+    const picksBans = dataResp?.divulgarLinksPicksbans || [];
+
+    for (const pickBan of picksBans) {
+        const timeA = pickBan.time_id_a;
+        const timeB = pickBan.time_id_b;
+        const dataFormatada = await formatarDataBR(pickBan.data_criacao);
+
+        try {
+            const responsetimeA = await fetch(`${API_URL}/times/${timeA}`);
+            const dataTimeA = await responsetimeA.json();
+            const nomeTimeA = dataTimeA.time.nome;
+            const avatarTimeA = dataTimeA.time.avatar_time_url;
+
+            const responsetimeB = await fetch(`${API_URL}/times/${timeB}`);
+            const dataTimeB = await responsetimeB.json();
+            const nomeTimeB = dataTimeB.time.nome;
+            const avatarTimeB = dataTimeB.time.avatar_time_url;
+
+            listaPicksEBans.push({
+                nomeTimeA,
+                avatarTimeA,
+                nomeTimeB,
+                avatarTimeB,
+                linkEspectador: pickBan.link_espectador,
+                data: dataFormatada,
+                dataOriginal: pickBan.data_criacao
+            });
+        } catch (error) {
+            console.error('Erro ao buscar time:', error);
+        }
+    }
+
+    if (listaPicksEBans.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'picksbans-empty';
+        empty.textContent = 'Nenhum veto disponível no momento.';
+        container.appendChild(empty);
+        return;
+    }
+
+    // Ordenar pela data de criação (mais recente primeiro)
+    listaPicksEBans.sort((a, b) => {
+        const da = new Date(a.dataOriginal);
+        const db = new Date(b.dataOriginal);
+        return db - da;
+    });
+
+    listaPicksEBans.forEach(item => {
+        const card = document.createElement('article');
+        card.className = 'picksbans-card';
+
+        card.innerHTML = `
+            <div class="picksbans-card-header">
+                <div class="picksbans-team">
+                    <img src="${item.avatarTimeA || ''}" alt="${item.nomeTimeA}" class="picksbans-team-logo"
+                        onerror="this.src='https://cdn-icons-png.flaticon.com/128/5726/5726775.png'">
+                    <span class="picksbans-team-name">${item.nomeTimeA}</span>
+                </div>
+                <div class="picksbans-vs">VS</div>
+                <div class="picksbans-team" style="justify-content: flex-end;">
+                    <span class="picksbans-team-name" style="text-align:right;">${item.nomeTimeB}</span>
+                    <img src="${item.avatarTimeB || ''}" alt="${item.nomeTimeB}" class="picksbans-team-logo"
+                        onerror="this.src='https://cdn-icons-png.flaticon.com/128/5726/5726775.png'">
+                </div>
+            </div>
+            <div class="picksbans-date">${item.data}</div>
+            <div class="picksbans-footer">
+                <button class="picksbans-btn" type="button">
+                    <i class="fas fa-map"></i>
+                    Ver vetos
+                </button>
+            </div>
+        `;
+
+        const btn = card.querySelector('.picksbans-btn');
+        if (btn && item.linkEspectador) {
+            btn.addEventListener('click', () => {
+                const base = window.location.origin + window.location.pathname.replace('matchs.html', '');
+                const href = item.linkEspectador.startsWith('http')
+                    ? item.linkEspectador
+                    : base + item.linkEspectador;
+                window.open(href, '_blank');
+            });
+        }
+
+        container.appendChild(card);
+    });
+}
+
+// Atualizar vetos a cada 10 segundos
+renderizarPicksEBans();
+setInterval(renderizarPicksEBans, 10000);
+
+
+
+// =============================================================
 // ====================== [ SISTEMA DE MATCHS ] ======================
 // Função para gerenciar estado vazio
 function handleEmptyState(isEmpty) {

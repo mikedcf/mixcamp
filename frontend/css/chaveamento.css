@@ -1871,18 +1871,13 @@ Seletores dentro das opções com fundo profissional .actions select {
   font-family: "Oswald", sans-serif;
   font-size: 1.3rem;
   font-weight: 800;
-  background: linear-gradient(45deg, #f56e08, #F66600, #ff8c42, #f56e08);
-  background-size: 300% 300%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
   position: relative;
   z-index: 1;
-  animation: text-shimmer 3s ease-in-out infinite;
-  text-shadow: 0 0 20px rgba(245, 110, 8, 0.5);
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
   margin-top: 5px;
 }
 
@@ -1904,7 +1899,7 @@ Seletores dentro das opções com fundo profissional .actions select {
   font-family: "Oswald", sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #f56e08;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 3px;
   margin-bottom: 8px;

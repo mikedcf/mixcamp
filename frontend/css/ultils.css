@@ -463,7 +463,12 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    z-index: 9999;
+    z-index: 99999;
+    pointer-events: none;
+}
+
+.notification-container .notification {
+    pointer-events: auto;
 }
 
 .notification {

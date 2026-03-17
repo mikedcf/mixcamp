@@ -36,20 +36,20 @@ async function autenticacao() {
     } catch (error) {
         console.error('Erro na inicialização:', error);
     }
-    
+
 }
 
 
 async function verificar_auth() {
-    const auth_dados = await autenticacao(); 
-    
-    
+    const auth_dados = await autenticacao();
+
+
     if (auth_dados.logado) {
         const userId = auth_dados.usuario.id;
         const perfil_data = await buscarDadosPerfil(userId);
 
-        
-        
+
+
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
         // Atualiza a UI para o usuário logado
@@ -61,7 +61,7 @@ async function verificar_auth() {
         if (menuPerfilLink) {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
-       
+
 
         const gerenciarCamp = document.getElementById("gerenciarCamp");
         if (perfil_data.usuario.organizador == 'premium') {
@@ -71,10 +71,10 @@ async function verificar_auth() {
         else {
             gerenciarCamp.style.display = 'none';
         }
-        
+
     }
-    else{
-        
+    else {
+
         document.getElementById('userAuth').classList.remove('hidden');
     }
 }
@@ -123,7 +123,7 @@ async function logout() {
 // ========= BUSCAR DADOS =========
 
 async function buscarDadosPerfil(userId) {
-    
+
     try {
         if (!userId) {
             console.warn('buscarDadosPerfil: userId não fornecido');
@@ -153,23 +153,23 @@ async function buscarDadosPerfil(userId) {
 }
 
 // ------ LISTAR TIMES
-async function DadosTimeLista(){
-    
-    try{
-        const dados = await fetch(`${API_URL}/times/list`,{
+async function DadosTimeLista() {
+
+    try {
+        const dados = await fetch(`${API_URL}/times/list`, {
             credentials: 'include'
         });
 
-        if(dados.ok){
+        if (dados.ok) {
             const data = await dados.json();
             return data;
         }
-        else{
+        else {
             console.error(`Erro ao listar times: ${dados.status} ${dados.statusText}`);
             throw new Error(`Erro ao listar times: ${dados.status}`);
         }
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao listar times:', error);
         // Não mostrar notificação se for erro de conexão (servidor offline)
         if (error.message && !error.message.includes('Failed to fetch')) {
@@ -181,22 +181,22 @@ async function DadosTimeLista(){
 }
 
 // ------ LISTAR PLAYERS
-async function DadosPlayersLista(){
-    try{
-        const dados = await fetch(`${API_URL}/users/perfils`,{
+async function DadosPlayersLista() {
+    try {
+        const dados = await fetch(`${API_URL}/users/perfils`, {
             credentials: 'include'
         });
 
-        if(dados.ok){
+        if (dados.ok) {
             const data = await dados.json();
             return data || [];
         }
-        else{
+        else {
             console.error(`Erro ao listar players: ${dados.status} ${dados.statusText}`);
             throw new Error(`Erro ao listar players: ${dados.status}`);
         }
     }
-    catch(error){
+    catch (error) {
         console.error('Erro ao listar players:', error);
         // Não mostrar notificação se for erro de conexão (servidor offline)
         if (error.message && !error.message.includes('Failed to fetch')) {
@@ -210,33 +210,33 @@ async function DadosPlayersLista(){
 
 
 // ------ TRANSFERÊNCIA DE DADOS
-async function TransferenciaDeDados(){
+async function TransferenciaDeDados() {
     const dadosTimes = await DadosTimeLista();
-    
+
     const todosOsTimes = []; // Array para armazenar todos os times
-    
+
     // Verificar se há dados válidos
     if (!dadosTimes || !dadosTimes.dados || dadosTimes.dados.length === 0) {
         return todosOsTimes;
     }
 
-    for(let i = 0; i < dadosTimes.dados.length; i++){
+    for (let i = 0; i < dadosTimes.dados.length; i++) {
         const time = dadosTimes.dados[i];
         // Calcular quantidade de membros para este time
-        const quantidadesMembros = dadosTimes.dadosMembros 
-            ? dadosTimes.dadosMembros.filter(m => m.time_id === time.id).length 
+        const quantidadesMembros = dadosTimes.dadosMembros
+            ? dadosTimes.dadosMembros.filter(m => m.time_id === time.id).length
             : 0;
-        
+
         // Buscar dados do líder
         const lider_id = time.lider_id;
         let nickLider = 'Sem líder';
-        
+
         try {
             const LiderPerfil = await buscarDadosPerfil(lider_id);
             if (LiderPerfil && LiderPerfil.usuario) {
                 nickLider = LiderPerfil.usuario.username || LiderPerfil.usuario.nome || 'Sem líder';
             }
-            
+
         } catch (error) {
             console.error(`Erro ao buscar perfil do líder ${lider_id}:`, error);
         }
@@ -253,8 +253,8 @@ async function TransferenciaDeDados(){
             lider_id: lider_id
         };
 
-        
-        
+
+
         // Adicionar ao array de times
         todosOsTimes.push(dadosDoTime);
     }
@@ -282,55 +282,61 @@ function mapPosicaoEmoji(posicao) {
 }
 
 async function loadData() {
+    const loadingEl = document.getElementById('resultsLoading');
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+        loadingEl.setAttribute('aria-hidden', 'false');
+    }
+
     const dadosDoPlayers = []
     const mockPlayers = []
 
     // Buscar todos os times (agora retorna um array)
     const dadosTimesArray = await TransferenciaDeDados();
-    
+
     // Usar o array completo de times
     const mockTimes = Array.isArray(dadosTimesArray) ? dadosTimesArray : [];
 
     const dadosPlayers = await DadosPlayersLista();
-    
+
     let position = []
-    
-    for(let i = 0; i < dadosPlayers.length; i++){
+
+    for (let i = 0; i < dadosPlayers.length; i++) {
         const player = dadosPlayers[i];
-       
-        
+
+
         const perfil_data = await buscarDadosPerfil(player.id);
-        
+
         // Verificar se perfil_data é válido
         if (!perfil_data || !perfil_data.usuario) {
-           
+
             continue;
         }
-    
+
         let position = perfil_data.usuario.posicoes
-        
-        
-        if (position == null){
-            
+
+
+        if (position == null) {
+
             position = ['player']; // Posição padrão para players sem posição definida
         }
-        else{
+        else {
             let posicoesArray = [];
 
             position = position.join(',')
             position = `"${position}"`
-            
+
         }
-        
-        
+
+
         let time_nome = player.time_nome;
-        
+
         // Normalizar nome do time e definir status (com time / sem time)
         if (!time_nome) {
             time_nome = 'Sem time';
         }
         const statusPlayer = time_nome === 'Sem time' ? 'without-team' : 'with-team';
-        
+
         dadosDoPlayers.push({
             id: player.id,
             username: player.username,
@@ -339,21 +345,21 @@ async function loadData() {
             time: time_nome,
             status: statusPlayer
         })
-        
 
-        
-        
-        
+
+
+
+
     }
-    
-    
 
-    for(let i = 0; i < dadosDoPlayers.length; i++){
+
+
+    for (let i = 0; i < dadosDoPlayers.length; i++) {
         const player = dadosDoPlayers[i];
-        
-        
 
-        
+
+
+
 
         mockPlayers.push({
             id: player.id,
@@ -365,19 +371,24 @@ async function loadData() {
         })
     }
 
-    
 
 
 
-    
+
+
     if (currentMode === 'times') {
         allData = [...mockTimes];
-        
+
     } else {
         allData = [...mockPlayers];
     }
-    
+
     await filterData();
+
+    if (loadingEl) {
+        loadingEl.style.display = 'none';
+        loadingEl.setAttribute('aria-hidden', 'true');
+    }
 }
 
 async function loadTransfersAndDepartures() {
@@ -386,15 +397,15 @@ async function loadTransfersAndDepartures() {
         const entradasCompletas = await buscarDadosCompletosEntradas();
         const saidasCompletas = await buscarDadosCompletosSaidas();
 
-        
-        
+
+
         // Renderizar com dados completos
         renderTransfers(entradasCompletas);
         renderDepartures(saidasCompletas);
         setupCarousels();
     } catch (error) {
         console.error('Erro ao carregar transferências:', error);
-        
+
         // Em caso de erro, mostrar mensagem de erro em vez de mocks
         renderTransfers([]);
         renderDepartures([]);
@@ -412,14 +423,14 @@ async function filterData() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const positionFilter = document.getElementById('positionFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
-    
+
     filteredData = allData.filter(item => {
         // Busca por texto
         let matchesSearch = true;
         if (searchTerm) {
             if (currentMode === 'times') {
-                matchesSearch = item.nome.toLowerCase().includes(searchTerm) || 
-                              item.tag.toLowerCase().includes(searchTerm);
+                matchesSearch = item.nome.toLowerCase().includes(searchTerm) ||
+                    item.tag.toLowerCase().includes(searchTerm);
             } else {
                 matchesSearch = item.username.toLowerCase().includes(searchTerm);
             }
@@ -427,7 +438,7 @@ async function filterData() {
 
         // Filtros específicos
         let matchesFilters = true;
-        
+
         if (currentMode === 'times') {
             const memberCount = document.getElementById('memberCountFilter').value;
             if (memberCount) {
@@ -439,30 +450,30 @@ async function filterData() {
             const position = positionFilter ? positionFilter.querySelector('.select-option.selected')?.getAttribute('data-value') || '' : '';
             const statusFilter = document.getElementById('statusFilter');
             const status = statusFilter ? statusFilter.querySelector('.select-option.selected')?.getAttribute('data-value') || '' : '';
-            
-            
-            
+
+
+
             if (position) {
                 // Verificar se a posição está no array de posições do player (case-insensitive)
                 const positionLower = position.toLowerCase();
-                const hasPosition = Array.isArray(item.posicao) ? 
-                    item.posicao.some(pos => pos.toLowerCase() === positionLower) : 
+                const hasPosition = Array.isArray(item.posicao) ?
+                    item.posicao.some(pos => pos.toLowerCase() === positionLower) :
                     item.posicao.toLowerCase() === positionLower;
-                    
-               
+
+
                 matchesFilters = matchesFilters && hasPosition;
             }
             if (status) {
                 const hasStatus = item.status === status;
-                
+
                 matchesFilters = matchesFilters && hasStatus;
             }
         }
 
         return matchesSearch && matchesFilters;
     });
-    
-    
+
+
 
     currentPage = 1;
     await renderResults();
@@ -476,7 +487,7 @@ async function renderResults() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const pageData = filteredData.slice(startIndex, endIndex);
-    
+
 
     if (currentView === 'cards') {
         await renderCards(pageData);
@@ -491,12 +502,12 @@ async function renderResults() {
 }
 
 async function renderCards(data) {
-    
+
     const container = document.getElementById('resultsCards');
     container.innerHTML = '';
 
     for (const item of data) {
-        
+
         const card = await createCard(item);
         container.appendChild(card);
     }
@@ -524,7 +535,7 @@ function renderBlocks(data) {
 }
 
 function createBlockItem(item) {
-    
+
     const block = document.createElement('div');
     block.className = 'result-block';
     block.onclick = () => handleItemClick(item);
@@ -559,7 +570,7 @@ function createBlockItem(item) {
         if (item.posicao && item.posicao.length > 0 && item.posicao[0] !== 'player') {
             posicaoHTML = getPositionBadges(item.posicao);
         } else {
-            
+
             posicaoHTML = '<span class="result-block-tag">Não selecionada</span>';
         }
 
@@ -588,8 +599,8 @@ function createBlockItem(item) {
 }
 
 async function createCard(item) {
-    
-    
+
+
     const card = document.createElement('div');
     card.className = 'result-card';
     card.onclick = () => handleItemClick(item);
@@ -618,17 +629,17 @@ async function createCard(item) {
     } else {
         // Gerar badges de posição ou mostrar "não selecionada"
         let posicaoHTML = '';
-        
+
         if (item.posicao && item.posicao.length > 0 && item.posicao[0] !== 'player') {
-            
+
             posicaoHTML = getPositionBadges(item.posicao);
 
-            
+
         } else {
             posicaoHTML = '<span class="tag">Não selecionada</span>';
         }
-        
-       
+
+
         card.innerHTML = `
             <div class="result-card-header">
                 <img src="${item.avatar}" alt="${item.username}" class="result-card-avatar">
@@ -677,12 +688,12 @@ function createListItem(item) {
         if (item.posicao && item.posicao.length > 0 && item.posicao[0] !== 'player') {
             posicaoHTML = getPositionBadges(item.posicao);
         } else {
-            
-            
+
+
             posicaoHTML = '<div class="result-list-tag">Não selecionada</div>';
         }
-        
-        
+
+
         listItem.innerHTML = `
             <img src="${item.avatar}" alt="${item.username}" class="result-list-avatar">
             <div class="result-list-info">
@@ -717,14 +728,14 @@ function handleItemClick(item) {
 function renderPagination() {
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
     const container = document.getElementById('pagination');
-    
+
     if (totalPages <= 1) {
         container.innerHTML = '';
         return;
     }
 
     let paginationHTML = '';
-    
+
     // Botão anterior
     paginationHTML += `
         <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} 
@@ -781,7 +792,7 @@ function updateResultsInfo() {
     const info = document.getElementById('resultsCount');
     const startIndex = (currentPage - 1) * itemsPerPage + 1;
     const endIndex = Math.min(currentPage * itemsPerPage, filteredData.length);
-    
+
     info.textContent = `${filteredData.length} resultados (${startIndex}-${endIndex})`;
 }
 
@@ -798,7 +809,7 @@ function renderTransfers(data = null) {
 
     // Usar dados reais se fornecidos, senão array vazio (mensagem "nenhum dado" já tratada abaixo)
     const items = data && data.length > 0 ? data : [];
-    
+
     // Se não há dados, mostrar mensagem ou ocultar seção
     if (!items || items.length === 0) {
         track.innerHTML = `
@@ -809,31 +820,31 @@ function renderTransfers(data = null) {
         `;
         return;
     }
-    
-    items.forEach( async transfer =>  {
-        
+
+    items.forEach(async transfer => {
+
         // Para dados de entrada, a posição está diretamente em transfer.team.posicao
         let posicao = transfer.team.posicao;
-        
+
         // Se posicao é um array (dados antigos), buscar a posição do usuário
         if (Array.isArray(posicao)) {
             posicao = null;
-            for (let i = 0; i < transfer.team.posicao.length; i++){
-                if (transfer.team.posicao[i].usuario_id == transfer.player.id){
+            for (let i = 0; i < transfer.team.posicao.length; i++) {
+                if (transfer.team.posicao[i].usuario_id == transfer.player.id) {
                     posicao = transfer.team.posicao[i].position
                     break; // Sair do loop quando encontrar a posição
                 }
             }
         }
 
-       
+
         const card = document.createElement('div');
         card.className = 'transfer-card';
         // Verificar se é dados completos (com player/team objects) ou dados básicos do backend
         const isCompleteData = transfer.player && transfer.team;
 
-        
-        
+
+
         if (isCompleteData) {
             // Dados completos com player e team details
             card.innerHTML = `
@@ -866,13 +877,14 @@ function renderTransfers(data = null) {
         } else {
             // Dados básicos do backend (usuario_id, time_id) ou mocks
             const isRealData = transfer.usuario_id !== undefined;
-            
+
             if (isRealData) {
                 // Dados básicos do backend
                 card.innerHTML = `
                     <div class="transfer-content">
                         <div class="player-info" onclick="handlePlayerClick(${transfer.usuario_id})">
-                            <img src="../img/avatar.jpg" alt="User ${transfer.usuario_id}" class="player-avatar">
+                            <img src="
+                            " alt="User ${transfer.usuario_id}" class="player-avatar">
                             <div class="player-details">
                                 <h3 class="player-name">User ${transfer.usuario_id}</h3>
                             </div>
@@ -925,10 +937,10 @@ function renderDepartures(data = null) {
     if (!viewport || !track) return;
     track.innerHTML = '';
 
-    
+
     // Usar dados reais se fornecidos, senão array vazio (mensagem "nenhum dado" já tratada abaixo)
     const items = data && data.length > 0 ? data : [];
-    
+
     // Se não há dados, mostrar mensagem ou ocultar seção
     if (!items || items.length === 0) {
         track.innerHTML = `
@@ -939,14 +951,14 @@ function renderDepartures(data = null) {
         `;
         return;
     }
-    
+
     items.forEach(departure => {
-       
+
         const card = document.createElement('div');
         card.className = 'departure-card';
         // Verificar se é dados completos (com player/team objects) ou dados básicos do backend
         const isCompleteData = departure.player && departure.team;
-        
+
         if (isCompleteData) {
             // Dados completos com player e team details
             card.innerHTML = `
@@ -979,13 +991,14 @@ function renderDepartures(data = null) {
         } else {
             // Dados básicos do backend (usuario_id, time_id) ou mocks
             const isRealData = departure.usuario_id !== undefined;
-            
+
             if (isRealData) {
                 // Dados básicos do backend
                 card.innerHTML = `
                     <div class="saida-content">
                         <div class="player-info" onclick="handlePlayerClick(${departure.usuario_id})">
-                            <img src="../img/avatar.jpg" alt="User ${departure.usuario_id}" class="player-avatar">
+                            <img src="
+                            " alt="User ${departure.usuario_id}" class="player-avatar">
                             <div class="player-details">
                                 <h3 class="player-name">User ${departure.usuario_id}</h3>
                             </div>
@@ -1037,12 +1050,12 @@ function renderDepartures(data = null) {
 async function verificarTimeUsuario() {
     const auth_dados = await autenticacao();
     try {
-        if(auth_dados.logado){
+        if (auth_dados.logado) {
             const userId = auth_dados.usuario.id;
-            const response = await fetch(`${API_URL}/times/by-user/${userId}`, { 
+            const response = await fetch(`${API_URL}/times/by-user/${userId}`, {
                 credentials: 'include'
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.time) {
@@ -1067,7 +1080,7 @@ async function verificarTimeUsuario() {
 function atualizarMenuTime(temTime, timeId = null) {
     const menuTimeLink = document.getElementById('menuTimeLink');
     const menuTimeText = document.getElementById('menuTimeText');
-    
+
     if (temTime && timeId) {
         // Usuário tem time - link para página do time
         menuTimeLink.href = `team.html?id=${timeId}`;
@@ -1077,7 +1090,7 @@ function atualizarMenuTime(temTime, timeId = null) {
         // Usuário não tem time - abrir modal de criação
         menuTimeLink.href = '#';
         menuTimeText.textContent = 'Criar Time';
-        menuTimeLink.onclick = function(e) {
+        menuTimeLink.onclick = function (e) {
             e.preventDefault();
             abrirModalCriarTime();
         };
@@ -1088,7 +1101,7 @@ function atualizarMenuTime(temTime, timeId = null) {
 async function criarTime() {
     const form = document.getElementById('formCriarTime');
     const formData = new FormData(form);
-    
+
     const data = {
         nome: formData.get('nome'),
         tag: formData.get('tag'),
@@ -1154,16 +1167,16 @@ function fecharModalCriarTime() {
     const modal = document.getElementById('modalCriarTime');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    
+
     // Limpar formulário
     document.getElementById('formCriarTime').reset();
-    
+
     // Limpar previews de imagens
     const logoPreview = document.getElementById('logoPreview');
     const bannerPreview = document.getElementById('bannerPreview');
     const logoUploadArea = document.getElementById('logoUploadArea');
     const bannerUploadArea = document.getElementById('bannerUploadArea');
-    
+
     if (logoPreview) {
         logoPreview.style.backgroundImage = '';
         logoPreview.classList.remove('show');
@@ -1187,7 +1200,7 @@ function fecharModalCriarTime() {
 function switchMode(mode) {
     currentMode = mode;
     currentPage = 1;
-    
+
     // Atualizar botões
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
@@ -1207,7 +1220,7 @@ function switchMode(mode) {
 
 function switchView(view) {
     currentView = view;
-    
+
     // Atualizar botões
     document.querySelectorAll('.view-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
@@ -1248,7 +1261,7 @@ function handleTeamClick(teamId) {
 function initializeEventListeners() {
     // Toggle entre Times e Players
     document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const mode = this.dataset.mode;
             switchMode(mode);
         });
@@ -1256,7 +1269,7 @@ function initializeEventListeners() {
 
     // Toggle entre Cards e Lista
     document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const view = this.dataset.view;
             switchView(view);
         });
@@ -1265,96 +1278,96 @@ function initializeEventListeners() {
     // Busca em tempo real
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', async function() {
+        searchInput.addEventListener('input', async function () {
             await filterData();
         });
     }
 
     // Filtros
     document.getElementById('memberCountFilter')?.addEventListener('change', async () => await filterData());
-    
+
     // Custom Select para posições
     const positionFilter = document.getElementById('positionFilter');
     if (positionFilter) {
         const trigger = positionFilter.querySelector('.select-trigger');
         const options = positionFilter.querySelectorAll('.select-option');
-        
-        trigger.addEventListener('click', function() {
+
+        trigger.addEventListener('click', function () {
             positionFilter.classList.toggle('active');
         });
-        
+
         options.forEach(option => {
-            option.addEventListener('click', function() {
+            option.addEventListener('click', function () {
                 const value = this.getAttribute('data-value');
                 const text = this.querySelector('span').textContent;
-                
+
                 // Atualizar o trigger
                 trigger.querySelector('.select-value').textContent = text;
-                
+
                 // Remover seleção anterior
                 options.forEach(opt => opt.classList.remove('selected'));
                 // Adicionar seleção atual
                 this.classList.add('selected');
-                
+
                 // Fechar dropdown
                 positionFilter.classList.remove('active');
-                
+
                 // Disparar evento de mudança
                 const event = new Event('change');
                 positionFilter.dispatchEvent(event);
             });
         });
-        
+
         // Fechar dropdown ao clicar fora
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!positionFilter.contains(e.target)) {
                 positionFilter.classList.remove('active');
             }
         });
-        
+
         // Event listener para o filtro
         positionFilter.addEventListener('change', async () => await filterData());
     }
-    
+
     // Custom Select para status
     const statusFilter = document.getElementById('statusFilter');
     if (statusFilter) {
         const trigger = statusFilter.querySelector('.select-trigger');
         const options = statusFilter.querySelectorAll('.select-option');
-        
-        trigger.addEventListener('click', function() {
+
+        trigger.addEventListener('click', function () {
             statusFilter.classList.toggle('active');
         });
-        
+
         options.forEach(option => {
-            option.addEventListener('click', function() {
+            option.addEventListener('click', function () {
                 const value = this.getAttribute('data-value');
                 const text = this.querySelector('span').textContent;
-                
+
                 // Atualizar o trigger
                 trigger.querySelector('.select-value').textContent = text;
-                
+
                 // Remover seleção anterior
                 options.forEach(opt => opt.classList.remove('selected'));
                 // Adicionar seleção atual
                 this.classList.add('selected');
-                
+
                 // Fechar dropdown
                 statusFilter.classList.remove('active');
-                
+
                 // Disparar evento de mudança
                 const event = new Event('change');
                 statusFilter.dispatchEvent(event);
             });
         });
-        
+
         // Fechar dropdown ao clicar fora
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!statusFilter.contains(e.target)) {
                 statusFilter.classList.remove('active');
             }
         });
-        
+
         // Event listener para o filtro
         statusFilter.addEventListener('change', async () => await filterData());
     }
@@ -1445,7 +1458,7 @@ async function listarTransferencias() {
         const response = await fetch(`${API_URL}/transferencias`, {
             credentials: 'include'
         });
-        
+
         if (!response.ok) {
             if (response.status === 404) {
                 console.warn('Endpoint /transferencias não encontrado (404)');
@@ -1453,7 +1466,7 @@ async function listarTransferencias() {
             }
             throw new Error(`Erro ao listar transferências: ${response.status}`);
         }
-        
+
         const data = await response.json();
         return data || [];
     } catch (error) {
@@ -1462,7 +1475,7 @@ async function listarTransferencias() {
     }
 }
 
-async function listarEntrada(){
+async function listarEntrada() {
     let data = await listarTransferencias();
     let entradas = [];
     for (let i = 0; i < data.length; i++) {
@@ -1473,7 +1486,7 @@ async function listarEntrada(){
     return entradas;
 }
 
-async function listarSaida(){
+async function listarSaida() {
     let data = await listarTransferencias();
     let saidas = [];
     for (let i = 0; i < data.length; i++) {
@@ -1487,14 +1500,14 @@ async function listarSaida(){
 // Função para formatar data
 function formatarData(dataISO) {
     if (!dataISO) return 'Data não disponível';
-    
+
     try {
         const data = new Date(dataISO);
         if (isNaN(data.getTime())) return 'Data inválida';
-        
+
         return data.toLocaleString('pt-BR', {
             day: '2-digit',
-            month: '2-digit', 
+            month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -1505,17 +1518,17 @@ function formatarData(dataISO) {
     }
 }
 
-async function buscarDadosCompletosEntradas(){
+async function buscarDadosCompletosEntradas() {
     const entradas = await listarEntrada();
-    
+
     const dadosCompletos = [];
-    
+
     for (let i = 0; i < entradas.length; i++) {
         const entrada = entradas[i];
         const posicao = entrada.posicao;
         const usuarioId = entrada.usuario_id;
         const timeId = entrada.time_id;
-        
+
         try {
             // Buscar dados do player
             const perfilResponse = await fetch(`${API_URL}/perfil/${usuarioId}`, {
@@ -1523,51 +1536,51 @@ async function buscarDadosCompletosEntradas(){
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
             });
-            
+
             // Buscar dados do time
             const timeResponse = await fetch(`${API_URL}/times/${timeId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
             });
-            
-            let playerData = { nome: `User ${usuarioId}`, avatar: '../img/avatar.jpg' };
-            let teamData = { nome: `Team ${timeId}`, logo: '../img/cs2.png', posicao: posicao };
-            
+
+            let playerData = { nome: `User ${usuarioId}`, avatar: '' };
+            let teamData = { nome: `Team ${timeId}`, logo: '', posicao: posicao };
+
             if (perfilResponse.ok) {
                 const perfilJson = await perfilResponse.json();
-                
-                
+
+
                 // Tentar diferentes estruturas de dados
                 const usuario = perfilJson.perfilData?.usuario || perfilJson.usuario || perfilJson;
-                
-                
+
+
                 playerData = {
                     nome: usuario.nome || usuario.username || usuario.nome_completo || `User ${usuarioId}`,
-                    avatar: usuario.avatar_url || usuario.avatar || '../img/avatar.jpg',
+                    avatar: usuario.avatar_url || usuario.avatar || '',
                     posicao: usuario.posicao || 'N/A'
                 };
-                
+
             }
-            
+
             if (timeResponse.ok) {
                 const timeJson = await timeResponse.json();
-                
+
                 const time = timeJson.time || {};
                 const membros = timeJson.membros || [];
-                
-                
+
+
                 // Buscar posição do primeiro membro (ou líder)
                 let dad = [];
                 let posicaoTime = {};
                 if (membros.length > 0) {
                     posicaoTime = membros[0].posicao || 'N/A';
-                    for(let j = 0; j < membros.length; j++){
-                        
+                    for (let j = 0; j < membros.length; j++) {
 
-                        posicaoTime = {usuario_id: membros[j].usuario_id, position: membros[j].posicao}
+
+                        posicaoTime = { usuario_id: membros[j].usuario_id, position: membros[j].posicao }
                         dad.push(posicaoTime)
-                        
+
                     }
                 }
                 teamData = {
@@ -1575,10 +1588,10 @@ async function buscarDadosCompletosEntradas(){
                     logo: time.avatar_time_url || '../img/cs2.png',
                     posicao: posicao
                 };
-                
-                
+
+
             }
-            
+
             // Montar objeto completo para o card
             const dataOriginal = entrada.data_criacao || entrada.data || entrada.created_at || entrada.timestamp;
             const dadosCompletosItem = {
@@ -1599,48 +1612,49 @@ async function buscarDadosCompletosEntradas(){
                 data: formatarData(dataOriginal),
                 dataOriginal: dataOriginal // Salvar data original para ordenação
             };
-            
+
             dadosCompletos.push(dadosCompletosItem);
-           
-            
+
+
         } catch (error) {
-            
+
             // Adicionar dados básicos em caso de erro
             const dataOriginal = entrada.data_criacao || entrada.data || entrada.created_at || entrada.timestamp;
             dadosCompletos.push({
                 id: entrada.id,
-                player: { id: usuarioId, nome: `User ${usuarioId}`, avatar: '../img/avatar.jpg', posicao: 'N/A' },
-                team: { id: timeId, nome: `Team ${timeId}`, logo: '../img/cs2.png' },
+                player: {
+                    id: usuarioId, nome: `User ${usuarioId}`, avatar: '', posicao: 'N / A' },
+                team: { id: timeId, nome: `Team ${timeId}`, logo: '' },
                 tipo: entrada.tipo,
                 data: formatarData(dataOriginal),
                 dataOriginal: dataOriginal // Salvar data original para ordenação
             });
-        }
     }
-    
-    // Ordenar por data decrescente (mais recentes primeiro)
-    dadosCompletos.sort((a, b) => {
-        const dataA = new Date(a.dataOriginal || 0);
-        const dataB = new Date(b.dataOriginal || 0);
-        return dataB - dataA; // Ordem decrescente
-    });
-    
-    return dadosCompletos;
 }
 
-async function buscarDadosCompletosSaidas(){
+// Ordenar por data decrescente (mais recentes primeiro)
+dadosCompletos.sort((a, b) => {
+    const dataA = new Date(a.dataOriginal || 0);
+    const dataB = new Date(b.dataOriginal || 0);
+    return dataB - dataA; // Ordem decrescente
+});
+
+return dadosCompletos;
+}
+
+async function buscarDadosCompletosSaidas() {
     const saidas = await listarSaida();
-    
-    
+
+
     const dadosCompletos = [];
-    
+
     for (let i = 0; i < saidas.length; i++) {
         const saida = saidas[i];
         const usuarioId = saida.usuario_id;
         const timeId = saida.time_id;
         const posicao = saida.posicao;
-        
-        
+
+
         try {
             // Buscar dados do player
             const perfilResponse = await fetch(`${API_URL}/perfil/${usuarioId}`, {
@@ -1648,105 +1662,107 @@ async function buscarDadosCompletosSaidas(){
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
             });
-            
+
             // Buscar dados do time
             const timeResponse = await fetch(`${API_URL}/times/${timeId}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
             });
-            
-            let playerData = { nome: `User ${usuarioId}`, avatar: '../img/avatar.jpg' };
-            let teamData = { nome: `Team ${timeId}`, logo: '../img/cs2.png', posicao: posicao };
-            
-            if (perfilResponse.ok) {
-                const perfilJson = await perfilResponse.json();
-                
-                
-                // Tentar diferentes estruturas de dados
-                const usuario = perfilJson.perfilData?.usuario || perfilJson.usuario || perfilJson;
-                
-                
-                playerData = {
-                    nome: usuario.nome || usuario.username || usuario.nome_completo || `User ${usuarioId}`,
-                    avatar: usuario.avatar_url || usuario.avatar || '../img/avatar.jpg',
+
+            let playerData = {
+                nome: `User ${usuarioId}`, avatar: '' };
+            let teamData = { nome: `Team ${timeId}`, logo: '', posicao: posicao };
+
+                if(perfilResponse.ok) {
+                    const perfilJson = await perfilResponse.json();
+
+
+            // Tentar diferentes estruturas de dados
+            const usuario = perfilJson.perfilData?.usuario || perfilJson.usuario || perfilJson;
+
+
+            playerData = {
+                nome: usuario.nome || usuario.username || usuario.nome_completo || `User ${usuarioId}`,
+                avatar: usuario.avatar_url || usuario.avatar || '',
                     posicao: usuario.posicao || 'N/A'
-                };
-                
-            }
+            };
+
+        }
             
             if (timeResponse.ok) {
-                const timeJson = await timeResponse.json();
-                
-                const time = timeJson.time || {};
-                const membros = timeJson.membros || [];
-                
-                
-                // Buscar posição do primeiro membro (ou líder)
-                // let posicaoTime = 'N/A';
-                // if (membros.length > 0) {
-                //     for(let j = 0; j < membros.length; j++){
-                //         posicaoTime = membros[j].posicao || 'N/A';
-                //     }
-                // }
-                
-                
-                
-                teamData = {
-                    nome: time.nome || `Team ${timeId}`,
-                    logo: time.avatar_time_url || '../img/cs2.png',
-                    posicao: posicao
-                };
-                
-            }
-            
-            // Montar objeto completo para o card
-            const dataOriginal = saida.data_criacao || saida.data || saida.created_at || saida.timestamp;
-            const dadosCompletosItem = {
-                id: saida.id,
-                player: {
-                    id: usuarioId,
-                    nome: playerData.nome,
-                    avatar: playerData.avatar,
-                    posicao: playerData.posicao || 'N/A'
-                },
-                team: {
-                    id: timeId,
-                    nome: teamData.nome,
-                    logo: teamData.logo,
-                    posicao: teamData.posicao
-                },
-                tipo: saida.tipo,
-                data: formatarData(dataOriginal),
-                dataOriginal: dataOriginal // Salvar data original para ordenação
+            const timeJson = await timeResponse.json();
+
+            const time = timeJson.time || {};
+            const membros = timeJson.membros || [];
+
+
+            // Buscar posição do primeiro membro (ou líder)
+            // let posicaoTime = 'N/A';
+            // if (membros.length > 0) {
+            //     for(let j = 0; j < membros.length; j++){
+            //         posicaoTime = membros[j].posicao || 'N/A';
+            //     }
+            // }
+
+
+
+            teamData = {
+                nome: time.nome || `Team ${timeId}`,
+                logo: time.avatar_time_url || '',
+                posicao: posicao
             };
-            
-            dadosCompletos.push(dadosCompletosItem);
-           
-            
-        } catch (error) {
-            console.error(`Erro ao buscar dados para saída ${i+1}:`, error);
-            // Adicionar dados básicos em caso de erro
-            const dataOriginal = saida.data_criacao || saida.data || saida.created_at || saida.timestamp;
-            dadosCompletos.push({
-                id: saida.id,
-                player: { id: usuarioId, nome: `User ${usuarioId}`, avatar: '../img/avatar.jpg', posicao: 'N/A' },
-                team: { id: timeId, nome: `Team ${timeId}`, logo: '../img/cs2.png' },
-                tipo: saida.tipo,
-                data: formatarData(dataOriginal),
-                dataOriginal: dataOriginal // Salvar data original para ordenação
-            });
+
         }
+
+        // Montar objeto completo para o card
+        const dataOriginal = saida.data_criacao || saida.data || saida.created_at || saida.timestamp;
+        const dadosCompletosItem = {
+            id: saida.id,
+            player: {
+                id: usuarioId,
+                nome: playerData.nome,
+                avatar: playerData.avatar,
+                posicao: playerData.posicao || 'N/A'
+            },
+            team: {
+                id: timeId,
+                nome: teamData.nome,
+                logo: teamData.logo,
+                posicao: teamData.posicao
+            },
+            tipo: saida.tipo,
+            data: formatarData(dataOriginal),
+            dataOriginal: dataOriginal // Salvar data original para ordenação
+        };
+
+        dadosCompletos.push(dadosCompletosItem);
+
+
+    } catch (error) {
+        console.error(`Erro ao buscar dados para saída ${i + 1}:`, error);
+        // Adicionar dados básicos em caso de erro
+        const dataOriginal = saida.data_criacao || saida.data || saida.created_at || saida.timestamp;
+        dadosCompletos.push({
+            id: saida.id,
+            player: {
+                id: usuarioId, nome: `User ${usuarioId}`, avatar: '', posicao: 'N / A' },
+                team: { id: timeId, nome: `Team ${timeId}`, logo: '' },
+            tipo: saida.tipo,
+            data: formatarData(dataOriginal),
+            dataOriginal: dataOriginal // Salvar data original para ordenação
+            });
+}
     }
-    
-    // Ordenar por data decrescente (mais recentes primeiro)
-    dadosCompletos.sort((a, b) => {
-        const dataA = new Date(a.dataOriginal || 0);
-        const dataB = new Date(b.dataOriginal || 0);
-        return dataB - dataA; // Ordem decrescente
-    });
-    
-    return dadosCompletos;
+
+// Ordenar por data decrescente (mais recentes primeiro)
+dadosCompletos.sort((a, b) => {
+    const dataA = new Date(a.dataOriginal || 0);
+    const dataB = new Date(b.dataOriginal || 0);
+    return dataB - dataA; // Ordem decrescente
+});
+
+return dadosCompletos;
 }
 
 
@@ -1756,13 +1772,13 @@ async function buscarDadosCompletosSaidas(){
 
 // Versão híbrida que tenta buscar do banco, mas funciona síncrona
 function getPositionBadges(posicoes) {
-    
+
     if (!posicoes || (Array.isArray(posicoes) && posicoes.length === 0)) {
         return '<div class="position-badge-container"></div>';
     }
-    
+
     let posicoesArray = [];
-    
+
     // Se é um array, usar diretamente
     if (Array.isArray(posicoes)) {
         posicoesArray = posicoes;
@@ -1775,15 +1791,15 @@ function getPositionBadges(posicoes) {
     else {
         posicoesArray = [posicoes];
     }
-    
+
     // Sistema inteligente baseado na quantidade de posições
     let badgesHTML = '';
     let indicadorExtra = '';
-    
+
     if (posicoesArray.length === 1) {
         // 1 posição: badge único centralizado
         const imageUrl = getPositionImageSync(posicoesArray[0]);
-        
+
         badgesHTML = `<img src="${imageUrl}" alt="${posicoesArray[0]}" class="position-badge position-badge-single">`;
     }
     else if (posicoesArray.length <= 3) {
@@ -1797,15 +1813,15 @@ function getPositionBadges(posicoes) {
         // 4+ posições: mostrar as 2 principais + indicador
         const posicoesPrincipais = posicoesArray.slice(0, 2);
         badgesHTML = posicoesPrincipais.map((posicao, index) => {
-            
+
             const imageUrl = getPositionImageSync(posicao);
             console.log(posicao)
             return `<img src="${imageUrl}" alt="${posicao}" class="position-badge position-badge-stack">`;
         }).join('');
-        
+
         indicadorExtra = `<div class="position-count">+${posicoesArray.length - 2}</div>`;
     }
-    
+
     const result = `<div class="position-badge-container">${badgesHTML}${indicadorExtra}</div>`;
     return result;
 }
@@ -1816,9 +1832,9 @@ function getPositionImageSync(posicao) {
     if (!posicao || typeof posicao !== 'string') {
         return 'https://img.icons8.com/ios-filled/50/question-mark.png';
     }
-    
+
     const posicaoLimpa = posicao.trim().toLowerCase();
-    
+
     // Buscar do cache global se disponível
     if (window.positionImagesCache) {
         switch (posicaoLimpa) {
@@ -1834,7 +1850,7 @@ function getPositionImageSync(posicao) {
             default: return 'https://img.icons8.com/ios-filled/50/user.png';
         }
     }
-    
+
     // Fallback para URLs padrão
     switch (posicaoLimpa) {
         case 'capitao': return 'https://cdn-icons-png.flaticon.com/128/1253/1253686.png';
@@ -1867,16 +1883,16 @@ async function getPositionImage(posicao) {
     if (!posicao || typeof posicao !== 'string') {
         return 'https://img.icons8.com/ios-filled/50/question-mark.png';
     }
-    
+
     const posicaoLimpa = posicao.trim().toLowerCase();
-    
+
     try {
         const imgPosition = await buscarImgPosition();
-        
+
         // Se temos dados do banco, usar eles
         if (imgPosition && imgPosition.length > 0) {
             const dados = imgPosition[0]; // Pegar o primeiro registro
-            
+
             switch (posicaoLimpa) {
                 case 'capitao': return dados.capitao || 'https://cdn-icons-png.flaticon.com/128/1253/1253686.png';
                 case 'awp': return dados.awp || 'https://img.icons8.com/offices/30/centre-of-gravity.png';
@@ -1893,7 +1909,7 @@ async function getPositionImage(posicao) {
     } catch (error) {
         console.error('Erro ao buscar imagens do banco:', error);
     }
-    
+
     // Fallback para URLs padrão se não conseguir buscar do banco
     switch (posicaoLimpa) {
         case 'capitao': return 'https://cdn-icons-png.flaticon.com/128/1253/1253686.png';
@@ -1953,12 +1969,12 @@ function abrirMenuSuspenso() {
 }
 
 // Fechar menu quando clicar fora dele (mesmo comportamento da home)
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const menu = document.querySelector('#menuOpcoes');
     const perfilBtn = document.querySelector('.perfil-btn');
 
     if (!menu || !perfilBtn) return;
-    
+
     if (!perfilBtn.contains(event.target) && !menu.contains(event.target)) {
         menu.style.display = 'none';
     }
@@ -1972,25 +1988,25 @@ async function buscarTimesEPlayers(termo) {
         esconderResultados();
         return;
     }
-    
+
     try {
         // Buscar times e players em paralelo
         const [timesResponse, playersResponse] = await Promise.all([
             fetch(`${API_URL}/times/search?search=${encodeURIComponent(termo)}`),
             fetch(`${API_URL}/usuarios/search?search=${encodeURIComponent(termo)}`)
         ]);
-        
+
         const timesData = await timesResponse.json();
         const playersData = await playersResponse.json();
-        
-        
+
+
         // Mostrar resultados
         mostrarResultados({
             times: timesData.times || [],
             players: playersData.usuarios || [],
             termo: termo
         });
-        
+
     } catch (error) {
         console.error('Erro na busca:', error);
         showNotification('error', 'Erro ao buscar. Tente novamente.');
@@ -2001,10 +2017,10 @@ async function buscarTimesEPlayers(termo) {
 function mostrarResultados(dados) {
     const container = document.getElementById('searchResults');
     if (!container) return;
-    
+
     const { times, players, termo } = dados;
     const totalResultados = times.length + players.length;
-    
+
     if (totalResultados === 0) {
         container.innerHTML = `
             <div class="search-no-results">
@@ -2014,14 +2030,14 @@ function mostrarResultados(dados) {
         `;
         return;
     }
-    
+
     let html = `
         <div class="search-results-header">
             <h3>Resultados para "${termo}" (${totalResultados})</h3>
         </div>
         <div class="search-results-content">
     `;
-    
+
     // Times
     if (times.length > 0) {
         html += `
@@ -2029,7 +2045,7 @@ function mostrarResultados(dados) {
                 <h4><i class="fas fa-users"></i> Times (${times.length})</h4>
                 <div class="search-items">
         `;
-        
+
         times.forEach(time => {
             html += `
                 <div class="search-item" onclick="irParaTime(${time.id})">
@@ -2042,10 +2058,10 @@ function mostrarResultados(dados) {
                 </div>
             `;
         });
-        
+
         html += `</div></div>`;
     }
-    
+
     // Players
     if (players.length > 0) {
         html += `
@@ -2053,9 +2069,9 @@ function mostrarResultados(dados) {
                 <h4><i class="fas fa-user"></i> Players (${players.length})</h4>
                 <div class="search-items">
         `;
-        
+
         players.forEach(player => {
-            
+
             html += `
                 <div class="search-item" onclick="irParaPlayer(${player.id})">
                     <img src="${player.avatar_url || '../img/cs2.png'}" alt="${player.username}" class="search-avatar">
@@ -2067,10 +2083,10 @@ function mostrarResultados(dados) {
                 </div>
             `;
         });
-        
+
         html += `</div></div>`;
     }
-    
+
     html += `</div>`;
     container.innerHTML = html;
     container.style.display = 'block';
@@ -2100,24 +2116,24 @@ function irParaPlayer(playerId) {
 // Conectar input de busca
 document.addEventListener('DOMContentLoaded', verificar_auth);
 document.addEventListener('DOMContentLoaded', verificarTimeUsuario);
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.querySelector('.search-input');
-    
+
     if (searchInput) {
         let timeoutId;
-        
-        searchInput.addEventListener('input', function() {
+
+        searchInput.addEventListener('input', function () {
             clearTimeout(timeoutId);
             const termo = this.value.trim();
-            
+
             // Debounce: aguarda 300ms após parar de digitar
             timeoutId = setTimeout(() => {
                 buscarTimesEPlayers(termo);
             }, 300);
         });
-        
+
         // Esconder resultados ao clicar fora
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!e.target.closest('.search-bar-container')) {
                 esconderResultados();
             }
@@ -2136,9 +2152,9 @@ async function loadPositionImagesCache() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    
-    
+document.addEventListener('DOMContentLoaded', function () {
+
+
     initializeEventListeners();
     loadTransfersAndDepartures();
     loadPositionImagesCache(); // Carregar cache das imagens
