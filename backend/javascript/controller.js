@@ -702,7 +702,7 @@ async function setupDatabase() {
     CREATE TABLE IF NOT EXISTS historico_matchs_players(
         id INT AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT NOT NULL,
-        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
+        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo',
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -714,7 +714,7 @@ async function setupDatabase() {
     CREATE TABLE IF NOT EXISTS historico_matchs_times(
         id INT AUTO_INCREMENT PRIMARY KEY,
         time_id INT NOT NULL,
-        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo'
+        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo',
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
