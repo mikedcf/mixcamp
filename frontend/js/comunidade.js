@@ -1444,6 +1444,18 @@ function createCarousel({ viewportId, trackId, prevBtnId, nextBtnId }) {
 
     // Inicializar
     setTimeout(applyTransform, 0);
+
+    // Mobile / touch: swipe no viewport (transform)
+    if (typeof window.MixCampTouch !== 'undefined' && window.MixCampTouch.attachHorizontalSwipe) {
+        window.MixCampTouch.attachHorizontalSwipe(viewport, {
+            onSwipePrev: () => {
+                if (!prevBtn.disabled) prevBtn.click();
+            },
+            onSwipeNext: () => {
+                if (!nextBtn.disabled) nextBtn.click();
+            }
+        });
+    }
 }
 
 

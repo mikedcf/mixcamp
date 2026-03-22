@@ -851,3 +851,18 @@ body {
         transform: translateY(0) scale(1);
     }
 }
+
+/* -----------------------------------------------------------------
+   Mobile / touch: rolagem horizontal natural em carrosséis (scroll)
+   ----------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .eventos-carousel,
+    .picksbans-carousel,
+    .banner-carousel .banner-viewport,
+    .teams-carousel,
+    .carousel-viewport,
+    .carrossel-viewport {
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+    }
+}

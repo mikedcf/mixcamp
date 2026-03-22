@@ -26,19 +26,24 @@
     height: 90px;
     margin: 0 auto;
     padding: 1px 40px;
-    background: linear-gradient(135deg,
-        rgba(15, 15, 25, 0.85) 0%,
-        rgba(10, 10, 20, 0.9) 50%,
-        rgba(15, 15, 25, 0.85) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* Visual padronizado (ex-home index): leitura sobre fundos escuros */
+    background: linear-gradient(
+        180deg,
+        rgba(8, 10, 16, 0.92) 0%,
+        rgba(8, 10, 16, 0.55) 70%,
+        transparent 100%
+    );
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     align-items: center;
     justify-content: space-between;
     border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 107, 53, 0.1) inset,
-                0 2px 8px rgba(255, 107, 53, 0.1);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    font-family: "Oswald", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     position: fixed;
     top: 0;
     left: 0;
@@ -65,25 +70,121 @@
 }
 
 .header:hover {
-    border-color: rgba(255, 107, 53, 0.3);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 107, 53, 0.2) inset,
-                0 4px 16px rgba(255, 107, 53, 0.15);
+    border-bottom-color: rgba(255, 107, 53, 0.35);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42);
     transform: translateY(-2px);
 }
 
+/* Expandido: mesmo visual “leve” do estado normal (sem escurecer) */
 .header.scrolled {
-    background: linear-gradient(135deg,
-        rgba(20, 20, 35, 0.95) 0%,
-        rgba(15, 15, 25, 0.95) 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(
+        180deg,
+        rgba(8, 10, 16, 0.92) 0%,
+        rgba(8, 10, 16, 0.55) 70%,
+        transparent 100%
+    );
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border-radius: 0 0 24px 24px;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
     width: 100%;
     max-width: none;
 }
 
 .header.scrolled:hover {
     transform: translateY(-2px);
+}
+
+/* Tipografia e contraste padronizados (ex-home index) */
+.header .nav-menu > li > a,
+.header .has-dropdown > a {
+    font-family: "Oswald", sans-serif;
+    font-weight: 600;
+    font-size: clamp(0.95rem, 1.15vw, 1.125rem);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.header .dropdown-menu li a {
+    font-family: "Oswald", sans-serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.header .search-input,
+.header .search-input::placeholder {
+    font-family: "Oswald", sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+/*
+ * Login / Registro / menu suspenso: !important vence * { font-family; font-weight } das páginas
+ * e qualquer regra antiga (.menu-opcoes em perfil.css etc.).
+ */
+.header .auth-btn,
+.header button.auth-btn,
+.header .auth-btn span {
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    font-style: normal !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+header.header .user-auth button.auth-btn,
+header.header #userAuth button.auth-btn,
+header.header .user-auth button.auth-btn span,
+header.header #userAuth button.auth-btn span {
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    font-style: normal !important;
+}
+
+.header .perfil-nome {
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+}
+
+.header .perfil-btn {
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 600 !important;
+}
+
+.header .menu-opcoes,
+.header #menuOpcoes {
+    font-family: "Oswald", sans-serif !important;
+}
+
+.header .menu-opcoes a,
+header.header .menu-opcoes a,
+header.header #menuOpcoes a {
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    font-style: normal !important;
+}
+
+/* Texto em spans dentro dos links (ícones <i> usam a fonte do Font Awesome no próprio <i>) */
+header.header #menuOpcoes a span,
+header.header .menu-opcoes a span {
+    font-family: inherit !important;
+    font-weight: inherit !important;
+}
+
+.header .search-btn {
+    font-family: "Oswald", sans-serif;
 }
 
 
@@ -327,9 +428,9 @@
         rgba(255, 255, 255, 0.08) 100%);
     backdrop-filter: blur(10px);
     color: #fff;
-    font-family: "Oswald", sans-serif;
+    font-family: "Oswald", sans-serif !important;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 600 !important;
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -415,7 +516,9 @@
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     color: #ffffff;
+    font-family: "Oswald", sans-serif !important;
     font-size: 0.95rem;
+    font-weight: 600 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
@@ -447,7 +550,8 @@
 }
 
 .perfil-nome {
-    font-weight: 600;
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 600 !important;
     color: #fff;
     letter-spacing: 0.1em;
     white-space: nowrap;
@@ -485,6 +589,7 @@
     min-width: 220px;
     z-index: 1001;
     overflow: hidden;
+    font-family: "Oswald", sans-serif !important;
 }
 
 .menu-opcoes::before {
@@ -507,8 +612,9 @@
     gap: 12px;
     color: #e0e0e0;
     text-decoration: none;
+    font-family: "Oswald", sans-serif !important;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 500 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     margin: 2px 8px;
@@ -831,6 +937,7 @@
 */
 
 /* ==== HEADER PRINCIPAL (fixo e centralizado - só anima width = sem balanço) ==== */
+/* Mesmo bloco visual da seção 1 — mantido para compatibilidade com referências antigas */
 .header {
     display: flex;
     width: 95%;
@@ -838,25 +945,30 @@
     height: 90px;
     margin: 0 auto;
     padding: 1px 40px;
-    background: linear-gradient(135deg, 
-        rgba(15, 15, 25, 0.85) 0%, 
-        rgba(10, 10, 20, 0.9) 50%,
-        rgba(15, 15, 25, 0.85) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: linear-gradient(
+        180deg,
+        rgba(8, 10, 16, 0.92) 0%,
+        rgba(8, 10, 16, 0.55) 70%,
+        transparent 100%
+    );
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     align-items: center;
     justify-content: space-between;
     border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 107, 53, 0.1) inset,
-                0 2px 8px rgba(255, 107, 53, 0.1);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    font-family: "Oswald", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     transform: none;
     z-index: 1000;
+    overflow: visible;
     transition: width 0.55s cubic-bezier(0, 0, 0.2, 1), border-radius 0.55s cubic-bezier(0, 0, 0.2, 1), background 0.4s ease, box-shadow 0.4s ease;
     box-sizing: border-box;
 }
@@ -876,19 +988,24 @@
 }
 
 .header:hover {
-    border-color: rgba(255, 107, 53, 0.3);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 107, 53, 0.2) inset,
-                0 4px 16px rgba(255, 107, 53, 0.15);
+    border-bottom-color: rgba(255, 107, 53, 0.35);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.42);
     transform: translateY(-2px);
 }
 
+/* Expandido: mesmo visual “leve” do estado normal (sem escurecer) */
 .header.scrolled {
-    background: linear-gradient(135deg,
-        rgba(20, 20, 35, 0.95) 0%,
-        rgba(15, 15, 25, 0.95) 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    background: linear-gradient(
+        180deg,
+        rgba(8, 10, 16, 0.92) 0%,
+        rgba(8, 10, 16, 0.55) 70%,
+        transparent 100%
+    );
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     border-radius: 0 0 24px 24px;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
     width: 100%;
     max-width: none;
 }
@@ -1180,9 +1297,9 @@
         rgba(255, 255, 255, 0.08) 100%);
     backdrop-filter: blur(10px);
     color: #fff;
-    font-family: "Oswald", sans-serif;
+    font-family: "Oswald", sans-serif !important;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 600 !important;
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1269,7 +1386,9 @@
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     color: #ffffff;
+    font-family: "Oswald", sans-serif !important;
     font-size: 0.95rem;
+    font-weight: 600 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
@@ -1301,7 +1420,8 @@
 }
 
 .perfil-nome {
-    font-weight: 600;
+    font-family: "Oswald", sans-serif !important;
+    font-weight: 600 !important;
     color: #fff;
     letter-spacing: 0.1em;
     white-space: nowrap;
@@ -1341,6 +1461,7 @@
     min-width: 220px;
     z-index: 1001;
     overflow: hidden;
+    font-family: "Oswald", sans-serif !important;
 }
 
 .menu-opcoes::before {
@@ -1363,8 +1484,9 @@
     gap: 12px;
     color: #e0e0e0;
     text-decoration: none;
+    font-family: "Oswald", sans-serif !important;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 500 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     margin: 2px 8px;
@@ -1618,8 +1740,10 @@
     padding: 14px 20px;
     color: #fff;
     text-decoration: none;
-    font-size: 1rem;
-    font-weight: 500;
+    font-family: "Oswald", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
     transition: background 0.2s ease, color 0.2s ease;
 }
 

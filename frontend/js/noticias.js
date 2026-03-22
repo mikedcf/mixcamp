@@ -496,6 +496,20 @@ async function buscarNoticiasSite() {
     }
 }
 
+/** Swipe horizontal nos carrosséis (viewport + botões prev/next). */
+function wireCarrosselSwipeNoticias(track, btnPrev, btnNext) {
+    const vp = track && track.closest('.carrossel-viewport');
+    if (!vp || typeof window.MixCampTouch === 'undefined' || !window.MixCampTouch.attachHorizontalSwipe) return;
+    window.MixCampTouch.attachHorizontalSwipe(vp, {
+        onSwipePrev: () => {
+            if (btnPrev) btnPrev.click();
+        },
+        onSwipeNext: () => {
+            if (btnNext) btnNext.click();
+        }
+    });
+}
+
 // ----- NOTICIAS CAMPEONATO
 async function buscarNoticiasCampeonato() {
     try {
@@ -624,6 +638,7 @@ async function mostrarNoticiasCampeonato() {
 
     window.addEventListener('resize', updateCarousel);
     updateCarousel();
+    wireCarrosselSwipeNoticias(track, btnPrev, btnNext);
 }
 //--------------------------------------------------
 
@@ -740,6 +755,7 @@ async function mostrarNoticiasSite() {
 
     window.addEventListener('resize', updateCarousel);
     updateCarousel();
+    wireCarrosselSwipeNoticias(track, btnPrev, btnNext);
 }
 
 

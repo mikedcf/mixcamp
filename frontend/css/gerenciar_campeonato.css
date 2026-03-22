@@ -196,6 +196,230 @@ main {
     background: linear-gradient(135deg, #ff8c42, #ff6b35);
 }
 
+/* Dashboard: lucro líquido (premiação − 8%) por mês — gráfico pizza */
+.dashboard-lucro-section {
+    margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.dashboard-lucro-section[hidden] {
+    display: none !important;
+}
+
+.dashboard-lucro-head h2 {
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    color: #ff6b35;
+    margin: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.dashboard-lucro-desc {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+    max-width: 920px;
+}
+
+.dashboard-lucro-desc strong {
+    color: #ffb08a;
+}
+
+.dashboard-lucro-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+.dashboard-lucro-total-card {
+    max-width: 420px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 107, 53, 0.38);
+    border-radius: 16px;
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.dashboard-lucro-total-label {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.78);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.dashboard-lucro-total-value {
+    font-size: clamp(1.45rem, 3vw, 1.95rem);
+    color: #ffd4b8;
+    font-weight: 700;
+}
+
+.dashboard-lucro-total-footnote {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.68);
+    line-height: 1.45;
+}
+
+.dashboard-lucro-meses {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 520px;
+}
+
+.dashboard-lucro-meses[hidden] {
+    display: none !important;
+}
+
+.dashboard-lucro-mes-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.65rem 0.85rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.dashboard-lucro-mes-nome {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+}
+
+.dashboard-lucro-mes-val {
+    color: #ffd4b8;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: right;
+}
+
+.dashboard-lucro-mes-pct {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.82rem;
+}
+
+.dashboard-lucro-chart-toggle-row {
+    margin-top: 0.35rem;
+}
+
+.dashboard-lucro-chart-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255, 107, 53, 0.45);
+    background: rgba(255, 107, 53, 0.12);
+    color: #ffb08a;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.dashboard-lucro-chart-toggle-btn:hover {
+    background: rgba(255, 107, 53, 0.22);
+    border-color: rgba(255, 107, 53, 0.65);
+    color: #ffd4b8;
+}
+
+.dashboard-lucro-chart-toggle-btn:focus-visible {
+    outline: 2px solid #ff6b35;
+    outline-offset: 2px;
+}
+
+.dashboard-lucro-chart-toggle-btn[hidden] {
+    display: none !important;
+}
+
+/* Bloco do gráfico (abaixo da seção Lucro por mês) */
+.dashboard-lucro-chart-section {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.dashboard-lucro-chart-section[hidden] {
+    display: none !important;
+}
+
+.dashboard-lucro-chart-section-inner {
+    max-width: 100%;
+}
+
+.dashboard-lucro-chart-block {
+    background: rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 1rem 1rem 0.75rem;
+}
+
+/* Painel estilo “dashboard” escuro (roxo) — área + spline */
+.dashboard-lucro-chart-block--area {
+    background: linear-gradient(165deg, #1e1b4b 0%, #0f172a 55%, #0c1222 100%);
+    border: 1px solid rgba(167, 139, 250, 0.22);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 1.15rem 1.15rem 0.85rem;
+}
+
+.dashboard-lucro-chart-title {
+    font-size: 1rem;
+    color: #ff9a6a;
+    margin: 0 0 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.dashboard-lucro-chart-hint {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0 0 0.75rem;
+    line-height: 1.35;
+}
+
+.dashboard-lucro-chart-canvas-wrap {
+    position: relative;
+    height: 260px;
+    width: 100%;
+}
+
+.dashboard-lucro-chart-canvas-wrap--area {
+    height: min(320px, 52vh);
+    min-height: 260px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: radial-gradient(ellipse 120% 80% at 50% 0%, rgba(88, 28, 135, 0.25) 0%, transparent 55%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
+}
+
+@media (max-width: 640px) {
+    .dashboard-lucro-chart-canvas-wrap {
+        height: 220px;
+    }
+
+    .dashboard-lucro-chart-canvas-wrap--area {
+        height: 260px;
+        min-height: 220px;
+    }
+}
+
 /* Campeonatos Section */
 .campeonatos-section {
     background: rgba(255, 255, 255, 0.03);
@@ -250,6 +474,20 @@ main {
     background-size: cover;
     background-position: center;
     border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Borda por plano: básico e máximo à esquerda; premium à direita */
+.promocao-ativa-card--basico {
+    border-left: 4px solid #2563eb;
+}
+
+.promocao-ativa-card--premium {
+    border-right: 4px solid #ca8a04;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.promocao-ativa-card--maximo {
+    border-left: 4px solid #dc2626;
 }
 
 .promocao-ativa-card::before {
@@ -603,6 +841,7 @@ main {
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    transition: transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
 }
 
 .promover-pacote-card .pacote-radio {
@@ -611,9 +850,66 @@ main {
     pointer-events: none;
 }
 
+/* Conteúdo acima do gradiente ::before */
+.promover-pacote-card > *:not(.pacote-radio) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Card selecionado: forte destaque (borda + brilho + leve “lift”) */
 .promover-pacote-card.selected {
-    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.9), 0 20px 40px rgba(0, 0, 0, 0.8);
-    transform: translateY(-2px);
+    transform: translateY(-5px) scale(1.02);
+    z-index: 2;
+    border-width: 2px;
+}
+
+.promover-pacote-card.selected::before {
+    opacity: 0.38;
+}
+
+.promover-pacote-card.basico.selected {
+    border-color: #38bdf8;
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.22) 0%, rgba(3, 7, 18, 0.98) 65%);
+    box-shadow:
+        0 0 0 3px rgba(56, 189, 248, 0.95),
+        0 0 36px rgba(56, 189, 248, 0.55),
+        0 0 60px rgba(56, 189, 248, 0.2),
+        0 22px 44px rgba(0, 0, 0, 0.85);
+}
+
+.promover-pacote-card.basico.selected::before {
+    background: radial-gradient(circle at top, #38bdf8, transparent 58%);
+    opacity: 0.45;
+}
+
+.promover-pacote-card.premium.selected {
+    border-color: #fbbf24;
+    background: radial-gradient(circle at top, rgba(251, 191, 36, 0.28) 0%, rgba(3, 7, 18, 0.98) 65%);
+    box-shadow:
+        0 0 0 3px rgba(251, 191, 36, 0.98),
+        0 0 40px rgba(251, 191, 36, 0.6),
+        0 0 70px rgba(251, 146, 60, 0.25),
+        0 22px 44px rgba(0, 0, 0, 0.85);
+}
+
+.promover-pacote-card.premium.selected::before {
+    background: radial-gradient(circle at top, #fbbf24, transparent 58%);
+    opacity: 0.48;
+}
+
+.promover-pacote-card.maximo.selected {
+    border-color: #fb7185;
+    background: radial-gradient(circle at top, rgba(251, 113, 133, 0.26) 0%, rgba(3, 7, 18, 0.98) 65%);
+    box-shadow:
+        0 0 0 3px rgba(251, 113, 133, 0.98),
+        0 0 40px rgba(244, 63, 94, 0.55),
+        0 0 72px rgba(244, 63, 94, 0.22),
+        0 22px 44px rgba(0, 0, 0, 0.85);
+}
+
+.promover-pacote-card.maximo.selected::before {
+    background: radial-gradient(circle at top, #fb7185, transparent 58%);
+    opacity: 0.48;
 }
 
 .promover-pacote-card::before {
@@ -623,6 +919,7 @@ main {
     opacity: 0.12;
     background: radial-gradient(circle at top, #f97316, transparent 55%);
     pointer-events: none;
+    transition: opacity 0.25s ease, background 0.25s ease;
 }
 
 .promover-pacote-card.basico {
@@ -922,6 +1219,54 @@ main {
 .form-group input::placeholder,
 .form-group textarea::placeholder {
     color: #666;
+}
+
+.premiacao-taxa-hint {
+    margin: 0;
+    margin-top: 0.35rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 10px;
+    background: rgba(255, 107, 53, 0.1);
+    border: 1px solid rgba(255, 107, 53, 0.25);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.premiacao-taxa-hint[hidden] {
+    display: none !important;
+}
+
+.premiacao-taxa-linha {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.5rem;
+}
+
+.premiacao-taxa-linha--liquido {
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.premiacao-taxa-texto {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.premiacao-taxa-taxa {
+    color: rgba(255, 184, 153, 0.95);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.premiacao-taxa-valor {
+    color: #c8ffd4;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
 }
 
 .form-actions {

@@ -880,14 +880,32 @@ document.addEventListener('click', function (event) {
 
 // =================================
 // ========= SCROLL DO HEADER =========
+// Na index, ScrollSmoother controla o scroll — homegsap.js (smoother.scrollTop()).
+// Nas demais páginas: header-scroll-gsap.js (GSAP + ScrollTrigger) define window.__HEADER_SCROLL_GSAP__.
+// ultils.css: scroll no body — window.scrollY pode ser 0 mesmo com a página rolando.
+function getPageScrollY() {
+    return Math.max(
+        window.pageYOffset || 0,
+        window.scrollY || 0,
+        (document.documentElement && document.documentElement.scrollTop) || 0,
+        (document.body && document.body.scrollTop) || 0
+    );
+}
 window.addEventListener("scroll", function () {
     const header = document.querySelector(".header");
-    if (header && window.scrollY > 50) {
+    if (!header) return;
+    if (typeof ScrollSmoother !== "undefined" && ScrollSmoother.get && ScrollSmoother.get()) {
+        return;
+    }
+    if (window.__HEADER_SCROLL_GSAP__) {
+        return;
+    }
+    if (getPageScrollY() > 50) {
         header.classList.add("scrolled");
-    } else if (header) {
+    } else {
         header.classList.remove("scrolled");
     }
-});
+}, true);
 
 // =================================
 // ========= MENU HAMBURGER (MOBILE) =========
@@ -1145,6 +1163,81 @@ async function formatarDataBR(dataISO) {
     const ano = data.getFullYear();
     return `${dia}/${mes}/${ano}`;
 }
+
+
+
+
+
+
+
+// ========================= GSAP SCROLL HEADER ========================
+
+/**
+ * Header universal (GSAP): aplica a classe .scrolled ao rolar — mesmo efeito de “expandir”
+ * definido em header.css (largura 100%, border-radius inferior, etc.).
+ *
+ * Uso: carregar APÓS gsap.min.js e ScrollTrigger.min.js, e após utils.js.
+ * Não incluir na index.html (lá o scroll é o ScrollSmoother em homegsap.js).
+ *
+ * Marca window.__HEADER_SCROLL_GSAP__ para utils.js não duplicar o listener de scroll.
+ */
+(function () {
+    "use strict";
+
+    if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") {
+        console.warn("[header-scroll-gsap] Inclua gsap.min.js e ScrollTrigger.min.js antes deste arquivo.");
+        return;
+    }
+
+    window.__HEADER_SCROLL_GSAP__ = true;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    var THRESHOLD = 50;
+    var lastY = -1;
+
+    /**
+     * ultils.css deixa o scroll no body (html overflow hidden, body overflow-y auto).
+     * Nesse caso window.scrollY costuma ser 0 — o valor real está em document.body.scrollTop.
+     */
+    function getScrollY() {
+        return Math.max(
+            window.pageYOffset || 0,
+            window.scrollY || 0,
+            (document.documentElement && document.documentElement.scrollTop) || 0,
+            (document.body && document.body.scrollTop) || 0
+        );
+    }
+
+    function syncHeaderScrolled() {
+        var header = document.getElementById("mainHeader") || document.querySelector(".header");
+        if (!header) return;
+
+        var y = getScrollY();
+        if (y === lastY) return;
+        lastY = y;
+        header.classList.toggle("scrolled", y > THRESHOLD);
+    }
+
+    gsap.ticker.add(syncHeaderScrolled);
+
+    /* Garante atualização se o scroll for só no body (alguns navegadores) */
+    window.addEventListener("scroll", syncHeaderScrolled, { passive: true, capture: true });
+    if (document.body) {
+        document.body.addEventListener("scroll", syncHeaderScrolled, { passive: true });
+    }
+
+    ScrollTrigger.addEventListener("refresh", syncHeaderScrolled);
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () {
+            requestAnimationFrame(syncHeaderScrolled);
+        });
+    } else {
+        requestAnimationFrame(syncHeaderScrolled);
+    }
+})();
+
 
 // =================================
 // CHAMADAS DAS FUNÇÕES

@@ -172,15 +172,34 @@ body {
 
 .gradient-text {
     font-family: 'Bangers', cursive;
-    background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 33%, #4a90e2 50%, #ffd700 66%, #ffa726 100%);
-    background-size: 300% 300%;
+    background: linear-gradient(
+        120deg,
+        #ff6b35 0%,
+        #ff8c42 18%,
+        #4a90e2 38%,
+        #7c3aed 52%,
+        #ffd700 68%,
+        #ffa726 85%,
+        #ff6b35 100%
+    );
+    background-size: 280% 280%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: colorShift 8s ease-in-out infinite;
+    /* Gradiente desliza na ida e volta (cores trocam suavemente) */
+    animation: mixcampGradientText 6s ease-in-out infinite alternate;
     letter-spacing: 15px;
     display: inline-block;
     padding: 0 10px;
+}
+
+@keyframes mixcampGradientText {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
 }
 
 .subtitle {

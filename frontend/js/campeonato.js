@@ -775,29 +775,20 @@ function criarBannerSlides() {
         });
     });
 
-    // Navegação apenas por touch (swipe) no mobile e dots; setas removidas
-    // Navegação por touch (swipe) no banner
+    // Navegação por touch (swipe) no banner — MixCampTouch evita listeners duplicados
     const viewport = document.querySelector('.banner-viewport');
-    if (viewport) {
-        let touchStartX = 0;
-        let touchEndX = 0;
-        const minSwipe = 50;
-
-        viewport.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches ? e.changedTouches[0].screenX : e.screenX;
-        }, { passive: true });
-
-        viewport.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches ? e.changedTouches[0].screenX : e.screenX;
-            const diff = touchStartX - touchEndX;
-            if (Math.abs(diff) < minSwipe) return;
-            if (diff > 0) {
+    if (viewport && bannerSlides.length > 1 && typeof window.MixCampTouch !== 'undefined' && window.MixCampTouch.attachHorizontalSwipe) {
+        window.MixCampTouch.attachHorizontalSwipe(viewport, {
+            threshold: 50,
+            onSwipeNext: () => {
                 bannerIndex = (bannerIndex + 1) % bannerSlides.length;
-            } else {
+                atualizarBanner();
+            },
+            onSwipePrev: () => {
                 bannerIndex = (bannerIndex - 1 + bannerSlides.length) % bannerSlides.length;
+                atualizarBanner();
             }
-            atualizarBanner();
-        }, { passive: true });
+        });
     }
 
     // Inicia o autoplay: barra de progresso enche em 5s e ao terminar troca de slide

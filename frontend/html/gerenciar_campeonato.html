@@ -106,6 +106,55 @@
     </header>
 
     <main>
+        <!-- Dashboard: lucro líquido por mês (sem gráfico aqui — gráfico na seção abaixo, oculto por padrão) -->
+        <section class="dashboard-lucro-section" id="dashboardLucroSection" hidden>
+            <div class="conteudo-container dashboard-lucro-inner">
+                <div class="dashboard-lucro-head">
+                    <h2><i class="fas fa-coins"></i> Lucro por mês (premiação líquida)</h2>
+                    <p class="dashboard-lucro-desc">
+                        Apenas <strong>Encerrados</strong>, agrupados pelo mês da <strong>previsão de início</strong>
+                        (sem usar data de encerramento). Lucro líquido = premiação já descontada a taxa de
+                        <strong>8%</strong>. Os gráficos comparam todos os meses que tiveram eventos nessa base.
+                    </p>
+                </div>
+                <div class="dashboard-lucro-panels">
+                    <div class="dashboard-lucro-total-card">
+                        <span class="dashboard-lucro-total-label">Total líquido</span>
+                        <strong class="dashboard-lucro-total-value" id="dashboardLucroTotal">R$ 0,00</strong>
+                        <small class="dashboard-lucro-total-footnote">
+                            Soma das premiações dos encerrados, já descontados os 8% de taxa.
+                        </small>
+                    </div>
+                    <ul class="dashboard-lucro-meses" id="dashboardLucroMeses" hidden></ul>
+                    <div class="dashboard-lucro-chart-toggle-row">
+                        <button type="button" class="dashboard-lucro-chart-toggle-btn" id="dashboardLucroChartToggle"
+                            hidden aria-controls="dashboardLucroCharts" aria-expanded="false"
+                            onclick="toggleDashboardLucroChart()">
+                            <i class="fas fa-chart-area" aria-hidden="true"></i>
+                            <span class="dashboard-lucro-chart-toggle-text">Mostrar gráfico</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráfico (bloco separado, abaixo de Lucro por mês; oculto até o usuário abrir) -->
+        <section class="dashboard-lucro-chart-section" id="dashboardLucroCharts" hidden aria-hidden="true"
+            role="region" aria-label="Gráfico comparativo de lucro por mês">
+            <div class="conteudo-container dashboard-lucro-chart-section-inner">
+                <div class="dashboard-lucro-chart-block dashboard-lucro-chart-block--area">
+                    <h3 class="dashboard-lucro-chart-title"><i class="fas fa-chart-area"></i> Comparativo por mês</h3>
+                    <p class="dashboard-lucro-chart-hint">
+                        Curvas suaves (área): <strong style="color:#c4b5fd">lucro líquido</strong> (R$, já sem 8%) no eixo esquerdo;
+                        <strong style="color:#fcd34d">quantidade</strong> de campeonatos encerrados no eixo direito. Meses pela previsão de início.
+                    </p>
+                    <div class="dashboard-lucro-chart-canvas-wrap dashboard-lucro-chart-canvas-wrap--area">
+                        <canvas id="dashboardChartArea" aria-label="Gráfico de área lucro e quantidade por mês"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Seção de Título -->
         <section class="page-header">
             <div class="header-content">
@@ -208,7 +257,17 @@
                     <div class="form-group">
                         <label for="premiacao"><i class="fas fa-trophy"></i> Premiação (R$) *</label>
                         <input type="number" id="premiacao" name="premiacao" step="0.01" min="0" required
-                            placeholder="0.00">
+                            placeholder="0.00" autocomplete="off">
+                        <div class="premiacao-taxa-hint" id="premiacaoTaxaHint" hidden aria-live="polite">
+                            <div class="premiacao-taxa-linha">
+                                <span class="premiacao-taxa-texto">Taxa de 8% sobre o valor da premiação:</span>
+                                <strong class="premiacao-taxa-taxa" id="premiacaoTaxaValorTaxa">R$ 0,00</strong>
+                            </div>
+                            <div class="premiacao-taxa-linha premiacao-taxa-linha--liquido">
+                                <span class="premiacao-taxa-texto">Valor líquido (premiação − taxa):</span>
+                                <strong class="premiacao-taxa-valor" id="premiacaoTaxaValorLiquido">R$ 0,00</strong>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -384,7 +443,7 @@
                             <li>Ideal para campeonatos de entrada</li>
                         </ul>
                         <div class="pacote-preco">
-                            <span class="valor">R$ 20</span>
+                            <span class="valor">R$&nbsp;10,00</span>
                             <span class="periodo">por 7 dias</span>
                         </div>
                     </label>
@@ -399,7 +458,7 @@
                             <li>Mais cliques e alcance para seu evento</li>
                         </ul>
                         <div class="pacote-preco">
-                            <span class="valor">R$ 50</span>
+                            <span class="valor">R$&nbsp;20,00</span>
                             <span class="periodo">por 7 dias</span>
                         </div>
                     </label>
@@ -414,7 +473,7 @@
                             <li>Máxima visibilidade para o seu campeonato</li>
                         </ul>
                         <div class="pacote-preco">
-                            <span class="valor">R$ 80</span>
+                            <span class="valor">R$&nbsp;25,00</span>
                             <span class="periodo">por 7 dias</span>
                         </div>
                     </label>
@@ -422,8 +481,8 @@
 
                 <div class="promover-footer">
                     <p class="promover-aviso">
-                        Em breve, o pagamento dos pacotes será feito via Mercado Pago.
-                        Neste espaço ficará a integração de checkout e o registro da promoção no banco de dados.
+                        Pagamento via Mercado Pago. Os valores exibidos (R$ 10,00 / R$ 20,00 / R$ 25,00) são os cobrados
+                        no checkout para cada plano, por 7 dias de destaque.
                     </p>
                     <button type="button" class="btn-salvar" onclick="iniciarPagamentoPromocao()">
                         <i class="fas fa-credit-card"></i> Prosseguir para pagamento
@@ -686,6 +745,11 @@
 
 
     <script src="../js/utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+    
+                            
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="../js/gerenciar_campeonato.js"></script>
 </body>
 

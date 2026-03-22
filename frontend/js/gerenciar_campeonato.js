@@ -452,6 +452,42 @@ function formatCurrencyBRL(valor) {
     return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+/** Taxa exibida abaixo do campo Premiação (modal criar/editar campeonato) */
+const TAXA_PREMIACAO_PERCENTUAL = 8;
+
+function atualizarPremiacaoTaxaHint() {
+    const input = document.getElementById('premiacao');
+    const hint = document.getElementById('premiacaoTaxaHint');
+    const elTaxa = document.getElementById('premiacaoTaxaValorTaxa');
+    const elLiquido = document.getElementById('premiacaoTaxaValorLiquido');
+    if (!input || !hint || !elTaxa || !elLiquido) return;
+
+    const raw = String(input.value).trim();
+    if (raw === '') {
+        hint.hidden = true;
+        return;
+    }
+
+    const val = parseFloat(raw.replace(',', '.'));
+    if (Number.isNaN(val) || val < 0) {
+        hint.hidden = true;
+        return;
+    }
+
+    hint.hidden = false;
+    const taxa = val * (TAXA_PREMIACAO_PERCENTUAL / 100);
+    const liquido = Math.max(0, val - taxa);
+    elTaxa.textContent = formatCurrencyBRL(taxa);
+    elLiquido.textContent = formatCurrencyBRL(liquido);
+}
+
+function initPremiacaoTaxaHint() {
+    const input = document.getElementById('premiacao');
+    if (!input) return;
+    input.addEventListener('input', atualizarPremiacaoTaxaHint);
+    input.addEventListener('change', atualizarPremiacaoTaxaHint);
+}
+
 function formatarData(dataISO) {
     if (!dataISO) return 'Data não disponível';
     
@@ -469,6 +505,318 @@ function formatarData(dataISO) {
     } catch (error) {
         console.error('Erro ao formatar data:', error);
         return 'Data inválida';
+    }
+}
+
+function mesChavePrevisaoInicio(iso) {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function labelMesPtBr(chaveYYYYMM) {
+    const parts = chaveYYYYMM.split('-');
+    if (parts.length < 2) return chaveYYYYMM;
+    const y = parts[0];
+    const m = parseInt(parts[1], 10);
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    if (m < 1 || m > 12) return chaveYYYYMM;
+    return `${meses[m - 1]}/${y}`;
+}
+
+/** Premiação líquida após a taxa de TAXA_PREMIACAO_PERCENTUAL (mesma regra do formulário). */
+function premiacaoLiquidaAposTaxa(premiacaoBruta) {
+    const val = parseFloat(premiacaoBruta);
+    if (Number.isNaN(val) || val < 0) return 0;
+    const taxa = val * (TAXA_PREMIACAO_PERCENTUAL / 100);
+    return Math.max(0, val - taxa);
+}
+
+let dashboardChartAreaInstance = null;
+/** Gráfico aberto pelo usuário; por padrão fica oculto. */
+let dashboardLucroChartExpanded = false;
+/** Últimos dados para redesenhar ao abrir ou após atualizar lista. */
+let dashboardLucroChartLastData = null;
+
+function destruirDashboardCharts() {
+    if (dashboardChartAreaInstance) {
+        dashboardChartAreaInstance.destroy();
+        dashboardChartAreaInstance = null;
+    }
+}
+
+function atualizarToggleGraficoLucroUI() {
+    const btn = document.getElementById('dashboardLucroChartToggle');
+    const wrap = document.getElementById('dashboardLucroCharts');
+    const textEl = btn?.querySelector('.dashboard-lucro-chart-toggle-text');
+    const icon = btn?.querySelector('i');
+    if (!btn || !wrap || !textEl) return;
+    const visivel = !wrap.hidden;
+    btn.setAttribute('aria-expanded', visivel ? 'true' : 'false');
+    textEl.textContent = visivel ? 'Ocultar gráfico' : 'Mostrar gráfico';
+    if (icon) {
+        icon.className = visivel ? 'fas fa-eye-slash' : 'fas fa-chart-area';
+    }
+}
+
+function toggleDashboardLucroChart() {
+    const wrap = document.getElementById('dashboardLucroCharts');
+    if (!wrap) return;
+    dashboardLucroChartExpanded = !dashboardLucroChartExpanded;
+    wrap.hidden = !dashboardLucroChartExpanded;
+    wrap.setAttribute('aria-hidden', dashboardLucroChartExpanded ? 'false' : 'true');
+    atualizarToggleGraficoLucroUI();
+    if (dashboardLucroChartExpanded && dashboardLucroChartLastData) {
+        requestAnimationFrame(() => {
+            buildDashboardAreaChart(
+                dashboardLucroChartLastData.labels,
+                dashboardLucroChartLastData.dataLucro,
+                dashboardLucroChartLastData.dataQtd
+            );
+        });
+    } else {
+        destruirDashboardCharts();
+    }
+}
+
+function buildDashboardAreaChart(labels, dataLucro, dataQtd) {
+    const canvasArea = document.getElementById('dashboardChartArea');
+    if (typeof Chart === 'undefined' || !canvasArea) return;
+
+    const roxoLinha = '#c084fc';
+    const roxoPreench = 'rgba(168, 85, 247, 0.35)';
+    const ouroLinha = '#fbbf24';
+    const ouroPreench = 'rgba(251, 191, 36, 0.28)';
+
+    destruirDashboardCharts();
+
+    dashboardChartAreaInstance = new Chart(canvasArea, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Lucro líquido (R$)',
+                    data: dataLucro,
+                    yAxisID: 'y',
+                    borderColor: roxoLinha,
+                    backgroundColor: roxoPreench,
+                    fill: true,
+                    tension: 0.42,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#a855f7',
+                    pointBorderColor: 'rgba(255,255,255,0.9)',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: 'Campeonatos',
+                    data: dataQtd,
+                    yAxisID: 'y1',
+                    borderColor: ouroLinha,
+                    backgroundColor: ouroPreench,
+                    fill: true,
+                    tension: 0.42,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: 'rgba(255,255,255,0.9)',
+                    pointBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            elements: {
+                line: { borderJoinStyle: 'round' },
+                point: { hoverBorderWidth: 2 }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#e2e8f0',
+                        font: { family: 'Oswald, sans-serif', size: 13 },
+                        padding: 16,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        label(ctx) {
+                            const v = ctx.parsed.y;
+                            if (ctx.datasetIndex === 0) {
+                                return ` ${formatCurrencyBRL(v)} (líquido, já sem 8%)`;
+                            }
+                            return ` ${v} campeonato(s) encerrado(s)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#a5b4fc',
+                        maxRotation: 35,
+                        font: { size: 11 }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.06)' }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Lucro líquido (R$)',
+                        color: '#e9d5ff',
+                        font: { size: 12 }
+                    },
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#c4b5fd',
+                        callback(v) {
+                            return Number(v).toLocaleString('pt-BR', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    grid: { color: 'rgba(167, 139, 250, 0.12)' }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Quantidade',
+                        color: '#fde68a',
+                        font: { size: 12 }
+                    },
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: '#fcd34d',
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    requestAnimationFrame(() => {
+        dashboardChartAreaInstance?.resize();
+    });
+}
+
+/**
+ * Dashboard: por mês da previsão de início (sem data de encerramento).
+ * Lucro líquido (premiação − 8%) e quantidade de encerrados; gráfico área (só quando o usuário abrir).
+ */
+function renderizarDashboardLucro(campeonatos) {
+    const section = document.getElementById('dashboardLucroSection');
+    const totalEl = document.getElementById('dashboardLucroTotal');
+    const mesesEl = document.getElementById('dashboardLucroMeses');
+    const chartsWrap = document.getElementById('dashboardLucroCharts');
+    const toggleBtn = document.getElementById('dashboardLucroChartToggle');
+    if (!section || !totalEl) return;
+
+    const normalizeStatus = (s) => (s || '').toLowerCase().trim().replace(/\s/g, '');
+    const lista = Array.isArray(campeonatos) ? campeonatos : [];
+    const encerrados = lista.filter((c) => normalizeStatus(c.status) === 'encerrado');
+
+    const porMesLucro = new Map();
+    const porMesQtd = new Map();
+
+    for (const c of encerrados) {
+        const chave = mesChavePrevisaoInicio(c.previsao_data_inicio);
+        if (!chave) continue;
+        porMesQtd.set(chave, (porMesQtd.get(chave) || 0) + 1);
+        const liq = premiacaoLiquidaAposTaxa(c.premiacao);
+        if (liq > 0) {
+            porMesLucro.set(chave, (porMesLucro.get(chave) || 0) + liq);
+        }
+    }
+
+    const allKeys = new Set([...porMesLucro.keys(), ...porMesQtd.keys()]);
+    const sortedKeys = [...allKeys].sort();
+
+    destruirDashboardCharts();
+
+    if (sortedKeys.length === 0) {
+        section.hidden = true;
+        dashboardLucroChartLastData = null;
+        dashboardLucroChartExpanded = false;
+        totalEl.textContent = formatCurrencyBRL(0);
+        if (mesesEl) {
+            mesesEl.innerHTML = '';
+            mesesEl.hidden = true;
+        }
+        if (chartsWrap) {
+            chartsWrap.hidden = true;
+            chartsWrap.setAttribute('aria-hidden', 'true');
+        }
+        if (toggleBtn) toggleBtn.hidden = true;
+        return;
+    }
+
+    const labels = sortedKeys.map(labelMesPtBr);
+    const dataLucro = sortedKeys.map((k) => porMesLucro.get(k) || 0);
+    const dataQtd = sortedKeys.map((k) => porMesQtd.get(k) || 0);
+    const total = dataLucro.reduce((a, b) => a + b, 0);
+    totalEl.textContent = formatCurrencyBRL(total);
+    section.hidden = false;
+
+    dashboardLucroChartLastData = { labels, dataLucro, dataQtd };
+
+    if (mesesEl) {
+        mesesEl.innerHTML = sortedKeys
+            .map((k) => {
+                const nome = labelMesPtBr(k);
+                const liqMes = porMesLucro.get(k) || 0;
+                const val = formatCurrencyBRL(liqMes);
+                const pct = total > 0 ? ((liqMes / total) * 100).toFixed(1) : '0';
+                return (
+                    `<li class="dashboard-lucro-mes-item">` +
+                    `<span class="dashboard-lucro-mes-nome">${nome}</span>` +
+                    `<span class="dashboard-lucro-mes-val">${val} <span class="dashboard-lucro-mes-pct">(${pct}%)</span></span>` +
+                    `</li>`
+                );
+            })
+            .join('');
+        mesesEl.hidden = false;
+    }
+
+    if (typeof Chart !== 'undefined' && chartsWrap) {
+        chartsWrap.hidden = !dashboardLucroChartExpanded;
+        chartsWrap.setAttribute('aria-hidden', chartsWrap.hidden ? 'true' : 'false');
+    }
+    if (toggleBtn) {
+        toggleBtn.hidden = false;
+        atualizarToggleGraficoLucroUI();
+    }
+
+    if (dashboardLucroChartExpanded && dashboardLucroChartLastData) {
+        requestAnimationFrame(() => {
+            buildDashboardAreaChart(
+                dashboardLucroChartLastData.labels,
+                dashboardLucroChartLastData.dataLucro,
+                dashboardLucroChartLastData.dataQtd
+            );
+        });
     }
 }
 
@@ -508,6 +856,7 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
         grid.innerHTML = '';
         emptyState.style.display = 'block';
         atualizarPromocoesAtivasSidebar();
+        renderizarDashboardLucro(window.campeonatosCache);
         return;
     }
 
@@ -578,10 +927,19 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
         </div>
     `).join('');
     atualizarPromocoesAtivasSidebar();
+    renderizarDashboardLucro(window.campeonatosCache);
 }
 
 // =================================
 // ========= PROMOÇÕES ATIVAS (SIDEBAR) =========
+/** Classe CSS do card conforme `plano_assinado` (basico / premium / maximo). */
+function classePlanoPromocaoAtiva(p) {
+    const raw = (p.plano_assinado || p.planoAssinado || 'basico').toString().toLowerCase().trim();
+    if (raw === 'premium') return 'promocao-ativa-card--premium';
+    if (raw === 'maximo') return 'promocao-ativa-card--maximo';
+    return 'promocao-ativa-card--basico';
+}
+
 async function atualizarPromocoesAtivasSidebar() {
     const sidebar = document.getElementById('promocoesAtivasSidebar');
     const list = document.getElementById('promocoesAtivasList');
@@ -627,7 +985,8 @@ async function atualizarPromocoesAtivasSidebar() {
             const styleBg = bannerUrl ? "background-image: url('" + bannerUrl.replace(/'/g, "\\'") + "');" : '';
             const dataEncStr = formatarDataExibicao(p.data_encerramento);
             const game = p.game || 'CS2';
-            return '<div class="promocao-ativa-card" style="' + styleBg + '">' +
+            const planoClass = classePlanoPromocaoAtiva(p);
+            return '<div class="promocao-ativa-card ' + planoClass + '" style="' + styleBg + '">' +
                 '<div class="promocao-ativa-card-content">' +
                 '<span class="promocao-ativa-card-title">' + titulo + '</span>' +
                 '<div class="promocao-ativa-card-meta">' +
@@ -652,11 +1011,25 @@ function filtrarCampeonatos() {
 let campeonatoPromovendoId = null;
 let pacotePromocaoSelecionado = 'basico';
 
+/** Valores cobrados no checkout (Mercado Pago) — mesmos usados em create_preference */
 const PACOTES_PROMOCAO = {
-    basico: { id: 'basico', nome: 'Destaque Básico', preco: 20, dias: 7 },
-    premium: { id: 'premium', nome: 'Destaque Premium', preco: 50, dias: 7 },
-    maximo: { id: 'maximo', nome: 'Destaque Máximo', preco: 80, dias: 7 }
+    basico: { id: 'basico', nome: 'Destaque Básico', preco: 10, dias: 7 },
+    premium: { id: 'premium', nome: 'Destaque Premium', preco: 20, dias: 7 },
+    maximo: { id: 'maximo', nome: 'Destaque Máximo', preco: 25, dias: 7 }
 };
+
+/** Atualiza os R$ nos cards do modal “Promover” a partir de PACOTES_PROMOCAO */
+function atualizarPrecosExibicaoModalPromover() {
+    const modal = document.getElementById('modalPromover');
+    if (!modal) return;
+    Object.keys(PACOTES_PROMOCAO).forEach((key) => {
+        const p = PACOTES_PROMOCAO[key];
+        const valorEl = modal.querySelector(`.promover-pacote-card.${p.id} .pacote-preco .valor`);
+        if (valorEl) {
+            valorEl.textContent = formatCurrencyBRL(p.preco);
+        }
+    });
+}
 
 // Helper: somar dias e formatar para DATETIME MySQL (YYYY-MM-DD HH:MM:SS)
 function adicionarDias(date, dias) {
@@ -713,6 +1086,7 @@ function promoverCampeonato(id) {
     }
     pacotePromocaoSelecionado = 'basico';
 
+    atualizarPrecosExibicaoModalPromover();
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -817,13 +1191,7 @@ async function iniciarPagamentoPromocao() {
 
         // Campeonato comum: passa pelo fluxo de pagamento (Mercado Pago).
         // Só será registrado em promover_eventos quando o pagamento for aprovado (webhook).
-        const priceMap = {
-            basico: 0.01,
-            premium: 0.02,
-            maximo: 0.03
-        };
-
-        const unitPrice = priceMap[pacote.id] || 0.01;
+        const unitPrice = typeof pacote.preco === 'number' ? pacote.preco : 10;
 
         const agoraComum = new Date();
         const dataEncerramentoComum = calcularDataEncerramentoPromocao();
@@ -972,6 +1340,7 @@ async function abrirModalCriar() {
     document.getElementById('qnt_times').value = '16';
     document.getElementById('chave').value = 'Single Elimination (todos BO3)';
     
+    atualizarPremiacaoTaxaHint();
     const modal = document.getElementById('modalCampeonato');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -1054,6 +1423,7 @@ async function editarCampeonato(id) {
         document.getElementById('previsao_data_inicio').value = dataFormatada;
     }
     
+    atualizarPremiacaoTaxaHint();
     const modal = document.getElementById('modalCampeonato');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -1064,6 +1434,8 @@ function fecharModal() {
     modal.classList.remove('active');
     document.body.style.overflow = 'auto';
     campeonatoEditando = null;
+    const hint = document.getElementById('premiacaoTaxaHint');
+    if (hint) hint.hidden = true;
 }
 
 // =================================
@@ -1574,4 +1946,6 @@ document.addEventListener('DOMContentLoaded', function() {
     verificar_auth();
     verificarTimeUsuario();
     addScrollProgress();
+    initPremiacaoTaxaHint();
+    atualizarPrecosExibicaoModalPromover();
 });

@@ -49,10 +49,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Header - sempre fixo no topo e centralizado (só anima width = sem balanço) */
 /* Use apenas .header para não afetar o <header> do modal de notificações (.modal-notificacoes-header) */
-.header,
-.header * {
-    font-family: "Oswald", sans-serif;
-}
+/* Não usar ".header *" aqui: quebra Poppins em login/registro e menu (header.css). Nav/logo já vêm do header.css */
 .header {
     position: fixed !important;
     top: 0 !important;
