@@ -39,6 +39,8 @@ async function autenticacao() {
 
 async function verificar_auth() {
     const auth_dados = await autenticacao();
+    
+    
 
 
     if (auth_dados.logado) {
@@ -64,18 +66,13 @@ async function verificar_auth() {
 
         
 
-        const deleteReel = document.getElementById("deleteReel")
+        
 
-        if(deleteReel){
-            deleteReel.style.display = "none";
-        }
+        
 
         document.getElementById("buconfig").style.display = "none";
         if(userId == userId_params){
             document.getElementById("addVideoBtn").style.display = "flex";
-            if(deleteReel){
-                deleteReel.style.display = "flex";
-            }
             document.getElementById("buconfig").style.display = "flex";
         }
         
@@ -109,6 +106,8 @@ async function verificar_auth() {
         document.getElementById("userPerfil").style.display = 'none'
         document.getElementById("userPerfil").classList.add("hidden");
         document.getElementById("followBtnBanner").style.display = "none";
+        
+        
 
     }
 }
@@ -1039,6 +1038,23 @@ async function inserirReels(reels, idUsuarioDoPerfil){
         
         reelsContainer.appendChild(reelItem);
     })
+
+    const auth_dados = await autenticacao();
+    const deleteReel = document.getElementById("deleteReel")
+    params = new URLSearchParams(window.location.search);
+    const userId_params = params.get('id');
+    
+    deleteReel.style.display = "none";
+    if(auth_dados.logado){
+        const userId = auth_dados.usuario.id;
+        if(userId == userId_params){
+            deleteReel.style.display = "flex";
+        }
+        else {
+            deleteReel.style.display = "none";
+        }
+    }
+    
 }
 
 // ===== DELETAR REEL =====
