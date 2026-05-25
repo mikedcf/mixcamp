@@ -119,27 +119,64 @@ let teamData = null;
 
 // Mapeamento de posições
 const posicoesMap = {
-    'capitao': 'Capitão',
     'awp': 'AWP',
     'entry': 'Entry',
     'support': 'Support',
     'igl': 'IGL',
-    'sub': 'Sub',
-    'coach': 'Coach',
     'lurker': 'Lurker',
     'rifle': 'Rifle'
 };
 
+const funcoesMap = {
+    'lider': 'Líder',
+    'titular': 'Titular',
+    'reserva': 'Reserva',
+    'coach': 'Coach'
+};
+
+function normalizarPosicaoJogo(posicao) {
+    const p = String(posicao || '').toLowerCase();
+    if (['sub', 'capitao', 'coach'].includes(p)) return 'rifle';
+    return posicoesMap[p] ? p : 'rifle';
+}
+
+function getFuncaoIconeUrl(funcao) {
+    const f = String(funcao || '').toLowerCase();
+    if (f === 'reserva') return getPositionImageSync('sub');
+    if (f === 'coach') return getPositionImageSync('coach');
+    if (f === 'lider') return getPositionImageSync('capitao');
+    return null;
+}
+
+function renderMemberRole(membro) {
+    const posicao = normalizarPosicaoJogo(membro.posicao);
+    const funcao = String(membro.funcao || 'titular').toLowerCase();
+    const posIcon = getPosicoesEmojis()[posicao] || '';
+    const funcIconUrl = getFuncaoIconeUrl(funcao);
+    const funcIcon = funcIconUrl && ['reserva', 'coach'].includes(funcao)
+        ? `<img src="${funcIconUrl}" alt="${funcoesMap[funcao] || funcao}" class="posicao-icon" title="${funcoesMap[funcao] || funcao}">`
+        : '';
+
+    const labels = [posicoesMap[posicao] || posicao];
+    if (funcao === 'reserva' || funcao === 'coach') {
+        labels.push(funcoesMap[funcao]);
+    }
+
+    return `
+        <div class="member-role">
+            <span class="member-role-icons">${posIcon}${funcIcon}</span>
+            <span class="member-role-labels">${labels.join(' • ')}</span>
+        </div>
+    `;
+}
+
 // Função para obter imagens de posições dinamicamente
 function getPosicoesEmojis() {
     return {
-        'capitao': `<img src="${getPositionImageSync('capitao')}" alt="Capitão" class="posicao-icon">`,
         'awp': `<img src="${getPositionImageSync('awp')}" alt="AWP" class="posicao-icon">`,
         'entry': `<img src="${getPositionImageSync('entry')}" alt="Entry" class="posicao-icon">`,
         'support': `<img src="${getPositionImageSync('support')}" alt="Support" class="posicao-icon">`,
         'igl': `<img src="${getPositionImageSync('igl')}" alt="IGL" class="posicao-icon">`,
-        'sub': `<img src="${getPositionImageSync('sub')}" alt="Sub" class="posicao-icon">`,
-        'coach': `<img src="${getPositionImageSync('coach')}" alt="Coach" class="posicao-icon">`,
         'lurker': `<img src="${getPositionImageSync('lurker')}" alt="Lurker" class="posicao-icon">`,
         'rifle': `<img src="${getPositionImageSync('rifle')}" alt="Rifle" class="posicao-icon">`
     };
@@ -187,7 +224,7 @@ async function verificar_auth() {
         const menuTimeLink = document.getElementById('menuTimeLink');
 
         const gerenciarCamp = document.getElementById("gerenciarCamp");
-        if (perfil_data.usuario.organizador == 'premium') {
+        if (isOrganizadorPlano(perfil_data.usuario.organizador)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
         }
@@ -587,6 +624,8 @@ function renderizarMembros(membros) {
     membros.forEach(membro => {
         // Verificar se teamData existe e tem lider_id antes de comparar
         const isLeader = teamData && teamData.lider_id ? membro.usuario_id == teamData.lider_id : false;
+        const posicaoAtual = normalizarPosicaoJogo(membro.posicao);
+        const funcaoAtual = String(membro.funcao || 'titular').toLowerCase();
         const memberCard = document.createElement('div');
         memberCard.className = `member-card ${isLeader ? 'leader' : ''}`;
         memberCard.innerHTML = `
@@ -594,23 +633,32 @@ function renderizarMembros(membros) {
                 <img src="${membro.avatar_url}" alt="${membro.username}" class="member-avatar">
                 <div class="member-info">
                     <div class="member-name">${membro.username}</div>
-                    <div class="member-role">
-                        ${getPosicoesEmojis()[membro.posicao] || '❓'} ${posicoesMap[membro.posicao] || membro.posicao}
-                    </div>
+                    ${renderMemberRole(membro)}
                 </div>
                 <div class="member-actions">
                     ${isLeader ? '<div class="leader-badge"><i class="fas fa-crown"></i> Líder</div>' : ''}
-                    <select class="position-select" onchange="atualizarPosicaoMembro(${membro.usuario_id}, this.value)">
-                        <option value="capitao" ${membro.posicao === 'capitao' ? 'selected' : ''}>Capitão</option>
-                        <option value="awp" ${membro.posicao === 'awp' ? 'selected' : ''}>AWP</option>
-                        <option value="entry" ${membro.posicao === 'entry' ? 'selected' : ''}>Entry</option>
-                        <option value="support" ${membro.posicao === 'support' ? 'selected' : ''}>Support</option>
-                        <option value="igl" ${membro.posicao === 'igl' ? 'selected' : ''}>IGL</option>
-                        <option value="sub" ${membro.posicao === 'sub' ? 'selected' : ''}>Sub</option>
-                        <option value="coach" ${membro.posicao === 'coach' ? 'selected' : ''}>Coach</option>
-                        <option value="lurker" ${membro.posicao === 'lurker' ? 'selected' : ''}>Lurker</option>
-                        <option value="rifle" ${membro.posicao === 'rifle' ? 'selected' : ''}>Rifle</option>
+                    <div class="member-selects-stack">
+                    ${isLeader ? `
+                    <select class="funcao-select" title="Função do líder" onchange="atualizarMembroTime(${membro.usuario_id}, { funcao: this.value })">
+                        <option value="lider" ${funcaoAtual === 'lider' ? 'selected' : ''}>Líder (fora do lineup)</option>
+                        <option value="titular" ${funcaoAtual === 'titular' ? 'selected' : ''}>Titular (em campo)</option>
                     </select>
+                    ` : `
+                    <select class="funcao-select" title="Função no time" onchange="atualizarMembroTime(${membro.usuario_id}, { funcao: this.value })">
+                        <option value="titular" ${funcaoAtual === 'titular' ? 'selected' : ''}>Titular</option>
+                        <option value="reserva" ${funcaoAtual === 'reserva' ? 'selected' : ''}>Reserva</option>
+                        <option value="coach" ${funcaoAtual === 'coach' ? 'selected' : ''}>Coach</option>
+                    </select>
+                    `}
+                    <select class="position-select" title="Posição em jogo" onchange="atualizarMembroTime(${membro.usuario_id}, { posicao: this.value })">
+                        <option value="awp" ${posicaoAtual === 'awp' ? 'selected' : ''}>AWP</option>
+                        <option value="entry" ${posicaoAtual === 'entry' ? 'selected' : ''}>Entry</option>
+                        <option value="support" ${posicaoAtual === 'support' ? 'selected' : ''}>Support</option>
+                        <option value="igl" ${posicaoAtual === 'igl' ? 'selected' : ''}>IGL</option>
+                        <option value="lurker" ${posicaoAtual === 'lurker' ? 'selected' : ''}>Lurker</option>
+                        <option value="rifle" ${posicaoAtual === 'rifle' ? 'selected' : ''}>Rifle</option>
+                    </select>
+                    </div>
                     ${!isLeader ? `
                         <button class="btn-action btn-remove" onclick="removerMembro(${membro.usuario_id}, '${membro.username}')">
                             <i class="fas fa-user-minus"></i> Remover
@@ -627,37 +675,36 @@ function renderizarMembros(membros) {
 // =============================================================
 // ====================== [ ATUALIZAR POSIÇÃO DO MEMBRO ] ======================
 
-async function atualizarPosicaoMembro(usuarioId, novaPosicao) {
+async function atualizarMembroTime(usuarioId, dados) {
     const params = new URLSearchParams(window.location.search);
     const timeId = params.get('id');
+    const body = {};
+    if (dados.posicao) body.posicao = dados.posicao;
+    if (dados.funcao) body.funcao = dados.funcao;
+
+    if (!body.posicao && !body.funcao) return;
+
     try {
         const response = await fetch(`${API_URL}/times/${timeId}/membros/${usuarioId}/posicao`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ posicao: novaPosicao })
+            body: JSON.stringify(body)
         });
 
         if (response.ok) {
             const data = await response.json();
             showNotification('success', data.message);
-            
-            // Recarregar membros para atualizar a interface
             await carregarMembrosTime();
-            
         } else {
             const errorData = await response.json();
-            showNotification('error', errorData.message || 'Erro ao atualizar posição');
-            
-            // Recarregar membros para reverter a mudança na interface
+            showNotification('error', errorData.message || 'Erro ao atualizar membro');
             await carregarMembrosTime();
         }
 
     } catch (error) {
-        console.error('Erro ao atualizar posição do membro:', error);
-        showNotification('error', 'Erro ao atualizar posição do membro');
-        
-        // Recarregar membros para reverter a mudança na interface
+        console.error('Erro ao atualizar membro:', error);
+        showNotification('error', 'Erro ao atualizar membro do time');
         await carregarMembrosTime();
     }
 }

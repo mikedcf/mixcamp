@@ -58,7 +58,7 @@ async function verificar_auth() {
         }
 
         if (gerenciarCamp) {
-            if (perfil_data.perfilData.usuario.organizador === 'premium') {
+            if (isOrganizadorPlano(perfil_data.perfilData.usuario.organizador)) {
                 gerenciarCamp.style.display = 'flex';
                 gerenciarCamp.href = 'gerenciar_campeonato.html';
             } else {

@@ -7,6 +7,9 @@ const { Resend } = require("resend")
 const cron = require('node-cron'); // tempo
 const { conectar, desconectar } = require('./db');
 const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
+const { verificarPermissaoCampeonato, verificarPermissaoPorInscricaoTime } = require('./middlewares/security');
+const { rotateCsrfToken, ensureCsrfToken } = require('./middlewares/hardening');
+const { registrarAuditoria } = require('./middlewares/auditLog');
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
@@ -18,9 +21,66 @@ const apiKey = process.env.APIKEYFACEIT
 const steamApiKey = process.env.APIKEYSTEAM;
 const resend = new Resend(process.env.RESEND_KEY);
 
+const TEAM_MAX_MEMBERS = 8;
+const TEAM_ROLE_LIMITS = { titular: 5, reserva: 1, coach: 1 };
+const POSICOES_JOGO = ['awp', 'entry', 'support', 'igl', 'lurker', 'rifle'];
 
+function normalizarPosicaoJogo(posicao) {
+    const p = String(posicao || '').toLowerCase();
+    if (POSICOES_JOGO.includes(p)) return p;
+    return null;
+}
 
+async function contarFuncoesTime(conexao, timeId, excluirUsuarioId = null) {
+    let sql = 'SELECT funcao, COUNT(*) AS total FROM membros_time WHERE time_id = ?';
+    const params = [timeId];
+    if (excluirUsuarioId) {
+        sql += ' AND usuario_id != ?';
+        params.push(excluirUsuarioId);
+    }
+    sql += ' GROUP BY funcao';
+    const [rows] = await conexao.execute(sql, params);
+    const counts = { titular: 0, reserva: 0, coach: 0, lider: 0 };
+    for (const row of rows) {
+        if (Object.prototype.hasOwnProperty.call(counts, row.funcao)) {
+            counts[row.funcao] = row.total;
+        }
+    }
+    return counts;
+}
 
+async function obterPosicaoLivreNoTime(conexao, timeId, usuarioIdExcluir) {
+    const [rows] = await conexao.execute(
+        `SELECT posicao FROM membros_time
+         WHERE time_id = ? AND usuario_id != ? AND funcao = 'titular'`,
+        [timeId, usuarioIdExcluir]
+    );
+    const ocupadas = new Set();
+    for (const row of rows) {
+        const p = normalizarPosicaoJogo(row.posicao);
+        if (p) ocupadas.add(p);
+    }
+    return POSICOES_JOGO.find((pos) => !ocupadas.has(pos)) || null;
+}
+
+async function posicaoOcupadaPorTitular(conexao, timeId, posicao, usuarioIdExcluir) {
+    const [rows] = await conexao.execute(
+        `SELECT posicao FROM membros_time
+         WHERE time_id = ? AND usuario_id != ? AND funcao = 'titular'`,
+        [timeId, usuarioIdExcluir]
+    );
+    return rows.some((row) => normalizarPosicaoJogo(row.posicao) === posicao);
+}
+
+function validarLimiteFuncao(counts, novaFuncao) {
+    const limite = TEAM_ROLE_LIMITS[novaFuncao];
+    if (limite === undefined) return null;
+    if ((counts[novaFuncao] || 0) >= limite) {
+        const labels = { titular: 'titulares', reserva: 'reservas', coach: 'coaches' };
+        return `Limite de ${limite} ${labels[novaFuncao] || novaFuncao} atingido no time`;
+    }
+    return null;
+}
 
 async function setupDatabase() {
     const conexao = await conectar()
@@ -69,8 +129,8 @@ async function setupDatabase() {
         sobre TEXT,
         time_id INT NULL,
         posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT '',
-        gerencia ENUM('admin','moderador','streammer','apoiador','user') DEFAULT 'user',
-        organizador ENUM('premium','simples') DEFAULT NULL,
+        gerencia ENUM('admin','moderador','streamer','apoiador','user') DEFAULT 'user',
+        organizador ENUM('premium','intermediario','basico') DEFAULT NULL,
         cores_perfil VARCHAR(50) DEFAULT '#ffffff80',
         cfg_cs VARCHAR(255)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -232,8 +292,8 @@ async function setupDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT NOT NULL,
         time_id INT NOT NULL,
-        funcao ENUM('titular','reserva','coach') NOT NULL,
-        posicao ENUM('capitao','awp','entry','support','igl','sub','coach','lurker','rifle') NOT NULL,
+        funcao ENUM('lider','titular','reserva','coach') NOT NULL,
+        posicao ENUM('awp','entry','support','igl','lurker','rifle') NOT NULL,
         data_entrada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uk_usuario_time (usuario_id, time_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -303,7 +363,7 @@ async function setupDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT NOT NULL,
         time_id INT NOT NULL,
-        posicao ENUM('awp','entry','support','igl','sub','coach','rifle','lurker') NOT NULL,
+        posicao ENUM('awp','entry','support','igl','rifle','lurker') NOT NULL DEFAULT 'rifle',
         status ENUM('pendente','aceita','recusada') DEFAULT 'pendente',
         data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -314,7 +374,7 @@ async function setupDatabase() {
         id INT PRIMARY KEY AUTO_INCREMENT,
         usuario_id INT NOT NULL,
         time_id INT NOT NULL,
-        posicao ENUM('awp','entry','support','igl','sub','coach','rifle','lurker') NOT NULL,
+        posicao ENUM('awp','entry','support','igl','rifle','lurker') NOT NULL DEFAULT 'rifle',
         tipo ENUM('entrada','saida') NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -426,7 +486,7 @@ async function setupDatabase() {
         campeonato_id INT NOT NULL,
         usuario_id INT NOT NULL,
         time_id INT NOT NULL,
-        posicao ENUM('awp','entry','support','igl','sub','coach','rifle','lurker') NOT NULL,
+        posicao ENUM('awp','entry','support','igl','lurker','rifle') NOT NULL,
         data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
@@ -742,6 +802,14 @@ async function setupDatabase() {
         CREATE INDEX idx_email ON email_verificacao(email);
     `).catch(() => { })
 
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS email_verificado (
+        email VARCHAR(255) NOT NULL PRIMARY KEY,
+        verificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expira_em DATETIME NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
+
 
     /*
     =====================================================
@@ -942,27 +1010,87 @@ async function setupDatabase() {
 
     await conexao.execute(`SET FOREIGN_KEY_CHECKS = 1;`)
 
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS sessions (
+        session_id VARCHAR(128) NOT NULL PRIMARY KEY,
+        expires INT UNSIGNED NOT NULL,
+        data MEDIUMTEXT,
+        INDEX IDX_sessions_expires (expires)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS security_audit_log (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        ip VARCHAR(45) NULL,
+        method VARCHAR(10) NOT NULL,
+        path VARCHAR(500) NOT NULL,
+        status_code SMALLINT NOT NULL,
+        user_agent VARCHAR(300) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX IDX_audit_created (created_at),
+        INDEX IDX_audit_status (status_code),
+        INDEX IDX_audit_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    try {
+        await conexao.execute(`UPDATE membros_time SET posicao = 'rifle' WHERE posicao = 'sub'`);
+    } catch (e) {
+        // Tabela/coluna pode não existir em instalações antigas
+    }
+
     console.log("✅ BANCO TOTALMENTE CONFIGURADO COM SUCESSO!")
 }
 
 
+// ===============================================================================================
+// ==================================== [API KEY] ================================================
+
+function validarApiKey(req, res, next) {
+    const apiKey = req.headers['x-api-key'];
+
+    if (!apiKey || apiKey !== process.env.DISCORD_BOT_API_KEY) {
+        return res.status(403).json({
+            erro: "Acesso negado"
+        });
+    }
+
+    next();
+}
+
+
+function auth(req, res, next) {
+    if (!req.session.user) {
+        return res.status(401).json({
+            error: "Não autorizado"
+        });
+    }
+
+    next();
+}
 
 // ===============================================================================================
 // ==================================== [API MERCADOPAGO] ================================================
+const PRECOS_PROMOCAO = {
+    basico: 10,
+    premium: 20,
+    maximo: 25
+};
+
+function normalizarValorMonetario(valor) {
+    return Math.round(Number(valor || 0) * 100) / 100;
+}
+
+function valoresMonetariosIguais(a, b, tolerancia = 0.01) {
+    return Math.abs(normalizarValorMonetario(a) - normalizarValorMonetario(b)) <= tolerancia;
+}
+
 // --- POST - preferência para inscrição em campeonato
 async function CreatePreference(req, res) {
-    const { title, quantity, unit_price, cardId, timeId } = req.body;
-
-    // Validar e garantir que o título não esteja vazio
-    const itemTitle = title && title.trim() ? title.trim() : 'Inscrição em Campeonato';
-    const itemQuantity = parseInt(quantity) || 1;
-    const itemPrice = parseFloat(unit_price) || 0;
-
-    if (!itemTitle || itemPrice <= 0) {
-        return res.status(400).json({
-            error: "Título e preço são obrigatórios"
-        });
-    }
+    const { cardId, timeId } = req.body;
+    const sessionUserId = req.session.user.id;
 
     // Validar cardId e timeId
     if (!cardId || !timeId) {
@@ -971,54 +1099,82 @@ async function CreatePreference(req, res) {
         });
     }
 
-    // Criar external_reference com cardId e timeId para rastrear o pagamento
-    const externalReference = `CAMP_${cardId}_TIME_${timeId}_${Date.now()}`;
+    let conexao;
+    try {
+        conexao = await conectar();
 
-    // URL base - usar ngrok URL se disponível, senão usar localhost (notification_url será opcional)
-    const baseUrl = process.env.BASE_URL || process.env.NGROK_URL || 'http://127.0.0.1:3000';
-    const isPublicUrl = baseUrl.startsWith('https://') || baseUrl.includes('ngrok');
-
-    // Construir body da preferência
-    const preferenceBody = {
-        items: [
-            {
-                title: itemTitle,
-                quantity: itemQuantity,
-                unit_price: itemPrice,
-                currency_id: "BRL"
-            }
-        ],
-        external_reference: externalReference,
-        back_urls: {
-            success: `${baseUrl}/api/v1/mercadopago/success`,
-            failure: `${baseUrl}/api/v1/mercadopago/failure`,
-            pending: `${baseUrl}/api/v1/mercadopago/pending`
+        const [liderTime] = await conexao.execute(
+            'SELECT lider_id FROM times WHERE id = ?',
+            [timeId]
+        );
+        if (!liderTime[0] || parseInt(liderTime[0].lider_id, 10) !== parseInt(sessionUserId, 10)) {
+            return res.status(403).json({ error: 'Apenas o líder do time pode iniciar o pagamento da inscrição' });
         }
-    };
 
-    // Só adicionar notification_url se for uma URL pública válida
-    if (isPublicUrl) {
-        preferenceBody.notification_url = `${baseUrl}${process.env.ROUTE_MERCADOPAGO_WEBHOOK}`;
-    }
+        const [campeonatoRows] = await conexao.execute(
+            'SELECT titulo, preco_inscricao FROM inscricoes_campeonato WHERE id = ?',
+            [cardId]
+        );
 
-    const preference = new Preference(client);
+        if (!campeonatoRows || campeonatoRows.length === 0) {
+            return res.status(404).json({ error: 'Campeonato não encontrado para pagamento.' });
+        }
 
-    preference.create({ body: preferenceBody })
-        .then(data => {
-            res.status(200).json({
-                preference_id: data.id,
-                preference_url: data.init_point,
-                external_reference: externalReference
-            });
-        })
-        .catch((error) => {
-            console.error('❌ Erro ao criar preferência:', error);
-            console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
-            res.status(500).json({
-                error: "Erro ao criar preferência",
-                details: error.message || 'Erro desconhecido'
-            });
+        const itemTitle = (campeonatoRows[0].titulo || 'Inscrição em Campeonato').trim();
+        const itemQuantity = 1;
+        const itemPrice = normalizarValorMonetario(campeonatoRows[0].preco_inscricao);
+
+        if (itemPrice <= 0) {
+            return res.status(400).json({ error: 'Preço de inscrição inválido para pagamento.' });
+        }
+
+        // Criar external_reference com cardId e timeId para rastrear o pagamento
+        const externalReference = `CAMP_${cardId}_TIME_${timeId}_${Date.now()}`;
+
+        // URL base - usar ngrok URL se disponível, senão usar localhost (notification_url será opcional)
+        const baseUrl = process.env.BASE_URL || process.env.NGROK_URL || 'http://127.0.0.1:3000';
+        const isPublicUrl = baseUrl.startsWith('https://') || baseUrl.includes('ngrok');
+
+        // Construir body da preferência
+        const preferenceBody = {
+            items: [
+                {
+                    title: itemTitle,
+                    quantity: itemQuantity,
+                    unit_price: itemPrice,
+                    currency_id: "BRL"
+                }
+            ],
+            external_reference: externalReference,
+            back_urls: {
+                success: `${baseUrl}/api/v1/mercadopago/success`,
+                failure: `${baseUrl}/api/v1/mercadopago/failure`,
+                pending: `${baseUrl}/api/v1/mercadopago/pending`
+            }
+        };
+
+        // Só adicionar notification_url se for uma URL pública válida
+        if (isPublicUrl) {
+            preferenceBody.notification_url = `${baseUrl}${process.env.ROUTE_MERCADOPAGO_WEBHOOK}`;
+        }
+
+        const preference = new Preference(client);
+        const data = await preference.create({ body: preferenceBody });
+        return res.status(200).json({
+            preference_id: data.id,
+            preference_url: data.init_point,
+            external_reference: externalReference
         });
+    } catch (error) {
+        console.error('❌ Erro ao criar preferência:', error);
+        console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
+        return res.status(500).json({
+            error: "Erro ao criar preferência",
+            details: error.message || 'Erro desconhecido'
+        });
+    } finally {
+        if (conexao) await desconectar(conexao);
+    }
 }
 
 // Preferência de pagamento para promoção de campeonatos (planos básico/premium/máximo).
@@ -1028,27 +1184,12 @@ async function CreatePreferencePromocao(req, res) {
     try {
         const {
             plano,
-            title,
-            unit_price,
             evento_id,
-            titulo,
-            data_inicio,
-            premiacao,
-            valor_inscricao,
-            qnt_times,
-            chave,
-            game,
-            plataforma,
-            banner_img,
-            banner_local,
-            plano_assinado
+            banner_local
         } = req.body;
 
         const planoId = (plano || '').toLowerCase();
-        const itemPrice = parseFloat(unit_price) || 0;
-        const itemTitle = title && title.trim()
-            ? title.trim()
-            : `Plano ${planoId || 'promoção'} - Destaque MIXCAMP`;
+        const itemPrice = PRECOS_PROMOCAO[planoId] || 0;
 
         if (!planoId || !['basico', 'premium', 'maximo'].includes(planoId)) {
             return res.status(400).json({ error: 'Plano inválido. Use basico, premium ou maximo.' });
@@ -1060,23 +1201,37 @@ async function CreatePreferencePromocao(req, res) {
             return res.status(400).json({ error: 'evento_id é obrigatório para promoção.' });
         }
 
+        const itemTitle = `Plano ${planoId} - Destaque MIXCAMP`;
         const externalRef = `PROMO_${evento_id}_${Date.now()}`;
-        const bodyParaBanco = {
-            evento_id,
-            titulo: titulo || '',
-            data_inicio: data_inicio || null,
-            premiacao: premiacao != null ? Number(premiacao) : 0,
-            valor_inscricao: valor_inscricao != null ? Number(valor_inscricao) : 0,
-            qnt_times: qnt_times != null ? Number(qnt_times) : 0,
-            chave: chave || '',
-            game: game || 'CS2',
-            plataforma: plataforma || 'FACEIT',
-            banner_img: banner_img || null,
-            banner_local: banner_local || 'campeonato',
-            plano_assinado: plano_assinado || planoId
-        };
 
         conexao = await conectar();
+        const [campeonatoRows] = await conexao.execute(
+            `SELECT titulo, previsao_data_inicio, premiacao, preco_inscricao, qnt_times, chave, game, plataforma, imagem_url
+             FROM inscricoes_campeonato
+             WHERE id = ?`,
+            [evento_id]
+        );
+
+        if (!campeonatoRows || campeonatoRows.length === 0) {
+            return res.status(404).json({ error: 'Campeonato não encontrado para promoção.' });
+        }
+
+        const campeonato = campeonatoRows[0];
+        const bodyParaBanco = {
+            evento_id,
+            titulo: campeonato.titulo || '',
+            data_inicio: campeonato.previsao_data_inicio || null,
+            premiacao: campeonato.premiacao != null ? Number(campeonato.premiacao) : 0,
+            valor_inscricao: campeonato.preco_inscricao != null ? Number(campeonato.preco_inscricao) : 0,
+            qnt_times: campeonato.qnt_times != null ? Number(campeonato.qnt_times) : 0,
+            chave: campeonato.chave || '',
+            game: campeonato.game || 'CS2',
+            plataforma: campeonato.plataforma || 'FACEIT',
+            banner_img: campeonato.imagem_url || null,
+            banner_local: banner_local || 'campeonato',
+            plano_assinado: planoId
+        };
+
         await conexao.execute(
             'INSERT INTO promocao_pendente_pagamento (external_reference, body_json) VALUES (?, ?)',
             [externalRef, JSON.stringify(bodyParaBanco)]
@@ -1175,6 +1330,16 @@ async function processarPagamento(paymentId) {
                 );
                 if (rows && rows.length > 0 && paymentData.status === 'approved') {
                     const body = JSON.parse(rows[0].body_json);
+                    const planoPago = (body.plano_assinado || '').toLowerCase();
+                    const valorEsperado = PRECOS_PROMOCAO[planoPago] || 0;
+                    const valorPago = normalizarValorMonetario(paymentData.transaction_amount);
+
+                    if (!valorEsperado || !valoresMonetariosIguais(valorPago, valorEsperado)) {
+                        console.error(
+                            `❌ Valor divergente no pagamento da promoção. externalRef=${externalRef}, esperado=${valorEsperado}, pago=${valorPago}`
+                        );
+                        return { success: false, tipo: 'promocao', status: 'amount_mismatch', externalRef };
+                    }
                     await registrarPromocaoAposPagamento(conexao, body);
                     await conexao.execute('DELETE FROM promocao_pendente_pagamento WHERE external_reference = ?', [externalRef]);
                     return { success: true, tipo: 'promocao', evento_id: body.evento_id };
@@ -1256,9 +1421,17 @@ async function registrarInscricaoAposPagamento(cardId, timeId, paymentId) {
 
         const totalInscritos = inscritos[0].total;
         const qntTimesMax = parseInt(campeonato[0].qnt_times);
+        const valorEsperado = normalizarValorMonetario(campeonato[0].preco_inscricao);
+        const valorPago = normalizarValorMonetario(paymentData.transaction_amount);
 
         if (totalInscritos >= qntTimesMax) {
             console.error('Campeonato já atingiu o número máximo de times');
+            return;
+        }
+        if (!valoresMonetariosIguais(valorPago, valorEsperado)) {
+            console.error(
+                `Valor de pagamento divergente para inscrição. cardId=${cardId}, timeId=${timeId}, esperado=${valorEsperado}, pago=${valorPago}`
+            );
             return;
         }
 
@@ -1272,7 +1445,7 @@ async function registrarInscricaoAposPagamento(cardId, timeId, paymentId) {
                 timeId,
                 paymentId,
                 paymentData.status,
-                paymentData.transaction_amount || campeonato[0].preco_inscricao
+                valorPago
             ]
         );
 
@@ -2178,6 +2351,29 @@ async function updateImgMap(req, res) {
 // ===============================================================================================
 // ==================================== [API EMAIL] =============================================
 
+const EMAIL_VERIFICADO_VALIDADE_MS = 30 * 60 * 1000;
+
+function normalizarEmail(email) {
+    return String(email || '').trim().toLowerCase();
+}
+
+async function marcarEmailVerificado(conexao, email) {
+    const expiraEm = new Date(Date.now() + EMAIL_VERIFICADO_VALIDADE_MS);
+    await conexao.execute('DELETE FROM email_verificado WHERE email = ?', [email]);
+    await conexao.execute(
+        'INSERT INTO email_verificado (email, expira_em) VALUES (?, ?)',
+        [email, expiraEm]
+    );
+}
+
+async function consumirEmailVerificado(conexao, email) {
+    const [result] = await conexao.execute(
+        'DELETE FROM email_verificado WHERE email = ? AND expira_em > NOW()',
+        [email]
+    );
+    return result.affectedRows > 0;
+}
+
 async function enviarEmail(email, code) {
     try {
         const response = await resend.emails.send({
@@ -2200,36 +2396,37 @@ async function enviarEmail(email, code) {
 
 
 async function enviarCodigoEmail(req, res) {
-    const { email } = req.body;
+    const email = normalizarEmail(req.body?.email);
+
+    if (!email || !validarEmail(email)) {
+        return res.status(400).json({ message: 'Email inválido' });
+    }
 
     let conexao;
 
     try {
         conexao = await conectar();
-        let query = "SELECT * FROM usuarios WHERE email = ?";
-        const [dados] = await conexao.execute(query, [email]);
-        if (dados.length == 0) {
-
-            const code = Math.floor(100000 + Math.random() * 900000);
-
-            query = 'INSERT INTO email_verificacao (email, codigo, expira_em) VALUES (?, ?, ?)';
-            await conexao.execute(query, [email, code, new Date(Date.now() + 10 * 60 * 1000)]);
-
-
-            const response = await enviarEmail(email, code);
-            console.log('response:', response);
-
-
-            if (response) {
-                console.log("EMAIL ENVIADO:", response);
-                res.status(200).json({ message: 'Código enviado com sucesso, verifique sua caixa de entrada' });
-            }
-            else {
-                res.status(500).json({ message: 'Erro ao enviar código de e-mail' });
-            }
+        const [usuarios] = await conexao.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
+        if (usuarios.length > 0) {
+            return res.status(400).json({ message: 'Email já cadastrado' });
         }
-        else {
-            res.status(400).json({ message: 'Email já cadastrado' });
+
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const expiraCodigo = new Date(Date.now() + 10 * 60 * 1000);
+
+        await conexao.execute('DELETE FROM email_verificacao WHERE email = ?', [email]);
+        await conexao.execute('DELETE FROM email_verificado WHERE email = ?', [email]);
+        await conexao.execute(
+            'INSERT INTO email_verificacao (email, codigo, expira_em) VALUES (?, ?, ?)',
+            [email, code, expiraCodigo]
+        );
+
+        const enviado = await enviarEmail(email, code);
+
+        if (enviado) {
+            res.status(200).json({ message: 'Código enviado com sucesso, verifique sua caixa de entrada' });
+        } else {
+            res.status(500).json({ message: 'Erro ao enviar código de e-mail' });
         }
 
     }
@@ -2245,29 +2442,42 @@ async function enviarCodigoEmail(req, res) {
 
 
 async function verificarCodigoEmail(req, res) {
-    const { email, codigo } = req.body;
+    const email = normalizarEmail(req.body?.email);
+    const codigo = String(req.body?.codigo || '').trim();
 
-    // Validação dos parâmetros
     if (!email || !codigo) {
         return res.status(400).json({ message: 'Email e código são obrigatórios' });
+    }
+
+    if (!/^\d{6}$/.test(codigo)) {
+        return res.status(400).json({ message: 'Código deve ter 6 dígitos' });
     }
 
     let conexao;
     try {
         conexao = await conectar();
-        let query = 'SELECT * FROM email_verificacao WHERE email = ? AND codigo = ? AND expira_em > NOW()';
-        const [dados] = await conexao.execute(query, [email, codigo]);
 
-        if (dados.length === 0) {
-            return res.status(400).json({ message: 'Código de verificação inválido' });
+        const [usuarios] = await conexao.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
+        if (usuarios.length > 0) {
+            return res.status(400).json({ message: 'Email já cadastrado' });
         }
 
-        query = 'DELETE FROM email_verificacao WHERE email = ?';
-        await conexao.execute(query, [email]);
-        res.status(200).json({ message: 'Código de verificação registrado com sucesso' });
+        const [dados] = await conexao.execute(
+            'SELECT id FROM email_verificacao WHERE email = ? AND codigo = ? AND expira_em > NOW()',
+            [email, codigo]
+        );
+
+        if (dados.length === 0) {
+            return res.status(400).json({ message: 'Código inválido ou expirado' });
+        }
+
+        await conexao.execute('DELETE FROM email_verificacao WHERE email = ?', [email]);
+        await marcarEmailVerificado(conexao, email);
+
+        res.status(200).json({ message: 'E-mail verificado com sucesso. Conclua o cadastro em até 30 minutos.' });
     }
     catch (error) {
-        console.error('Erro ao registrar código de e-mail:', error);
+        console.error('Erro ao verificar código de e-mail:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
     }
     finally {
@@ -2283,12 +2493,13 @@ async function verificarCodigoEmail(req, res) {
 // ------- API GET
 async function getNotificacoes(req, res) {
     let conexao;
+    const userId = req.session.user.id;
 
     try {
         conexao = await conectar();
 
-        query = "SELECT * FROM notificacoes";
-        const [dados] = await conexao.execute(query);
+        const query = 'SELECT * FROM notificacoes WHERE user_id = ? ORDER BY criada_em DESC';
+        const [dados] = await conexao.execute(query, [userId]);
         res.status(200).json({ notificacoes: dados });
     }
     catch (error) {
@@ -2302,6 +2513,19 @@ async function getNotificacoes(req, res) {
 // ------- API POST
 async function criarMsgNotificacao(req, res) {
     const { usuario_id, texto } = req.body;
+    const sessionUserId = req.session.user.id;
+
+    if (!texto || !String(texto).trim()) {
+        return res.status(400).json({ message: 'Texto da notificação é obrigatório' });
+    }
+
+    const destinoId = usuario_id != null ? parseInt(usuario_id, 10) : sessionUserId;
+    if (destinoId !== parseInt(sessionUserId, 10)) {
+        const gerencia = req.session.user?.gerencia;
+        if (!['admin', 'moderador'].includes(gerencia)) {
+            return res.status(403).json({ message: 'Sem permissão para notificar outro usuário' });
+        }
+    }
 
     let conexao;
 
@@ -2309,9 +2533,9 @@ async function criarMsgNotificacao(req, res) {
 
         conexao = await conectar();
 
-        query = "INSERT INTO notificacoes (user_id, texto) VALUES (?,?)";
+        const query = 'INSERT INTO notificacoes (user_id, texto) VALUES (?,?)';
 
-        await conexao.execute(query, [usuario_id, texto]);
+        await conexao.execute(query, [destinoId, String(texto).trim()]);
 
         res.status(200).json({ message: 'Notificação criada com sucesso' });
 
@@ -2357,6 +2581,18 @@ async function atualizarNotificacao(req, res) {
         conexao = await conectar();
         const { id } = req.params;
         const { lida, texto } = req.body;
+        const sessionUserId = req.session.user.id;
+
+        const [donos] = await conexao.execute(
+            'SELECT user_id FROM notificacoes WHERE id = ?',
+            [id]
+        );
+        if (!donos[0]) {
+            return res.status(404).json({ error: 'Notificação não encontrada.' });
+        }
+        if (parseInt(donos[0].user_id, 10) !== parseInt(sessionUserId, 10)) {
+            return res.status(403).json({ error: 'Sem permissão para alterar esta notificação.' });
+        }
 
         const fields = [];
         const values = [];
@@ -2433,16 +2669,43 @@ async function deletarNotificacao(req, res) {
 // ===================== [ AUTENTICAÇÃO ] =====================
 
 // ------- API GET
-async function autenticacao(req, res, next) {
-    if (req.session.user) {
+async function autenticacao(req, res) {
+    if (!req.session.user) {
+        return res.json({ logado: false });
+    }
+
+    let conexao;
+    try {
+        conexao = await conectar();
+        const [rows] = await conexao.execute(
+            'SELECT id, username, email, time_id, gerencia, organizador FROM usuarios WHERE id = ?',
+            [req.session.user.id]
+        );
+
+        if (!rows[0]) {
+            req.session.destroy(() => {});
+            return res.json({ logado: false });
+        }
+
+        req.session.user = {
+            id: rows[0].id,
+            nome: rows[0].username,
+            email: rows[0].email,
+            time: rows[0].time_id,
+            gerencia: rows[0].gerencia,
+            organizador: rows[0].organizador
+        };
+
         res.json({
             logado: true,
-            usuario: req.session.user
+            usuario: req.session.user,
+            csrfToken: ensureCsrfToken(req)
         });
-    } else {
-        res.json({
-            logado: false
-        });
+    } catch (error) {
+        console.error('Erro na autenticação:', error);
+        res.status(500).json({ logado: false, message: 'Erro ao validar sessão' });
+    } finally {
+        if (conexao) await desconectar(conexao);
     }
 }
 
@@ -2595,11 +2858,38 @@ async function getPerfil(req, res) {
         conexao = await conectar();
 
         // Busca os dados do usuário
-        const [usuariosRows] = await conexao.execute('SELECT * FROM usuarios WHERE id=?', [id]);
+        const [usuariosRows] = await conexao.execute(`
+            SELECT 
+                id,
+                username,
+                data_criacao,
+                avatar_url,
+                banner_url,
+                sobre,
+                time_id,
+                posicoes,
+                organizador,
+                cores_perfil,
+                steamid,
+                faceitid,
+                cfg_cs
+            FROM usuarios 
+            WHERE id=?
+        `, [id]);
         const usuario = usuariosRows[0];
 
         if (!usuario) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        const sessionId = req.session?.user?.id;
+        const isOwner = sessionId && parseInt(sessionId, 10) === parseInt(id, 10);
+        const [gerenciaRow] = await conexao.execute(
+            'SELECT gerencia FROM usuarios WHERE id = ?',
+            [id]
+        );
+        if (isOwner || ['admin', 'moderador'].includes(req.session?.user?.gerencia)) {
+            usuario.gerencia = gerenciaRow[0]?.gerencia || 'user';
         }
 
         // Converter posicoes de string separada por vírgulas para array (se existir)
@@ -2660,25 +2950,33 @@ async function login(req, res) {
         const usuario = dados[0][0];
 
 
-        if (!usuario) {
-            return res.status(404).send({ message: 'Usuário não encontrado' });
+        const senhaCorreta = usuario && await bcrypt.compare(senha, usuario.senha);
+
+        if (!usuario || !senhaCorreta) {
+            await registrarAuditoria({ req, status: 401, userId: null });
+            return res.status(401).send({ message: 'Email ou senha inválidos' });
         }
 
+        req.session.regenerate((regErr) => {
+            if (regErr) {
+                console.error('Erro ao regenerar sessão:', regErr);
+                return res.status(500).send({ message: 'Erro ao iniciar sessão' });
+            }
 
-        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+            req.session.user = {
+                id: usuario.id,
+                nome: usuario.username,
+                email: usuario.email,
+                time: usuario.time_id,
+                gerencia: usuario.gerencia,
+                organizador: usuario.organizador
+            };
 
-        if (!senhaCorreta) {
-            return res.status(401).send({ message: 'Senha incorreta' });
-        }
+            const csrfToken = rotateCsrfToken(req);
 
-        req.session.user = {
-            id: usuario.id,
-            nome: usuario.username,
-            email: usuario.email,
-            time: usuario.time_id
-        };
-
-        res.status(200).send({ message: 'Login com sucesso!' });
+            res.status(200).send({ message: 'Login com sucesso!', csrfToken });
+        });
+        return;
 
     }
     catch (error) {
@@ -2706,7 +3004,9 @@ async function register(req, res) {
     let conexao;
 
     try {
-        const { username, email, password } = req.body;
+        const username = String(req.body?.username || '').trim();
+        const email = normalizarEmail(req.body?.email);
+        const password = req.body?.password;
 
         if (!username || !email || !password) {
             return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
@@ -2722,9 +3022,18 @@ async function register(req, res) {
             return res.status(400).json({ message: 'Caracteres inválidos' });
         }
 
+        conexao = await conectar();
+
+        const emailVerificado = await consumirEmailVerificado(conexao, email);
+        if (!emailVerificado) {
+            return res.status(403).json({
+                message: 'E-mail não verificado ou prazo expirado. Solicite um novo código e valide antes de registrar.',
+                error: 'EMAIL_NOT_VERIFIED'
+            });
+        }
+
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        conexao = await conectar();
         const query = 'INSERT INTO usuarios (username, email, senha) VALUES (?,?,?)';
         await conexao.execute(query, [username, email, hashedPassword]);
 
@@ -2745,6 +3054,12 @@ async function register(req, res) {
 
 async function updateConfig(req, res) {
     const userID = req.params.id;
+    const sessionUserId = req.session.user.id;
+
+    if (parseInt(userID, 10) !== parseInt(sessionUserId, 10)) {
+        return res.status(403).json({ error: 'Você só pode editar o seu próprio perfil' });
+    }
+
     const { username, sobre, redes, destaques, avatar, banner, cores_perfil, posicoes, steamid, faceitid, cfg_cs } = req.body;
 
     // Valores válidos para posicoes (incluindo rifle e lurker)
@@ -3076,10 +3391,11 @@ async function getTimeById(req, res) {
             WHERE mt.time_id = ?
             ORDER BY
                 CASE mt.funcao
-                    WHEN 'titular' THEN 1
-                    WHEN 'reserva' THEN 2
-                    WHEN 'coach' THEN 3
-                    ELSE 4
+                    WHEN 'lider' THEN 1
+                    WHEN 'titular' THEN 2
+                    WHEN 'reserva' THEN 3
+                    WHEN 'coach' THEN 4
+                    ELSE 5
                 END,
                 u.username ASC
             `, [id]);
@@ -3213,11 +3529,12 @@ async function listarMembrosParaLideranca(req, res) {
             JOIN usuarios u ON u.id = mt.usuario_id
             WHERE mt.time_id = ? AND mt.usuario_id != ?
             ORDER BY 
-                CASE mt.funcao 
-                    WHEN 'titular' THEN 1
-                    WHEN 'reserva' THEN 2
-                    WHEN 'coach' THEN 3
-                    ELSE 4
+                CASE mt.funcao
+                    WHEN 'lider' THEN 1
+                    WHEN 'titular' THEN 2
+                    WHEN 'reserva' THEN 3
+                    WHEN 'coach' THEN 4
+                    ELSE 5
                 END,
                 u.username ASC
         `, [id, userId]);
@@ -3235,11 +3552,7 @@ async function listarMembrosParaLideranca(req, res) {
 // Listar solicitações de entrada de um time (somente líder pode ver)
 async function listarSolicitacoesPorTime(req, res) {
     const { id } = req.params; // id do time
-    const { userId } = req.query; // id do usuário autenticado (líder)
-
-    if (!userId) {
-        return res.status(400).json({ message: 'userId é obrigatório' });
-    }
+    const userId = req.session.user.id;
 
     let conexao;
     try {
@@ -3288,10 +3601,8 @@ async function listarSolicitacoesPorTime(req, res) {
 // ----- TEAMS POST
 
 async function criarTime(req, res) {
-    const { userId, nome, tag, sobre_time, link_logo, link_banner } = req.body;
-    if (!userId) {
-        return res.status(401).json({ error: 'Usuário não autenticado' });
-    }
+    const userId = req.session.user.id;
+    const { nome, tag, sobre_time, link_logo, link_banner } = req.body;
 
     if (!nome || !tag) {
         return res.status(400).json({ error: 'Nome e tag do time são obrigatórios' });
@@ -3338,10 +3649,10 @@ async function criarTime(req, res) {
 
         const timeId = timeResult.insertId;
 
-        // Adicionar usuário como membro titular e capitão
+        // Adicionar usuário como líder do time. A função guarda liderança; posição é função em jogo.
         await conexao.execute(
             'INSERT INTO membros_time (usuario_id, time_id, funcao, posicao) VALUES (?, ?, ?, ?)',
-            [userId, timeId, 'titular', 'capitao']
+            [userId, timeId, 'lider', 'rifle']
         );
 
         // Atualizar time_id do usuário
@@ -3510,14 +3821,15 @@ async function transferirLideranca(req, res) {
                 [novoLiderId, id]
             );
 
-            // 2. Opcional: Se o novo líder for reserva, promover para titular
-            const membro = membroRows[0];
-            if (membro.funcao === 'reserva') {
-                await conexao.execute(
-                    'UPDATE membros_time SET funcao = "titular" WHERE time_id = ? AND usuario_id = ?',
-                    [id, novoLiderId]
-                );
-            }
+            // 2. A função "lider" acompanha o dono atual do time.
+            await conexao.execute(
+                'UPDATE membros_time SET funcao = "titular" WHERE time_id = ? AND funcao = "lider"',
+                [id]
+            );
+            await conexao.execute(
+                'UPDATE membros_time SET funcao = "lider" WHERE time_id = ? AND usuario_id = ?',
+                [id, novoLiderId]
+            );
 
             // 3. Atualizar time_id do novo líder (se não estiver setado)
             await conexao.execute(
@@ -3735,7 +4047,7 @@ async function removerMembro(req, res) {
 
         // Verificar se o usuário é membro do time
         const [memberCheck] = await conexao.execute(
-            'SELECT id FROM membros_time WHERE time_id = ? AND usuario_id = ?',
+            'SELECT id, funcao FROM membros_time WHERE time_id = ? AND usuario_id = ?',
             [timeId, usuarioId]
         );
 
@@ -3743,6 +4055,13 @@ async function removerMembro(req, res) {
             return res.status(404).json({
                 message: 'Usuário não é membro deste time',
                 error: 'NOT_TEAM_MEMBER'
+            });
+        }
+
+        if (memberCheck[0].funcao === 'lider' || parseInt(usuarioId, 10) === parseInt(teamCheck[0].lider_id, 10)) {
+            return res.status(400).json({
+                message: 'Transfira a liderança antes de remover o líder do time',
+                error: 'CANNOT_REMOVE_TEAM_LEADER'
             });
         }
 
@@ -3786,7 +4105,7 @@ async function MembroSair(req, res) {
 
         // Verificar se o usuário é membro do time
         const [memberCheck] = await conexao.execute(
-            'SELECT id FROM membros_time WHERE time_id = ? AND usuario_id = ?',
+            'SELECT id, funcao FROM membros_time WHERE time_id = ? AND usuario_id = ?',
             [timeId, usuarioId]
         );
 
@@ -3821,9 +4140,17 @@ async function MembroSair(req, res) {
 
 
 // ----- TIME UPDATE
-async function atualizarPosicaoMembro(req, res) {
-    const { timeId, usuarioId } = req.params;
-    const { posicao } = req.body;
+async function atualizarMembro(req, res) {
+    const timeId = req.params.timeId ?? req.params.id;
+    const usuarioId = req.params.usuarioId ?? req.params.userId;
+    const { posicao, funcao } = req.body;
+
+    if (!timeId || !usuarioId) {
+        return res.status(400).json({
+            message: 'ID do time e do usuário são obrigatórios',
+            error: 'MISSING_PARAMS'
+        });
+    }
 
     let conexao;
     try {
@@ -3844,7 +4171,7 @@ async function atualizarPosicaoMembro(req, res) {
 
         // Verificar se o usuário é membro do time
         const [memberCheck] = await conexao.execute(
-            'SELECT id FROM membros_time WHERE time_id = ? AND usuario_id = ?',
+            'SELECT id, funcao, posicao FROM membros_time WHERE time_id = ? AND usuario_id = ?',
             [timeId, usuarioId]
         );
 
@@ -3855,28 +4182,104 @@ async function atualizarPosicaoMembro(req, res) {
             });
         }
 
-        // Verificar se a posição já está ocupada (exceto sub e coach)
-        if (posicao !== 'sub' && posicao !== 'coach') {
-            const [positionCheck] = await conexao.execute(
-                'SELECT id FROM membros_time WHERE time_id = ? AND posicao = ? AND usuario_id != ?',
-                [timeId, posicao, usuarioId]
-            );
+        const posicoesValidas = ['awp', 'entry', 'support', 'igl', 'lurker', 'rifle'];
+        const funcoesValidas = ['lider', 'titular', 'reserva', 'coach'];
 
-            if (positionCheck.length > 0) {
+        if (posicao !== undefined && posicao !== null && posicao !== '') {
+            if (!posicoesValidas.includes(posicao)) {
                 return res.status(400).json({
-                    message: `A posição ${posicao} já está ocupada por outro membro`,
-                    error: 'POSITION_OCCUPIED'
+                    message: `Posição inválida: ${posicao}. Valores permitidos: ${posicoesValidas.join(', ')}`,
+                    error: 'INVALID_POSITION'
                 });
             }
         }
 
-        // Atualizar posição do membro
+        const isTeamLeader = parseInt(teamCheck[0].lider_id, 10) === parseInt(usuarioId, 10);
+
+        if (funcao !== undefined && funcao !== null && funcao !== '') {
+            if (!funcoesValidas.includes(funcao)) {
+                return res.status(400).json({
+                    message: `Função inválida: ${funcao}. Valores permitidos: ${funcoesValidas.join(', ')}`,
+                    error: 'INVALID_ROLE'
+                });
+            }
+            if (funcao === 'lider' && !isTeamLeader) {
+                return res.status(400).json({
+                    message: 'Apenas o líder do time pode usar a função "lider"',
+                    error: 'INVALID_ROLE'
+                });
+            }
+            if (funcao !== memberCheck[0].funcao) {
+                const counts = await contarFuncoesTime(conexao, timeId, usuarioId);
+                const erroLimite = validarLimiteFuncao(counts, funcao);
+                if (erroLimite) {
+                    return res.status(400).json({
+                        message: erroLimite,
+                        error: 'ROLE_LIMIT_REACHED'
+                    });
+                }
+            }
+        }
+
+        const funcaoEfetiva = (funcao !== undefined && funcao !== null && funcao !== '')
+            ? funcao
+            : memberCheck[0].funcao;
+
+        const posicaoInformada = (posicao !== undefined && posicao !== null && posicao !== '')
+            ? posicao
+            : memberCheck[0].posicao;
+
+        const updates = [];
+        const values = [];
+
+        if (funcao !== undefined && funcao !== null && funcao !== '' && funcao !== memberCheck[0].funcao) {
+            updates.push('funcao = ?');
+            values.push(funcao);
+        }
+
+        if (posicao !== undefined && posicao !== null && posicao !== '' && posicao !== memberCheck[0].posicao) {
+            updates.push('posicao = ?');
+            values.push(posicao);
+        }
+
+        if (funcaoEfetiva === 'titular') {
+            let posicaoJogo = normalizarPosicaoJogo(posicaoInformada);
+            if (!posicaoJogo) {
+                posicaoJogo = await obterPosicaoLivreNoTime(conexao, timeId, usuarioId);
+            } else if (await posicaoOcupadaPorTitular(conexao, timeId, posicaoJogo, usuarioId)) {
+                posicaoJogo = await obterPosicaoLivreNoTime(conexao, timeId, usuarioId);
+            }
+
+            if (!posicaoJogo) {
+                return res.status(400).json({
+                    message: 'Não há posição em jogo disponível. Libere uma posição ou altere a de outro titular.',
+                    error: 'POSITION_OCCUPIED'
+                });
+            }
+
+            const idxPos = updates.findIndex((u) => u.startsWith('posicao'));
+            if (idxPos >= 0) {
+                values[idxPos] = posicaoJogo;
+            } else if (posicaoJogo !== memberCheck[0].posicao) {
+                updates.push('posicao = ?');
+                values.push(posicaoJogo);
+            }
+        }
+
+        if (updates.length === 0) {
+            return res.status(400).json({
+                message: 'Informe posição e/ou função para atualizar',
+                error: 'NOTHING_TO_UPDATE'
+            });
+        }
+
+        values.push(timeId, usuarioId);
         await conexao.execute(
-            'UPDATE membros_time SET posicao = ? WHERE time_id = ? AND usuario_id = ?',
-            [posicao, timeId, usuarioId]
+            `UPDATE membros_time SET ${updates.join(', ')} WHERE time_id = ? AND usuario_id = ?`,
+            values
         );
 
-        res.json({ message: 'Posição do membro atualizada com sucesso' });
+        res.json({ message: 'Membro atualizado com sucesso' });
 
     } catch (error) {
         console.error('Erro ao atualizar posição do membro:', error);
@@ -3885,6 +4288,8 @@ async function atualizarPosicaoMembro(req, res) {
         if (conexao) await desconectar(conexao);
     }
 }
+
+const atualizarPosicaoMembro = atualizarMembro;
 
 // ===============================================================================================
 // ==================================== [API SOLICITAÇÕES TIME] =============================================
@@ -3974,7 +4379,12 @@ async function verificarStatusSolicitacao(req, res) {
 
 // ----- SOLICITARÇÃO POST
 async function solicitarEntradaTime(req, res) {
-    const { timeId, userId } = req.body;
+    const { timeId } = req.body;
+    const userId = req.session.user.id;
+
+    if (!timeId) {
+        return res.status(400).json({ message: 'timeId é obrigatório' });
+    }
 
     let conexao;
     try {
@@ -4006,16 +4416,24 @@ async function solicitarEntradaTime(req, res) {
             });
         }
 
-        // Verificar se o time tem vagas disponíveis (máximo 7 membros)
+        // Verificar se o time tem vagas disponíveis (máximo 8 membros)
         const [memberCount] = await conexao.execute(
             'SELECT COUNT(*) as count FROM membros_time WHERE time_id = ?',
             [timeId]
         );
 
-        if (memberCount[0].count >= 7) {
+        if (memberCount[0].count >= TEAM_MAX_MEMBERS) {
             return res.status(400).json({
-                message: 'Time não possui vagas disponíveis',
+                message: 'Time não possui vagas disponíveis (máximo 8 membros)',
                 error: 'TEAM_FULL'
+            });
+        }
+
+        const counts = await contarFuncoesTime(conexao, timeId);
+        if ((counts.reserva || 0) >= TEAM_ROLE_LIMITS.reserva) {
+            return res.status(400).json({
+                message: 'Time já possui reserva. Libere a vaga antes de novas solicitações.',
+                error: 'RESERVE_FULL'
             });
         }
 
@@ -4041,6 +4459,7 @@ async function solicitarEntradaTime(req, res) {
 // ----- SOLICITARÇÃO DELETE
 async function deletarSolicitacao(req, res) {
     const { solicitacaoId } = req.body;
+    const sessionUserId = req.session.user.id;
 
     // Validar se o solicitacaoId está presente
     if (!solicitacaoId) {
@@ -4053,6 +4472,24 @@ async function deletarSolicitacao(req, res) {
     let conexao;
     try {
         conexao = await conectar();
+
+        const [rows] = await conexao.execute(
+            `SELECT st.usuario_id, t.lider_id
+             FROM solicitacoes_time st
+             JOIN times t ON t.id = st.time_id
+             WHERE st.id = ?`,
+            [solicitacaoId]
+        );
+
+        if (!rows[0]) {
+            return res.status(404).json({ message: 'Solicitação não encontrada' });
+        }
+
+        const isOwner = parseInt(rows[0].usuario_id, 10) === parseInt(sessionUserId, 10);
+        const isLeader = parseInt(rows[0].lider_id, 10) === parseInt(sessionUserId, 10);
+        if (!isOwner && !isLeader) {
+            return res.status(403).json({ message: 'Sem permissão para excluir esta solicitação' });
+        }
 
         await conexao.execute(
             'DELETE FROM solicitacoes_time WHERE id = ?',
@@ -4070,8 +4507,8 @@ async function deletarSolicitacao(req, res) {
 
 // ----- SOLICITARÇÃO UPDATE
 async function aceitarSolicitacao(req, res) {
-    const { solicitacaoId, userId } = req.body;
-
+    const { solicitacaoId } = req.body;
+    const userId = req.session.user.id;
 
     let conexao;
     try {
@@ -4106,10 +4543,18 @@ async function aceitarSolicitacao(req, res) {
             [solicitacao[0].time_id]
         );
 
-        if (memberCount[0].count >= 7) {
+        if (memberCount[0].count >= TEAM_MAX_MEMBERS) {
             return res.status(400).json({
-                message: 'Time não possui mais vagas disponíveis',
+                message: 'Time não possui mais vagas disponíveis (máximo 8 membros)',
                 error: 'TEAM_FULL'
+            });
+        }
+
+        const counts = await contarFuncoesTime(conexao, solicitacao[0].time_id);
+        if ((counts.reserva || 0) >= TEAM_ROLE_LIMITS.reserva) {
+            return res.status(400).json({
+                message: 'Time já possui reserva. Promova ou remova alguém antes de aceitar.',
+                error: 'RESERVE_FULL'
             });
         }
 
@@ -4123,9 +4568,9 @@ async function aceitarSolicitacao(req, res) {
                 [solicitacaoId]
             );
 
-            // Adicionar usuário ao time como reserva
+            // Adicionar usuário ao time como reserva. "reserva" substitui o antigo posicao="sub".
             await conexao.execute(
-                'INSERT INTO membros_time (usuario_id, time_id, funcao, posicao) VALUES (?, ?, "reserva", "sub")',
+                'INSERT INTO membros_time (usuario_id, time_id, funcao, posicao) VALUES (?, ?, "reserva", "rifle")',
                 [solicitacao[0].usuario_id, solicitacao[0].time_id]
             );
 
@@ -4158,7 +4603,8 @@ async function aceitarSolicitacao(req, res) {
 // Aceitar solicitação via param e com posição
 async function aceitarSolicitacaoPorId(req, res) {
     const { solicitacaoId } = req.params;
-    const { userId, posicao } = req.body;
+    const { posicao } = req.body;
+    const userId = req.session.user.id;
 
     let conexao;
     try {
@@ -4193,15 +4639,23 @@ async function aceitarSolicitacaoPorId(req, res) {
             [solicitacao[0].time_id]
         );
 
-        if (memberCount[0].count >= 7) {
+        if (memberCount[0].count >= TEAM_MAX_MEMBERS) {
             return res.status(400).json({
-                message: 'Time não possui mais vagas disponíveis',
+                message: 'Time não possui mais vagas disponíveis (máximo 8 membros)',
                 error: 'TEAM_FULL'
             });
         }
 
-        // Posição default
-        const posicaoFinal = posicao || 'sub';
+        const counts = await contarFuncoesTime(conexao, solicitacao[0].time_id);
+        if ((counts.reserva || 0) >= TEAM_ROLE_LIMITS.reserva) {
+            return res.status(400).json({
+                message: 'Time já possui reserva. Promova ou remova alguém antes de aceitar.',
+                error: 'RESERVE_FULL'
+            });
+        }
+
+        const posicoesValidas = ['awp', 'entry', 'support', 'igl', 'lurker', 'rifle'];
+        const posicaoFinal = posicoesValidas.includes(posicao) ? posicao : 'rifle';
 
         // Iniciar transação
         await conexao.beginTransaction();
@@ -4247,7 +4701,7 @@ async function aceitarSolicitacaoPorId(req, res) {
 // Rejeitar solicitação via param
 async function rejeitarSolicitacaoPorId(req, res) {
     const { solicitacaoId } = req.params;
-    const { userId } = req.body;
+    const userId = req.session.user.id;
 
     let conexao;
     try {
@@ -4296,8 +4750,8 @@ async function rejeitarSolicitacaoPorId(req, res) {
 }
 
 async function rejeitarSolicitacao(req, res) {
-    const { solicitacaoId, userId } = req.body;
-
+    const { solicitacaoId } = req.body;
+    const userId = req.session.user.id;
 
     let conexao;
     try {
@@ -4405,10 +4859,13 @@ async function criarTransferencia(req, res) {
             return res.status(404).json({ error: 'Team não encontrado' });
         }
 
+        const posicoesValidas = ['awp', 'entry', 'support', 'igl', 'rifle', 'lurker'];
+        const posicaoFinal = posicoesValidas.includes(posicao) ? posicao : 'rifle';
+
         // Inserir transferência
         const [result] = await conexao.execute(
             'INSERT INTO transferencias (usuario_id, time_id, posicao, tipo) VALUES (?, ?, ?, ?)',
-            [usuario_id, time_id, posicao, tipo]
+            [usuario_id, time_id, posicaoFinal, tipo]
         );
 
         res.status(200).json({ message: 'Transferência adicionada com sucesso' });
@@ -5164,7 +5621,8 @@ async function getHistoricoMembros(req, res) {
 }
 // ----- INSCRICAO POST
 async function criarInscricaoCampeonato(req, res) {
-    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp } = req.body;
+    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp } = req.body;
+    const id_organizador = req.session.user.id;
     let conexao;
     try {
         conexao = await conectar();
@@ -5309,6 +5767,7 @@ async function registrarHistoricoMembrosCampeonato(conexao, campeonatoId, timeId
 
 async function criarInscricaoTimes(req, res) {
     const { cardId, timeId } = req.body;
+    const sessionUserId = req.session.user.id;
 
     if (!cardId || !timeId) {
         return res.status(400).json({ message: 'cardId e timeId são obrigatórios' });
@@ -5317,6 +5776,14 @@ async function criarInscricaoTimes(req, res) {
     let conexao;
     try {
         conexao = await conectar();
+
+        const [liderTime] = await conexao.execute(
+            'SELECT lider_id FROM times WHERE id = ?',
+            [timeId]
+        );
+        if (!liderTime[0] || parseInt(liderTime[0].lider_id, 10) !== parseInt(sessionUserId, 10)) {
+            return res.status(403).json({ message: 'Apenas o líder do time pode inscrever o time' });
+        }
 
         // Verificar se o time já está inscrito neste campeonato
         const [existe] = await conexao.execute(
@@ -5379,7 +5846,15 @@ async function criarInscricaoTimes(req, res) {
 // Mantém a rota manual para criar histórico de um único membro (se precisar no futuro)
 async function criarHistoricoMembros(req, res) {
     const { campeonato_id, usuario_id, time_id, posicao } = req.body;
-    console.log('criarHistoricoMembros', campeonato_id, usuario_id, time_id, posicao);
+
+    if (!campeonato_id) {
+        return res.status(400).json({ message: 'campeonato_id é obrigatório' });
+    }
+
+    if (await verificarPermissaoCampeonato(req, res, { campeonatoId: campeonato_id })) {
+        return;
+    }
+
     let conexao;
     try {
         // Validação dos valores permitidos para posicao
@@ -5458,8 +5933,17 @@ async function garantirMigracaoPosicao(conexao) {
 async function atualizarInscricaoCampeonato(req, res) {
     let conexao;
     try {
-        conexao = await conectar();
         const { id, ...dados } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ message: 'id do campeonato é obrigatório' });
+        }
+
+        if (await verificarPermissaoCampeonato(req, res, { campeonatoId: id })) {
+            return;
+        }
+
+        conexao = await conectar();
 
         // Validar e tratar trofeu_id
         if (dados.trofeu_id !== undefined) {
@@ -5538,6 +6022,10 @@ async function atualizarInscricaoTimes(req, res) {
         return res.status(400).json({ message: 'ID da inscrição é obrigatório' });
     }
 
+    if (await verificarPermissaoPorInscricaoTime(req, res, id)) {
+        return;
+    }
+
     let conexao;
     try {
         conexao = await conectar();
@@ -5595,6 +6083,15 @@ async function atualizarInscricaoTimes(req, res) {
 
 async function atualizarHistoricoMembros(req, res) {
     const { id, campeonato_id, usuario_id, time_id, posicao } = req.body;
+
+    if (!campeonato_id) {
+        return res.status(400).json({ message: 'campeonato_id é obrigatório' });
+    }
+
+    if (await verificarPermissaoCampeonato(req, res, { campeonatoId: campeonato_id })) {
+        return;
+    }
+
     let conexao;
     try {
         conexao = await conectar();
@@ -5613,12 +6110,32 @@ async function atualizarHistoricoMembros(req, res) {
 
 // ----- INSCRICAO DELETE
 async function deletarInscricaoCampeonato(req, res) {
+    const { id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: 'ID do campeonato é obrigatório' });
+    }
+
+    if (await verificarPermissaoCampeonato(req, res, { campeonatoId: id })) {
+        return;
+    }
+
     let conexao;
     try {
         conexao = await conectar();
-        const [inscricao] = await conexao.execute(
-            'DELETE FROM inscricoes_campeonato WHERE id = ?',
+
+        const [existe] = await conexao.execute(
+            'SELECT id FROM inscricoes_campeonato WHERE id = ?',
+            [id]
         );
+
+        if (existe.length === 0) {
+            return res.status(404).json({ message: 'Campeonato não encontrado' });
+        }
+
+        await conexao.execute('DELETE FROM inscricoes_campeonato WHERE id = ?', [id]);
+
+        res.status(200).json({ message: 'Campeonato excluído com sucesso' });
     }
     catch (error) {
         console.error('Erro ao deletar inscrição de campeonato:', error);
@@ -5633,6 +6150,10 @@ async function deletarInscricaoTimes(req, res) {
 
     if (!id) {
         return res.status(400).json({ message: 'ID da inscrição é obrigatório' });
+    }
+
+    if (await verificarPermissaoPorInscricaoTime(req, res, id)) {
+        return;
     }
 
     let conexao;
@@ -5813,10 +6334,10 @@ async function atualizarGerenciaUsuario(req, res) {
         }
 
         // Validar gerência
-        const gerenciasValidas = ['admin', 'moderador', 'streammer', 'apoiador', 'user'];
+        const gerenciasValidas = ['admin', 'moderador', 'streamer', 'apoiador', 'user'];
         if (!gerenciasValidas.includes(gerencia)) {
             return res.status(400).json({
-                message: 'Gerência inválida. Valores aceitos: admin, moderador, streammer, apoiador, user'
+                message: 'Gerência inválida. Valores aceitos: admin, moderador, streamer, apoiador, user'
             });
         }
 
@@ -5871,6 +6392,10 @@ async function criarChaveamento(req, res) {
     let conexao;
     try {
         const { campeonato_id, formato_chave, quantidade_times } = req.body;
+
+        if (await verificarPermissaoCampeonato(req, res, { campeonatoId: campeonato_id })) {
+            return;
+        }
 
         console.log('[DEBUG criarChaveamento] body recebido:', {
             campeonato_id,
@@ -6057,16 +6582,21 @@ async function salvarResultadoPartida(req, res) {
     const maxRetries = 3;
     let attempt = 0;
 
+    const { chaveamento_id, match_id, time_vencedor_id, score_time1, score_time2, resultados_mapas, time1_id, time2_id } = req.body;
+
+    if (!chaveamento_id || !match_id || !time_vencedor_id) {
+        return res.status(400).json({
+            error: 'chaveamento_id, match_id e time_vencedor_id são obrigatórios'
+        });
+    }
+
+    if (await verificarPermissaoCampeonato(req, res, { chaveamentoId: chaveamento_id })) {
+        return;
+    }
+
     while (attempt < maxRetries) {
         let conexao;
         try {
-            const { chaveamento_id, match_id, time_vencedor_id, score_time1, score_time2, resultados_mapas, time1_id, time2_id } = req.body;
-
-            if (!chaveamento_id || !match_id || !time_vencedor_id) {
-                return res.status(400).json({
-                    error: 'chaveamento_id, match_id e time_vencedor_id são obrigatórios'
-                });
-            }
 
             conexao = await conectar();
 
@@ -9552,6 +10082,10 @@ async function inicializarPartidasChaveamento(req, res) {
             });
         }
 
+        if (await verificarPermissaoCampeonato(req, res, { chaveamentoId: chaveamento_id })) {
+            return;
+        }
+
         conexao = await conectar();
 
         // Buscar informações do chaveamento
@@ -9599,6 +10133,10 @@ async function resetarChaveamento(req, res) {
 
         if (!chaveamento_id) {
             return res.status(400).json({ error: 'ID do chaveamento é obrigatório' });
+        }
+
+        if (await verificarPermissaoCampeonato(req, res, { chaveamentoId: chaveamento_id })) {
+            return;
         }
 
         conexao = await conectar();
@@ -11312,8 +11850,12 @@ async function getcupomresgatado(req, res) {
 }
 // --- POST CUPOM RESGATADOS
 async function criarcupomresgatado(req, res) {
-    const { usuario_id, codigo } = req.body;
+    const { codigo } = req.body;
+    const usuario_id = req.session.user.id;
 
+    if (!codigo) {
+        return res.status(400).json({ message: 'Código do cupom é obrigatório' });
+    }
 
     let conexao;
     try {
@@ -11325,11 +11867,12 @@ async function criarcupomresgatado(req, res) {
                 if (selectCupom[0].usos_restantes > 0) {
                     const cupom_id = selectCupom[0].id;
 
-                    const [userVerificarUsoCupom] = await conexao.execute('SELECT * FROM cupons_resgatados', [usuario_id, cupom_id]);
-                    for (user of userVerificarUsoCupom) {
-                        if (user.usuario_id == usuario_id && user.cupom_id == cupom_id) {
-                            return res.status(400).json({ message: 'Usuário já resgatou este cupom' });
-                        }
+                    const [userVerificarUsoCupom] = await conexao.execute(
+                        'SELECT * FROM cupons_resgatados WHERE usuario_id = ? AND cupom_id = ?',
+                        [usuario_id, cupom_id]
+                    );
+                    if (userVerificarUsoCupom.length > 0) {
+                        return res.status(400).json({ message: 'Usuário já resgatou este cupom' });
                     }
 
                     await conexao.execute('INSERT INTO cupons_resgatados (usuario_id, cupom_id) VALUES (?, ?)', [usuario_id, cupom_id]);
@@ -11337,10 +11880,6 @@ async function criarcupomresgatado(req, res) {
 
                     if (selectCupom[0].codigo.includes("MOR")) {
                         await conexao.execute(`UPDATE usuarios SET organizador = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
-                    }
-                    else if (selectCupom[0].codigo.includes("MCARG")) {
-                        await conexao.execute(`UPDATE usuarios SET gerencia = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
-
                     }
                     else if (selectCupom[0].codigo.includes("MCONQ")) {
 
@@ -11567,7 +12106,328 @@ async function verificarPosicaoRankingTimes() {
     }
 }
 
+// =====================================================
+// ==================================== [DISCORD] ================================================
 
+async function getDiscordUserId(req,res){
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        const {id} = req.params;
+        const [userDados] = await conexao.execute(`
+            SELECT
+                u.id,
+                u.username,
+                u.steamid,
+                u.faceitid,
+                u.avatar_url,
+                u.banner_url,
+                u.time_id,
+                u.gerencia,
+                u.organizador,
+                u.cores_perfil,
+                t.nome,
+                t.tag,
+                t.avatar_time_url,
+                t.banner_time_url,
+                t.cores_perfil,
+                t.lider_id,
+                tm.funcao,
+                tm.posicao
+            FROM usuarios u
+            LEFT JOIN times t ON u.time_id = t.id
+            LEFT JOIN membros_time tm ON u.id = tm.usuario_id
+            WHERE u.id = ?
+            `, [id]);
+
+        res.status(200).json({ userDados });
+    }
+    
+    catch (error) {
+        console.error('Erro ao buscar usuario discord:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+async function DadosGeraisUser(req,res){
+    const {id} = req.params;
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        query = `
+        SELECT 
+            -- =========================================
+            -- USUARIO
+            -- =========================================
+            u.id,
+            u.username,
+            u.email,
+            u.steamid,
+            u.faceitid,
+            u.avatar_url,
+            u.time_id,
+            u.posicoes,
+            u.gerencia,
+            u.organizador,
+            u.cores_perfil,
+            u.cfg_cs,
+
+            -- =========================================
+            -- REDES SOCIAIS
+            -- =========================================
+            rs.discord_url,
+            rs.youtube_url,
+            rs.instagram_url,
+            rs.twitter_url,
+            rs.twitch_url,
+            rs.faceit_url,
+            rs.gamesclub_url,
+            rs.steam_url,
+            rs.tiktok_url,
+            rs.kick_url,
+            rs.allstar_url,
+
+            -- =========================================
+            -- CONTADORES USUARIO
+            -- =========================================
+            COUNT(DISTINCT um.medalha_id) AS total_medalhas,
+            COUNT(DISTINCT d.id) AS total_destaques,
+
+            -- =========================================
+            -- TIME
+            -- =========================================
+            t.nome AS nome_time,
+            t.tag AS tag_time,
+            t.lider_id,
+            t.avatar_time_url,
+            t.cores_perfil AS cores_perfil_time,
+
+            -- =========================================
+            -- MEMBRO TIME
+            -- =========================================
+            mt.funcao,
+            mt.posicao,
+
+            -- =========================================
+            -- CONTADORES TIME
+            -- =========================================
+            (
+                SELECT COUNT(*)
+                FROM membros_time mt2
+                WHERE mt2.time_id = t.id
+            ) AS total_membros,
+
+            (
+                SELECT COUNT(*)
+                FROM time_conquistas tc
+                WHERE tc.time_id = t.id
+            ) AS total_conquistas_time
+
+        FROM usuarios u
+
+        -- =========================================
+        -- REDES SOCIAIS
+        -- =========================================
+        LEFT JOIN redes_sociais rs
+            ON rs.usuario_id = u.id
+
+        -- =========================================
+        -- MEDALHAS
+        -- =========================================
+        LEFT JOIN usuario_medalhas um
+            ON um.usuario_id = u.id
+
+        -- =========================================
+        -- DESTAQUES
+        -- =========================================
+        LEFT JOIN destaques d
+            ON d.usuario_id = u.id
+
+        -- =========================================
+        -- TIME
+        -- =========================================
+        LEFT JOIN times t
+            ON t.id = u.time_id
+
+        -- =========================================
+        -- MEMBRO TIME
+        -- =========================================
+        LEFT JOIN membros_time mt
+            ON mt.usuario_id = u.id
+
+        -- =========================================
+        -- USUARIO ESPECIFICO
+        -- =========================================
+        WHERE u.id = ?
+
+        GROUP BY u.id;
+        `
+        const [userDados] = await conexao.execute(query, [id]);
+        res.status(200).json({ userDados });
+    }
+    catch (error) {
+        console.error('Erro ao buscar dados gerais do usuario:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+async function getDiscordTimesAll(req,res){
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        const times = [];
+        const [TimesAll] = await conexao.execute('SELECT nome FROM times');
+        for(const time of TimesAll){
+            times.push(time.nome);
+        }
+        res.status(200).json({ times });
+    }
+    catch (error) {
+        console.error('Erro ao buscar times discord:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+
+async function getSeasonDoscampeonatos(req,res){
+    let conexao;
+
+    try {
+        conexao = await conectar();
+        query = `
+            SELECT 
+                CAST(
+                    REGEXP_REPLACE(
+                        edicao_campeonato,
+                        '[^0-9]',
+                        ''
+                    ) AS UNSIGNED
+                ) AS season
+            FROM inscricoes_campeonato
+            WHERE titulo = 'MX LEAGUE'
+            AND status = 'encerrado'
+            ORDER BY season ASC
+        `;
+        const [rows] = await conexao.execute(query);
+        const seasons = rows.map(row => row.season);
+        res.status(200).json({ seasons });
+    }
+    catch (error) {
+        console.error('Erro ao buscar seasons dos campeonatos:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+
+
+}
+
+
+// =====================================================
+// ==================================== [MARCAÇÕES DE JOGOS] ================================================
+
+async function getMarcacoesJogos(req,res){
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        const [marcacoesJogos] = await conexao.execute('SELECT * FROM marcacoes_jogos');
+        res.status(200).json({ marcacoesJogos });
+    }
+
+    catch (error) {
+        console.error('Erro ao buscar marcacoes de jogos:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+async function criarMarcacaoJogo(req,res){
+    const {usuario_id, primeiro_time_nome, segundo_time_nome, horario_inicio, campeonatos, season, data_do_jogo} = req.body;
+    let conexao;
+
+    try{
+        conexao = await conectar();
+
+        query = `
+        INSERT INTO marcacoes_jogos (usuario_id, primeiro_time_nome, segundo_time_nome, horario_inicio,campeonatos, season, data_do_jogo)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+        `
+        await conexao.execute(query, [usuario_id, primeiro_time_nome, segundo_time_nome, horario_inicio, campeonatos, season, data_do_jogo]);
+        res.status(200).json({ message: 'Marcacao de jogo criada com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao criar marcacao de jogo:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+async function atualizarMarcacaoJogo(req,res){
+    const { coluna,valor,id}= req.body;
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        verificarColuna = ['primeiro_time_nome', 'segundo_time_nome', 'horario_inicio', 'campeonatos', 'season', 'data_do_jogo'];
+
+        if(!verificarColuna.includes(coluna)){
+            return res.status(400).json({ message: 'Coluna invalida' });
+        }
+
+        query = `
+        UPDATE marcacoes_jogos SET ${coluna} = ? WHERE id = ?;
+        `
+        await conexao.execute(query, [valor, id]);
+        res.status(200).json({ message: 'Marcacao de jogo atualizada com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar marcacao de jogo:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+async function deletarMarcacaoJogo(req,res){
+    const {id} = req.params;
+    let conexao;
+
+    try{
+        conexao = await conectar();
+        query = `
+        DELETE FROM marcacoes_jogos WHERE id = ?;
+        `
+        await conexao.execute(query, [id]);
+        res.status(200).json({ message: 'Marcacao de jogo deletada com sucesso!' });
+    }
+    catch (error) {
+        console.error('Erro ao deletar marcacao de jogo:', error);
+        res.status(500).json({ message: 'Erro interno no servidor' });
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
 
 cron.schedule('0 1 * * *', () => {
     console.log("Executando função verificar atividade do evento diária:", new Date());
@@ -11596,9 +12456,9 @@ module.exports = {
     solicitarEntradaTime, aceitarSolicitacao, rejeitarSolicitacao, verificarStatusSolicitacao, getTransferencias, criarTransferencia, deletarTransferencia,
     getSolicitacaoById, listarTodasSolicitacoes, buscarTimes, buscarUsuarios, listarSolicitacoesPorTime, aceitarSolicitacaoPorId, rejeitarSolicitacaoPorId, MembroSair, deletarSolicitacao,
     atualizarTransferencia, listarTimes, getplayers, buscarDadosFaceitPlayer, locationMatchesIds, infoMatchId, buscarInfoMatchId, uploadImagemCloudinary, criarTrofeus, buscarImgPosition, createImgPosition, updateImgPosition,
-    listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoTimes, CreatePreference, CreatePreferencePromocao,
+    listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoCampeonato, deletarInscricaoTimes, CreatePreference, CreatePreferencePromocao,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
     criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao, getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
-    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,
+    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,auth,getMarcacoesJogos,criarMarcacaoJogo,atualizarMarcacaoJogo,deletarMarcacaoJogo,getSeasonDoscampeonatos
 };

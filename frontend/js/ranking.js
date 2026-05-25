@@ -62,7 +62,7 @@ async function verificar_auth() {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
 
-        if (perfil_data.perfilData.usuario.organizador == 'premium') {
+        if (isOrganizadorPlano(perfil_data.perfilData.usuario.organizador)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
         }

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIXCAMP - Painel Administrativo</title>
+    <link rel="shortcut icon" href="../img/favicon.svg" type="image/x-icon">
     <link rel="stylesheet" href="../css/pag_adm.css">
     <link rel="stylesheet" href="../css/ultils.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -196,7 +197,7 @@
                                 <option value="">Todos os usuários</option>
                                 <option value="admin">Administradores</option>
                                 <option value="moderador">Moderadores</option>
-                                <option value="streammer">Streammers</option>
+                                <option value="streamer">Streamers</option>
                                 <option value="apoiador">Apoiadores</option>
                                 <option value="user">Usuários</option>
                             </select>
@@ -865,8 +866,8 @@
                 <div id="cupomTipoWrap" class="form-group">
                     <label for="cupomTipo">Tipo *</label>
                     <select id="cupomTipoSelect" name="tipo" style="display:none;">
-                        <!-- MOR: premium, intermediario, basico, simples -->
-                        <!-- MCARG: ADMIN, STREAMMER, APOIADOR, MODERADOR -->
+                        <!-- MOR: premium, intermediario, basico -->
+                        <!-- MCARG: ADMIN, STREAMER, APOIADOR, MODERADOR -->
                     </select>
                     <input type="text" id="cupomTipo" name="tipo" placeholder="Ex: desconto, item"
                         style="display:none;">
@@ -1015,7 +1016,7 @@
                     <select id="editGerenciaSelect" required>
                         <option value="user">USER</option>
                         <option value="apoiador">APOIADOR</option>
-                        <option value="streammer">STREMMER</option>
+                        <option value="streamer">STREAMER</option>
                         <option value="moderador">MODERADOR</option>
                         <option value="admin">ADMIN</option>
                     </select>
@@ -1035,6 +1036,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="../js/utils.js"></script>
     <script src="../js/pag_adm.js"></script>
 </body>
 

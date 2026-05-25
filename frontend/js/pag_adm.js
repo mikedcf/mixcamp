@@ -4,10 +4,7 @@
 // ==================================== [CONFIGURAÇÕES GLOBAIS] ==================================
 // ===============================================================================================
 
-// URL base da API
-
-// const API_URL = 'http://127.0.0.1:3000/api/v1';
-const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
+// API_URL e apiFetch vêm de utils.js (carregado antes deste script)
 
 // Estado global da aplicação
 const appState = {
@@ -39,8 +36,26 @@ let chartCampLucro = null;
 // Função principal de inicialização da página
 // Configura event listeners e carrega dados iniciais
 // ===============================================================================================
-document.addEventListener('DOMContentLoaded', function() {
+async function guardarPainelAdmin() {
+    const auth = await getAdminUser();
+    if (!auth || !auth.logado) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    if (!['admin', 'moderador'].includes(auth.usuario.gerencia)) {
+        showNotification('Sem permissão para acessar o painel administrativo.', 'error');
+        setTimeout(() => { window.location.href = 'home.html'; }, 2000);
+        return false;
+    }
+    return true;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Inicializando Painel Administrativo MIXCAMP...');
+
+    if (!(await guardarPainelAdmin())) {
+        return;
+    }
     
     // Inicializar navegação
     initNavigation();
@@ -179,10 +194,10 @@ async function loadDashboardData() {
         showLoading();
 
         const [statsResponse, timesResponse, medalhasResponse, trofeusResponse] = await Promise.all([
-            fetch(`${API_URL}/admin/usuarios/estatisticas`),
-            fetch(`${API_URL}/times/list`),
-            fetch(`${API_URL}/admin/medalhas`),
-            fetch(`${API_URL}/trofeus`)
+            apiFetch(`${API_URL}/admin/usuarios/estatisticas`),
+            apiFetch(`${API_URL}/times/list`),
+            apiFetch(`${API_URL}/admin/medalhas`),
+            apiFetch(`${API_URL}/trofeus`)
         ]);
 
         if (!statsResponse.ok) throw new Error(`Erro HTTP stats: ${statsResponse.status}`);
@@ -348,7 +363,7 @@ async function loadUsuarios() {
         console.log('👥 Carregando lista de usuários...');
         showLoading();
         
-        const response = await fetch(`${API_URL}/admin/usuarios`);
+        const response = await apiFetch(`${API_URL}/admin/usuarios`);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -505,7 +520,7 @@ function getGerenciaClass(gerencia) {
     const classes = {
         'admin': 'status-admin',
         'moderador': 'status-moderador',
-        'streammer': 'status-streammer',
+        'streamer': 'status-streamer',
         'apoiador': 'status-apoiador',
         'user': 'status-user'
     };
@@ -859,7 +874,7 @@ async function salvarNovaMedalha(e) {
             url = `${API_URL}/medalhas/atualizar/dados/${editId}`;
             method = 'PUT';
         }
-        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(dados) });
+        const res = await apiFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
         const json = await res.json().catch(() => ({}));
         if (res.ok) {
             showNotification(json.message || (editId ? 'Medalha atualizada!' : 'Medalha criada!'), 'success');
@@ -906,7 +921,7 @@ async function salvarNovoTrofeu(e) {
             url = `${API_URL}/trofeus/atualizar/${editId}`;
             method = 'PUT';
         }
-        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(dados) });
+        const res = await apiFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
         const json = await res.json().catch(() => ({}));
         if (res.ok) {
             showNotification(json.message || (editId ? 'Troféu atualizado!' : 'Troféu criado!'), 'success');
@@ -990,7 +1005,7 @@ async function salvarNovaNoticia(e) {
                 imagem_url
             });
         }
-        const res = await fetch(url, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body });
+        const res = await apiFetch(url, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body });
         const json = await res.json().catch(() => ({}));
         if (res.ok) {
             showNotification(json.message || (editId ? 'Notícia atualizada!' : 'Notícia criada!'), 'success');
@@ -1018,7 +1033,7 @@ async function editarNoticia(id, tipoLista) {
     else url = `${API_URL}/noticias/site`;
 
     try {
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         const noticias = Array.isArray(data.noticias) ? data.noticias : [];
@@ -1080,10 +1095,9 @@ async function excluirNoticia(id, tipoLista) {
 
     showLoading();
     try {
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ id })
         });
         const json = await res.json().catch(() => ({}));
@@ -1125,7 +1139,7 @@ async function loadTimes() {
         console.log('🏆 Carregando times...');
         showLoading();
 
-        const response = await fetch(`${API_URL}/times/list`);
+        const response = await apiFetch(`${API_URL}/times/list`);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -1226,7 +1240,7 @@ async function loadMedalhas() {
         console.log('🏅 Carregando medalhas...');
         showLoading();
 
-        const response = await fetch(`${API_URL}/admin/medalhas`);
+        const response = await apiFetch(`${API_URL}/admin/medalhas`);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -1317,9 +1331,8 @@ async function excluirMedalha(id) {
     if (!confirmou) return;
     showLoading();
     try {
-        const res = await fetch(`${API_URL}/medalhas/deletar/${id}`, {
-            method: 'DELETE',
-            credentials: 'include'
+        const res = await apiFetch(`${API_URL}/medalhas/deletar/${id}`, {
+            method: 'DELETE'
         });
         const json = await res.json().catch(() => ({}));
         if (res.ok) {
@@ -1345,7 +1358,7 @@ async function loadTrofeus() {
         console.log('🏆 Carregando troféus...');
         showLoading();
 
-        const response = await fetch(`${API_URL}/trofeus`);
+        const response = await apiFetch(`${API_URL}/trofeus`);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -1436,9 +1449,8 @@ async function excluirTrofeu(id) {
     if (!confirmou) return;
     showLoading();
     try {
-        const res = await fetch(`${API_URL}/trofeus/deletar/${id}`, {
-            method: 'DELETE',
-            credentials: 'include'
+        const res = await apiFetch(`${API_URL}/trofeus/deletar/${id}`, {
+            method: 'DELETE'
         });
         const json = await res.json().catch(() => ({}));
         if (res.ok) {
@@ -1464,7 +1476,7 @@ async function loadCupons() {
         console.log('🎫 Carregando cupons...');
         showLoading();
 
-        const response = await fetch(`${API_URL}/cupom`, { credentials: 'include' });
+        const response = await apiFetch(`${API_URL}/cupom`);
         if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
 
         const data = await response.json();
@@ -1539,8 +1551,8 @@ function displayCupons(cupons) {
 }
 
 // Opções de tipo por prefixo de cupom
-const CUPOM_OPCOES_MOR = ['premium', 'intermediario', 'basico', 'simples'];
-const CUPOM_OPCOES_MCARG = ['ADMIN', 'STREAMMER', 'APOIADOR', 'MODERADOR'];
+const CUPOM_OPCOES_MOR = ['premium', 'intermediario', 'basico'];
+const CUPOM_OPCOES_MCARG = ['ADMIN', 'STREAMER', 'APOIADOR', 'MODERADOR'];
 
 function getPrefixoCupom(codigo) {
     if (!codigo || typeof codigo !== 'string') return '';
@@ -1689,7 +1701,7 @@ function abrirModalResgatesCupom() {
     modal.setAttribute('aria-hidden', 'false');
     var tbody = document.getElementById('resgatesCupomTableBody');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>';
-    fetch(API_URL + '/cupom/resgatados', { credentials: 'include' })
+    apiFetch(API_URL + '/cupom/resgatados')
         .then(function(r) { return r.json(); })
         .then(function(data) {
             var list = data.cupomresgatados || [];
@@ -1780,10 +1792,9 @@ async function salvarCupom(e) {
             url = `${API_URL}/cupom/atualizar/${editId}`;
             method = 'PUT';
         }
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify(dados)
         });
         const json = await res.json().catch(() => ({}));
@@ -1846,7 +1857,7 @@ async function excluirCupom(id) {
     if (!confirmou) return;
     showLoading();
     try {
-        const res = await fetch(`${API_URL}/cupom/deletar/${id}`, {
+        const res = await apiFetch(`${API_URL}/cupom/deletar/${id}`, {
             method: 'DELETE',
             credentials: 'include'
         });
@@ -1880,7 +1891,7 @@ async function loadNoticias(tipo = null) {
             url = `${API_URL}/noticias/site`;
         }
 
-        const response = await fetch(url);
+        const response = await apiFetch(url);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -1973,7 +1984,7 @@ async function loadCampeonatos() {
         console.log('🏆 Carregando campeonatos e organizadores...');
         showLoading();
 
-        const response = await fetch(`${API_URL}/inscricoes/campeonato`);
+        const response = await apiFetch(`${API_URL}/inscricoes/campeonato`);
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
         }
@@ -2302,7 +2313,7 @@ function fecharModalDetalheCampeonato() {
 
 async function getAdminUser() {
     try {
-        const response = await fetch(`${API_URL}/dashboard`, { credentials: 'include' });
+        const response = await apiFetch(`${API_URL}/dashboard`);
         if (!response.ok) return null;
         const data = await response.json();
         return data && data.logado ? data : null;
@@ -2389,10 +2400,9 @@ async function salvarCampeonatoAdm(e) {
     }
     showLoading();
     try {
-        const response = await fetch(`${API_URL}/inscricoes/campeonato`, {
+        const response = await apiFetch(`${API_URL}/inscricoes/campeonato`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify(dados)
         });
         const result = await response.json().catch(() => ({}));
@@ -2435,7 +2445,7 @@ async function loadNotificacoesEnviar() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/admin/usuarios`);
+        const response = await apiFetch(`${API_URL}/admin/usuarios`);
         if (!response.ok) return;
         const data = await response.json();
         const usuarios = Array.isArray(data.usuarios) ? data.usuarios : [];
@@ -2468,10 +2478,9 @@ async function enviarNotificacaoSubmit(e) {
     showLoading();
     try {
         if (destinatario === 'todos') {
-            const response = await fetch(`${API_URL}/notificacoes/enviar-todos`, {
+            const response = await apiFetch(`${API_URL}/notificacoes/enviar-todos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify({ texto })
             });
             const data = await response.json().catch(() => ({}));
@@ -2487,10 +2496,9 @@ async function enviarNotificacaoSubmit(e) {
                 hideLoading();
                 return;
             }
-            const response = await fetch(`${API_URL}/notificacoes/criar`, {
+            const response = await apiFetch(`${API_URL}/notificacoes/criar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
                 body: JSON.stringify({ usuario_id: parseInt(usuarioId, 10), texto })
             });
             const data = await response.json().catch(() => ({}));
@@ -2581,7 +2589,7 @@ async function handleEditGerenciaSubmit(event) {
         showLoading();
         
         // Fazer requisição para atualizar gerência
-        const response = await fetch(`${API_URL}/admin/usuarios/${userId}/gerencia`, {
+        const response = await apiFetch(`${API_URL}/admin/usuarios/${userId}/gerencia`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'

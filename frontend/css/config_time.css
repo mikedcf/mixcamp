@@ -100,11 +100,25 @@
 }
 
 .member-role {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
     font-size: 0.9rem;
     color: #0096FF;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.member-role-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.member-role-labels {
+    line-height: 1.2;
 }
 
 .posicao-icon {
@@ -124,10 +138,25 @@
 .member-actions {
     display: flex;
     gap: 0.8rem;
-    align-items: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
 }
 
-/* Seletor de posição */
+.member-selects-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 140px;
+}
+
+.member-selects-stack .funcao-select,
+.member-selects-stack .position-select {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Seletores de função e posição */
+.funcao-select,
 .position-select {
     padding: 0.6rem 1rem;
     border: 2px solid rgba(0, 150, 255, 0.3);
@@ -142,17 +171,20 @@
     min-width: 120px;
 }
 
+.funcao-select:focus,
 .position-select:focus {
     border-color: #0096FF;
     background: rgba(0, 150, 255, 0.2);
     box-shadow: 0 0 15px rgba(0, 150, 255, 0.3);
 }
 
+.funcao-select:hover,
 .position-select:hover {
     border-color: #0096FF;
     background: rgba(0, 150, 255, 0.15);
 }
 
+.funcao-select option,
 .position-select option {
     background: #1a1a1a;
     color: #ffffff;
@@ -328,7 +360,12 @@
         gap: 0.5rem;
     }
     
-    .position-select {
+    .member-selects-stack {
+        width: 100%;
+    }
+
+    .member-selects-stack .funcao-select,
+    .member-selects-stack .position-select {
         width: 100%;
         min-width: auto;
     }

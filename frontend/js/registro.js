@@ -49,6 +49,34 @@ async function verificar_auth() {
 // ========= LÓGICA DE REGISTRO =========
 
 let listdados = [];
+const REGISTRO_PENDENTE_KEY = 'mixcamp_registro_pendente';
+
+function salvarRegistroPendente(dados) {
+    listdados = [dados];
+    try {
+        sessionStorage.setItem(REGISTRO_PENDENTE_KEY, JSON.stringify(dados));
+    } catch (e) {
+        console.warn('sessionStorage indisponível:', e);
+    }
+}
+
+function obterRegistroPendente() {
+    if (listdados.length > 0) return listdados[0];
+    try {
+        const raw = sessionStorage.getItem(REGISTRO_PENDENTE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch (e) {
+        console.warn('Erro ao ler registro pendente:', e);
+    }
+    return null;
+}
+
+function limparRegistroPendente() {
+    listdados = [];
+    try {
+        sessionStorage.removeItem(REGISTRO_PENDENTE_KEY);
+    } catch (e) { /* ignore */ }
+}
 
 async function Registro(event) {
     event.preventDefault();
@@ -68,8 +96,8 @@ async function Registro(event) {
 }
 
 async function verificarDadosRegistro(dados){
-    const username = dados.username;
-    const email = dados.email;
+    const username = String(dados.username || '').trim();
+    const email = String(dados.email || '').trim().toLowerCase();
     const password = dados.password;
     const confirmPassword = dados.confirmPassword;
 
@@ -108,10 +136,9 @@ async function verificarDadosRegistro(dados){
     if (verifyemail){
         if(verifypassword){
             if(verifyusername){
-                listdados.push({username, email, password, confirmPassword});
-                // enviarCodigoEmail(email);
+                salvarRegistroPendente({ username, email, password, confirmPassword });
+                enviarCodigoEmail(email);
                 
-                RegistrarUsuario();
                 return;
             }
             else{
@@ -158,18 +185,24 @@ async function enviarCodigoEmail(email){
 }
 
 async function verificarCodeEmail(){
-    const codeInput = document.getElementById('emailCodeInput').value;
-    const code = codeInput;
-    let email = '';
+    const code = String(document.getElementById('emailCodeInput')?.value || '').trim();
+    const pendente = obterRegistroPendente();
+    const email = pendente?.email || '';
 
-    if(code == ''){
-        showNotification("error", `Insira o código de verificação`);
+    if (!email) {
+        showNotification('error', 'Dados do cadastro não encontrados. Preencha o formulário novamente.');
+        fecharModalCodigoEmail();
         return;
     }
 
-    for(const dados of listdados){
-        email = dados.email;
-        
+    if (code === '') {
+        showNotification('error', 'Insira o código de verificação');
+        return;
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+        showNotification('error', 'O código deve ter 6 dígitos');
+        return;
     }
 
     try{
@@ -212,11 +245,15 @@ async function abrirModalCodigoEmail() {
 }
 
 async function RegistrarUsuario(){
+    const pendente = obterRegistroPendente();
+    if (!pendente) {
+        showNotification('error', 'Cadastro expirado. Preencha o formulário e verifique o e-mail novamente.');
+        return;
+    }
 
-
-    const username = listdados[0].username;
-    const email = listdados[0].email;
-    const password = listdados[0].password;
+    const username = pendente.username;
+    const email = pendente.email;
+    const password = pendente.password;
     
     try {
         const response = await fetch(`${API_URL}/register`, {
@@ -230,17 +267,17 @@ async function RegistrarUsuario(){
         const data = await response.json();
 
         if (response.ok) {
-            if (response.ok) {
-
-                showNotification("success", `Registro bem-sucedido! Redirecionando...`, 1500);
-
-                // Espera a notificação sumir antes do redirect
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1500);
-            }
+            limparRegistroPendente();
+            showNotification('success', 'Registro bem-sucedido! Redirecionando...', 1500);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
         } else {
-            showNotification("error", `${data.message}`);
+            if (data.error === 'EMAIL_NOT_VERIFIED') {
+                showNotification('error', data.message || 'Verifique o e-mail antes de registrar.');
+            } else {
+                showNotification('error', data.message || 'Erro ao registrar');
+            }
         }
 
     } catch (error) {
@@ -257,6 +294,8 @@ function fecharModalCodigoEmail() {
     const modal = document.getElementById('emailCodeModal');
     if (!modal) return;
     modal.style.display = 'none';
+    const input = document.getElementById('emailCodeInput');
+    if (input) input.value = '';
 }
 
 

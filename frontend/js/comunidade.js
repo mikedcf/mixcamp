@@ -64,7 +64,7 @@ async function verificar_auth() {
 
 
         const gerenciarCamp = document.getElementById("gerenciarCamp");
-        if (perfil_data.usuario.organizador == 'premium') {
+        if (isOrganizadorPlano(perfil_data.usuario.organizador)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
         }

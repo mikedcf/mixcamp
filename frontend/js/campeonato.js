@@ -26,6 +26,7 @@ async function autenticacao() {
         return data;
     } catch (error) {
         console.error('Erro na inicialização:', error);
+        return { logado: false };
     }
 }
 
@@ -50,7 +51,7 @@ async function verificar_auth() {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
 
-        if(perfil_data.perfilData.usuario.organizador == 'premium') {
+        if (isOrganizadorPlano(perfil_data.perfilData.usuario.organizador)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
         }
@@ -1321,9 +1322,8 @@ function irParaPlayer(playerId) {
 // =================================
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Autenticação / layout base
+    // Autenticação / layout base (verificarTimeUsuario já roda via utils.js)
     verificar_auth();
-    verificarTimeUsuario();
     addScrollProgress();
 
     // Banner: preenchido somente por getPromoverBanner()

@@ -23,6 +23,28 @@ async function autenticacao() {
     }
 }
 
+async function guardarPaginaOrganizador() {
+    const auth_dados = await autenticacao();
+
+    if (!auth_dados || !auth_dados.logado) {
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    const { organizador } = auth_dados.usuario;
+    const organizadorOk = typeof isOrganizadorPlano === 'function'
+        ? isOrganizadorPlano(organizador)
+        : ['premium', 'intermediario', 'basico'].includes(organizador);
+
+    if (!organizadorOk) {
+        showNotification('error', 'Sem permissão para gerenciar campeonatos.', 2500);
+        setTimeout(() => { window.location.href = 'home.html'; }, 2000);
+        return false;
+    }
+
+    return true;
+}
+
 async function verificar_auth() {
     const auth_dados = await autenticacao(); 
     
@@ -44,11 +66,11 @@ async function verificar_auth() {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
 
-        if(perfil_data.perfilData.usuario.organizador == 'premium') {
+        const org = perfil_data.perfilData.usuario.organizador;
+        if (typeof isOrganizadorPlano === 'function' ? isOrganizadorPlano(org) : ['premium', 'intermediario', 'basico'].includes(org)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
-        }
-        else{
+        } else {
             gerenciarCamp.style.display = 'none';
         }
     }
@@ -1284,7 +1306,60 @@ function atualizarOpcoesChave(selectElement, incluirCS2Major, valorPreservar = n
 // =================================
 // ========= MODAL CRIAR/EDITAR =========
 let campeonatoEditando = null;
-let tipoOrganizador = null; // 'premium' ou 'simples'
+let tipoOrganizador = null; // 'premium' | 'intermediario' | 'basico'
+let usuarioGerencia = null;
+
+/** IDs de troféu/medalha: só admin + campeonato tipo oficial */
+function podeEditarTrofeuMedalha(gerencia, tipoCampeonato) {
+    return gerencia === 'admin' && tipoCampeonato === 'oficial';
+}
+
+function atualizarVisibilidadeTrofeuMedalha() {
+    const trofeuMedalhaGroup = document.getElementById('trofeuMedalhaGroup');
+    const trofeuInput = document.getElementById('trofeu_id');
+    const medalhaInput = document.getElementById('medalha_id');
+    const tipoSelect = document.getElementById('tipo');
+    if (!trofeuMedalhaGroup || !trofeuInput || !medalhaInput || !tipoSelect) return;
+
+    const mostrar = podeEditarTrofeuMedalha(usuarioGerencia, tipoSelect.value);
+    trofeuMedalhaGroup.style.display = mostrar ? 'flex' : 'none';
+    trofeuInput.required = mostrar;
+    medalhaInput.required = mostrar;
+    if (!mostrar) {
+        if (!trofeuInput.value) trofeuInput.value = '1';
+        if (!medalhaInput.value) medalhaInput.value = '1';
+    }
+}
+
+function aplicarFormularioPorPlanoOrganizador(plano, { chaveAtual = null, modoEdicao = false, gerencia = null } = {}) {
+    if (gerencia != null) usuarioGerencia = gerencia;
+
+    const tipoSelect = document.getElementById('tipo');
+    const chaveSelect = document.getElementById('chave');
+    const comChaveCs2 = typeof organizadorComChaveCs2Major === 'function'
+        ? organizadorComChaveCs2Major(plano)
+        : plano === 'premium' || plano === 'intermediario';
+    const ehPremium = typeof isOrganizadorPremium === 'function'
+        ? isOrganizadorPremium(plano)
+        : plano === 'premium';
+
+    if (ehPremium) {
+        if (!modoEdicao) tipoSelect.value = 'oficial';
+        tipoSelect.disabled = !modoEdicao;
+        tipoSelect.style.opacity = modoEdicao ? '1' : '0.6';
+        tipoSelect.style.cursor = modoEdicao ? 'pointer' : 'not-allowed';
+        atualizarOpcoesChave(chaveSelect, true, chaveAtual);
+        atualizarVisibilidadeTrofeuMedalha();
+        return;
+    }
+
+    tipoSelect.value = 'comum';
+    tipoSelect.disabled = true;
+    tipoSelect.style.opacity = '0.6';
+    tipoSelect.style.cursor = 'not-allowed';
+    atualizarOpcoesChave(chaveSelect, comChaveCs2, chaveAtual);
+    atualizarVisibilidadeTrofeuMedalha();
+}
 
 async function abrirModalCriar() {
     campeonatoEditando = null;
@@ -1292,44 +1367,11 @@ async function abrirModalCriar() {
     document.getElementById('formCampeonato').reset();
     document.getElementById('campeonatoId').value = '';
     
-    // Buscar dados do perfil para verificar tipo de organizador
+    const auth_dados = await autenticacao();
     const perfilData = await buscarDadosPerfil();
-    tipoOrganizador = perfilData?.perfilData?.usuario?.organizador || 'simples';
-    
-    const tipoSelect = document.getElementById('tipo');
-    const tipoGroup = document.getElementById('tipoGroup');
-    const trofeuMedalhaGroup = document.getElementById('trofeuMedalhaGroup');
-    const trofeuInput = document.getElementById('trofeu_id');
-    const medalhaInput = document.getElementById('medalha_id');
-    const chaveSelect = document.getElementById('chave');
-    
-    if (tipoOrganizador === 'premium') {
-        // Premium: tipo fixo como "oficial" e mostrar campos de troféu/medalha
-        tipoSelect.value = 'oficial';
-        tipoSelect.disabled = true;
-        tipoSelect.style.opacity = '0.6';
-        tipoSelect.style.cursor = 'not-allowed';
-        trofeuMedalhaGroup.style.display = 'flex';
-        trofeuInput.required = true;
-        medalhaInput.required = true;
-        
-        // Premium: mostrar todas as opções de chave incluindo CS2 Major
-        atualizarOpcoesChave(chaveSelect, true);
-    } else {
-        // Simples: tipo fixo como "comum" e esconder campos de troféu/medalha
-        tipoSelect.value = 'comum';
-        tipoSelect.disabled = true;
-        tipoSelect.style.opacity = '0.6';
-        tipoSelect.style.cursor = 'not-allowed';
-        trofeuMedalhaGroup.style.display = 'none';
-        trofeuInput.required = false;
-        medalhaInput.required = false;
-        trofeuInput.value = '';
-        medalhaInput.value = '';
-        
-        // Simples: remover opção CS2 Major do select
-        atualizarOpcoesChave(chaveSelect, false);
-    }
+    tipoOrganizador = perfilData?.perfilData?.usuario?.organizador || null;
+    usuarioGerencia = auth_dados?.usuario?.gerencia || null;
+    aplicarFormularioPorPlanoOrganizador(tipoOrganizador, { gerencia: usuarioGerencia });
     
     // Definir valores padrão
     document.getElementById('status').value = 'disponivel';
@@ -1355,18 +1397,13 @@ async function editarCampeonato(id) {
         return;
     }
     
-    // Buscar dados do perfil para verificar tipo de organizador
+    const auth_dados = await autenticacao();
     const perfilData = await buscarDadosPerfil();
-    tipoOrganizador = perfilData?.perfilData?.usuario?.organizador || 'simples';
+    tipoOrganizador = perfilData?.perfilData?.usuario?.organizador || null;
+    usuarioGerencia = auth_dados?.usuario?.gerencia || null;
     
     campeonatoEditando = campeonato;
     document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-edit"></i> Editar Campeonato';
-    
-    const tipoSelect = document.getElementById('tipo');
-    const trofeuMedalhaGroup = document.getElementById('trofeuMedalhaGroup');
-    const trofeuInput = document.getElementById('trofeu_id');
-    const medalhaInput = document.getElementById('medalha_id');
-    const chaveSelect = document.getElementById('chave');
     
     // Preencher formulário
     document.getElementById('campeonatoId').value = campeonato.id;
@@ -1390,31 +1427,11 @@ async function editarCampeonato(id) {
     document.getElementById('status').value = campeonato.status || 'disponivel';
     document.getElementById('regras').value = campeonato.regras || '';
     
-    // Ajustar campos baseado no tipo de organizador
-    if (tipoOrganizador === 'premium') {
-        // Premium: tipo pode ser editado mas mostrar campos de troféu/medalha
-        tipoSelect.disabled = false;
-        tipoSelect.style.opacity = '1';
-        tipoSelect.style.cursor = 'pointer';
-        trofeuMedalhaGroup.style.display = 'flex';
-        trofeuInput.required = true;
-        medalhaInput.required = true;
-        
-        // Premium: mostrar todas as opções de chave incluindo CS2 Major
-        atualizarOpcoesChave(chaveSelect, true, campeonato.chave);
-    } else {
-        // Simples: tipo fixo como "comum" e esconder campos de troféu/medalha
-        tipoSelect.value = 'comum';
-        tipoSelect.disabled = true;
-        tipoSelect.style.opacity = '0.6';
-        tipoSelect.style.cursor = 'not-allowed';
-        trofeuMedalhaGroup.style.display = 'none';
-        trofeuInput.required = false;
-        medalhaInput.required = false;
-        
-        // Simples: remover opção CS2 Major do select
-        atualizarOpcoesChave(chaveSelect, false, campeonato.chave);
-    }
+    aplicarFormularioPorPlanoOrganizador(tipoOrganizador, {
+        chaveAtual: campeonato.chave,
+        modoEdicao: true,
+        gerencia: usuarioGerencia
+    });
     
     // Formatar data para datetime-local
     if (campeonato.previsao_data_inicio) {
@@ -1454,9 +1471,8 @@ async function salvarCampeonato(event) {
     
     const campeonatoId = formData.get('id');
     
-    // Verificar tipo de organizador novamente
-    const perfilData = await buscarDadosPerfil();
-    const tipoOrg = perfilData?.perfilData?.usuario?.organizador || 'simples';
+    const gerencia = auth_dados.usuario?.gerencia || null;
+    const tipoCampeonato = document.getElementById('tipo').value;
     
     // Normalizar status: garantir que "Em Breve" vá como "em breve" (com espaço)
     let statusValue = formData.get('status');
@@ -1489,12 +1505,11 @@ async function salvarCampeonato(event) {
         link_whatsapp: formData.get('link_whatsapp') || null
     };
     console.log(dados.tipo);
-    // Só adicionar troféu e medalha se for premium
-    if (tipoOrg === 'premium') {
-        dados.trofeu_id = parseInt(formData.get('trofeu_id')) || 1;
-        dados.medalha_id = parseInt(formData.get('medalha_id')) || 1;
+    // Troféu/medalha customizados: só admin + campeonato oficial
+    if (podeEditarTrofeuMedalha(gerencia, tipoCampeonato)) {
+        dados.trofeu_id = parseInt(formData.get('trofeu_id'), 10) || 1;
+        dados.medalha_id = parseInt(formData.get('medalha_id'), 10) || 1;
     } else {
-        // Para simples, usar valores padrão (1) já que o backend requer
         dados.trofeu_id = 1;
         dados.medalha_id = 1;
     }
@@ -1721,12 +1736,22 @@ document.addEventListener('click', function(event) {
 // =================================
 // ========= INITIALIZATION =========
 document.addEventListener('DOMContentLoaded', async function() {
+    if (!(await guardarPaginaOrganizador())) {
+        return;
+    }
+
     await renderizarCampeonatos();
     
     // Form submit
     const form = document.getElementById('formCampeonato');
     if (form) {
         form.addEventListener('submit', salvarCampeonato);
+    }
+
+    const tipoSelect = document.getElementById('tipo');
+    if (tipoSelect && !tipoSelect.dataset.trofeuListener) {
+        tipoSelect.dataset.trofeuListener = '1';
+        tipoSelect.addEventListener('change', atualizarVisibilidadeTrofeuMedalha);
     }
     
     // Scroll header

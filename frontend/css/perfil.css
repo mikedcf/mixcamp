@@ -609,6 +609,21 @@ h1, h2, h3, h4, h5, h6 {
     flex-wrap: wrap;
     gap: 8px;
     cursor: pointer;
+    --profile-badge-size: 36px;
+}
+
+.card-menu-container .role-badge-img,
+.card-menu-container .mx-basic-img {
+    width: var(--profile-badge-size);
+    height: var(--profile-badge-size);
+    object-fit: contain;
+    display: block;
+}
+
+.card-menu-container .apoiador-icon i,
+.card-menu-container .supporter-icon i {
+    font-size: var(--profile-badge-size);
+    line-height: 1;
 }
 
 /* Dentro do card do perfil: mais compacto */
@@ -628,16 +643,6 @@ h1, h2, h3, h4, h5, h6 {
     width: 42px;
     height: 42px;
     font-size: 18px;
-}
-
-.profile-card-inside .mx-basic-img {
-    width: 36px;
-    height: 36px;
-}
-
-.profile-card-inside .admin-badge i,
-.profile-card-inside .supporter-icon i {
-    font-size: 14px;
 }
 
 /* Área invisível expandida para conectar menu aos botões (não captura clique/hover para o botão receber cursor) */
@@ -899,9 +904,11 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 10;
 }
 
-.admin-badge i {
-    font-size: 14px;
-    color: #ff0000;
+.role-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
 }
 
 .mx-basic-icon {
@@ -912,8 +919,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .mx-basic-img {
-    width: 40px;
-    height: 40px;
     object-fit: contain;
 }
 
@@ -924,7 +929,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .apoiador-icon i {
-    font-size: 14px;
     color: #FFD700; /* dourado para destacar apoiador */
 }
 
@@ -5816,23 +5820,13 @@ h1, h2, h3, h4, h5, h6 {
         font-size: 17px;
     }
 
-    .profile-card-inside .mx-basic-img {
-        width: 34px;
-        height: 34px;
-    }
-
-    .profile-card-inside .admin-badge i,
-    .profile-card-inside .supporter-icon i {
-        font-size: 13px;
+    .profile-card-inside .card-menu-container {
+        --profile-badge-size: 34px;
     }
 
     .card-avatar-wrapper {
         margin: 35px 0 12px;
         gap: 12px;
-    }
-
-    .admin-badge i {
-        font-size: 18px;
     }
 
     .card-avatar-container {
@@ -5965,23 +5959,13 @@ h1, h2, h3, h4, h5, h6 {
         font-size: 16px;
     }
 
-    .profile-card-inside .mx-basic-img {
-        width: 32px;
-        height: 32px;
-    }
-
-    .profile-card-inside .admin-badge i,
-    .profile-card-inside .supporter-icon i {
-        font-size: 12px;
+    .profile-card-inside .card-menu-container {
+        --profile-badge-size: 32px;
     }
 
     .card-avatar-wrapper {
         margin: 30px 0 10px;
         gap: 10px;
-    }
-
-    .admin-badge i {
-        font-size: 16px;
     }
 
     .card-avatar-container {
@@ -6199,14 +6183,8 @@ h1, h2, h3, h4, h5, h6 {
         font-size: 15px;
     }
 
-    .profile-card-inside .mx-basic-img {
-        width: 30px;
-        height: 30px;
-    }
-
-    .profile-card-inside .admin-badge i,
-    .profile-card-inside .supporter-icon i {
-        font-size: 11px;
+    .profile-card-inside .card-menu-container {
+        --profile-badge-size: 30px;
     }
 
     .card-avatar-container {
@@ -6435,14 +6413,8 @@ h1, h2, h3, h4, h5, h6 {
         font-size: 14px;
     }
 
-    .profile-card-inside .mx-basic-img {
-        width: 28px;
-        height: 28px;
-    }
-
-    .profile-card-inside .admin-badge i,
-    .profile-card-inside .supporter-icon i {
-        font-size: 11px;
+    .profile-card-inside .card-menu-container {
+        --profile-badge-size: 28px;
     }
 
     .card-avatar-container {
@@ -6463,15 +6435,6 @@ h1, h2, h3, h4, h5, h6 {
     .verified-check {
         width: 24px;
         height: 24px;
-    }
-
-    .admin-badge {
-        width: 24px;
-        height: 24px;
-    }
-
-    .admin-badge i {
-        font-size: 12px;
     }
 
     .medals-container {
@@ -6756,14 +6719,8 @@ h1, h2, h3, h4, h5, h6 {
         font-size: 13px;
     }
 
-    .profile-card-inside .mx-basic-img {
-        width: 26px;
-        height: 26px;
-    }
-
-    .profile-card-inside .admin-badge i,
-    .profile-card-inside .supporter-icon i {
-        font-size: 10px;
+    .profile-card-inside .card-menu-container {
+        --profile-badge-size: 26px;
     }
 
     .card-avatar-container {

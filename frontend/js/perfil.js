@@ -92,7 +92,7 @@ async function verificar_auth() {
             menuPerfilLink.href = `perfil.html?id=${userId}`;
         }
 
-        if (perfil_data.perfilData.usuario.organizador == 'premium') {
+        if (isOrganizadorPlano(perfil_data.perfilData.usuario.organizador)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
         }
@@ -548,10 +548,12 @@ async function atualizarDadosPerfil() {
 
 
     // verificar organização
-    let cargo = perfilData.usuario.gerencia
+    const cargo = perfilData.usuario.gerencia
     const adm = document.getElementById('adminBadge')
+    const moderadorBadge = document.getElementById('moderadorBadge')
+    const streamerBadge = document.getElementById('streamerBadge')
     const planoMx = document.getElementById('mxBasicIcon')
-    const apoiador = document.getElementById('supportIcon')
+    const apoiadorIcon = document.getElementById('apoiadorIcon')
     const verify = document.getElementById('verifiedCheck')
 
 
@@ -605,21 +607,27 @@ async function atualizarDadosPerfil() {
     // }
 
 
-    if (cargo == 'admin') {
-        adm.style.display = 'flex'
-    }
-    else {
-        adm.style.display = 'none'
+    function toggleRoleBadge(el, visible) {
+        if (el) el.style.display = visible ? 'flex' : 'none';
     }
 
-    if (perfilData.usuario.organizador == 'premium') {
-        document.getElementById('mxBasicImg').src = '../img/mxplus.png'
-    }
-    else if (perfilData.usuario.organizador == 'simples') {
-        document.getElementById('mxBasicImg').src = '../img/mx basic.png'
-    }
-    else {
-        planoMx.style.display = 'none'
+    toggleRoleBadge(adm, cargo === 'admin');
+    toggleRoleBadge(moderadorBadge, cargo === 'moderador');
+    toggleRoleBadge(streamerBadge, cargo === 'streamer');
+    toggleRoleBadge(apoiadorIcon, cargo === 'apoiador');
+
+    const planoOrg = perfilData.usuario.organizador;
+    const iconeOrg = typeof getOrganizadorIconeSrc === 'function'
+        ? getOrganizadorIconeSrc(planoOrg)
+        : null;
+    if (iconeOrg) {
+        document.getElementById('mxBasicImg').src = iconeOrg;
+        document.getElementById('mxBasicImg').title = planoOrg
+            ? planoOrg.charAt(0).toUpperCase() + planoOrg.slice(1)
+            : 'Organizador';
+        planoMx.style.display = 'flex';
+    } else {
+        planoMx.style.display = 'none';
     }
 
 

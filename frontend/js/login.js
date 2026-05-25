@@ -23,8 +23,10 @@ async function autenticacao() {
 
     } catch (error) {
         console.error('Erro na inicialização:', error);
-        showNotification('error', `${error}`);
-
+        if (typeof showNotification === 'function') {
+            showNotification('error', 'Não foi possível conectar ao servidor. Tente recarregar a página.');
+        }
+        return { logado: false };
     }
 }
 
@@ -33,7 +35,7 @@ async function verificar_auth() {
     const auth_dados = await autenticacao();
 
 
-    if (auth_dados.logado) {
+    if (auth_dados?.logado) {
         window.location.href = 'home.html';
         document.getElementById('userAuth').classList.add('hidden');
         document.getElementById('userPerfil').classList.remove('hidden');
@@ -76,13 +78,19 @@ async function dados_e_Login(event) {
         const result = await response.json();
 
         if (response.ok) {
-            // Primeiro, verifique se a sessão foi criada com sucesso no servidor
+            if (result.csrfToken && typeof setCsrfToken === 'function') {
+                setCsrfToken(result.csrfToken);
+            }
+
             const sessionCheck = await fetch(`${API_URL}/dashboard`, {
                 method: 'GET',
                 credentials: 'include'
             });
 
             const sessionData = await sessionCheck.json();
+            if (typeof applyCsrfFromAuthData === 'function') {
+                applyCsrfFromAuthData(sessionData);
+            }
 
             if (sessionData.logado) {
                 showNotification("success", `Bem-vindo ao MixCamp ${sessionData.usuario.nome} <br> Redirecionando para a página inicial !`,duration=2000);

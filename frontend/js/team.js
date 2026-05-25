@@ -156,7 +156,7 @@ async function verificar_auth() {
         document.getElementById("ftPerfil").src = perfil_data.perfilData.usuario.avatar_url;
 
 
-        if(perfil_data.perfilData.usuario.organizador == 'premium') {
+        if (isOrganizadorPlano(perfil_data.perfilData.usuario.organizador)) {
             gerenciarCamp.style.display = 'flex';
             gerenciarCamp.href = `gerenciar_campeonato.html`;
         }
@@ -265,6 +265,7 @@ async function buscarDadosPerfil() {
 // ========= MAPEAMENTO DE FUNÇÕES =========
 function mapFuncaoEmoji(funcao) {
     switch (funcao) {
+        case 'lider': return '👑';
         case 'titular': return '⭐';
         case 'reserva': return '🔄';
         case 'coach': return '📋';
@@ -670,18 +671,24 @@ function preencherTimeNaUI(data) {
     if (jogadoresContainer) {
         jogadoresContainer.innerHTML = '';
         membros.forEach(m => {
-            
             const item = document.createElement('div');
             item.setAttribute('onclick', `abrirPerfilJogador('${m.usuario_id}')`);
             item.className = 'jogador-item';
-            const posicaoImgUrl = getPositionImageSync(m.posicao || '');
-            const liderImgUrl = getPositionImageSync('capitao'); /* ícone de líder/coroa */
+            const posicaoNorm = normalizarPosicaoJogoTeam(m.posicao);
+            const posicaoImgUrl = getPositionImageSync(posicaoNorm);
+            const funcao = String(m.funcao || 'titular').toLowerCase();
+            const funcaoImgUrl = getFuncaoIconeUrlTeam(funcao);
+            const liderImgUrl = getPositionImageSync('capitao');
+            const funcaoIconHtml = funcaoImgUrl && ['reserva', 'coach'].includes(funcao)
+                ? `<img src="${funcaoImgUrl}" alt="${capitalize(funcao)}" class="jogador-role-icon" title="${capitalize(funcao)}">`
+                : '';
             item.innerHTML = `
                 <img src="${m.avatar_url}" alt="${m.username}" class="jogador-avatar" onclick="abrirPerfilJogador('${m.usuario_id}')">
                 <div class="jogador-info" onclick="abrirPerfilJogador('${m.usuario_id}')">
                     <span class="jogador-nome" >${m.username}</span>
                     <div class="jogador-role-container">
-                        <img src="${posicaoImgUrl}" alt="${capitalize(m.posicao)}" class="jogador-role-icon" title="${capitalize(m.posicao)}">
+                        <img src="${posicaoImgUrl}" alt="${capitalize(posicaoNorm)}" class="jogador-role-icon" title="${capitalize(posicaoNorm)}">
+                        ${funcaoIconHtml}
                         ${m.usuario_id == liderTime ? '<img src="' + liderImgUrl + '" alt="Líder" class="lider-badge-icon" title="Líder">' : ''}
                     </div>
                 </div>`;
@@ -698,14 +705,19 @@ function abrirPerfilJogador(user_id) {
     window.location.href = `perfil.html?id=${user_id}`;
 }
 
-//---MAPEAMENTO DE FUNÇÃO PARA EMOJI
-function mapFuncaoEmoji(funcao) {
-    switch (funcao) {
-        case 'titular': return '⭐';
-        case 'reserva': return '🔄';
-        case 'coach': return '📋';
-        default: return '👤';
-    }
+function normalizarPosicaoJogoTeam(posicao) {
+    const p = String(posicao || '').toLowerCase();
+    if (['sub', 'capitao', 'coach'].includes(p)) return 'rifle';
+    const validas = ['awp', 'entry', 'support', 'igl', 'lurker', 'rifle'];
+    return validas.includes(p) ? p : 'rifle';
+}
+
+function getFuncaoIconeUrlTeam(funcao) {
+    const f = String(funcao || '').toLowerCase();
+    if (f === 'reserva') return getPositionImageSync('sub');
+    if (f === 'coach') return getPositionImageSync('coach');
+    if (f === 'lider') return getPositionImageSync('capitao');
+    return null;
 }
 
 //---CAPITALIZAR A PRIMEIRA LETRA
@@ -1337,15 +1349,11 @@ function mostrarSolicitacoes(solicitacoes) {
                     <label for="posicao-${solicitacao.id}">Posição:</label>
                     <div class="custom-dropdown" id="dropdown-${solicitacao.id}">
                         <div class="dropdown-selected" onclick="toggleDropdown('${solicitacao.id}')">
-                            <img src="${getPositionImageSync('sub')}" alt="Sub" class="position-icon">
-                            <span class="position-text">Sub</span>
+                            <img src="${getPositionImageSync('rifle')}" alt="Rifle" class="position-icon">
+                            <span class="position-text">Rifle</span>
                             <span class="dropdown-arrow">▼</span>
                         </div>
                         <div class="dropdown-options" id="options-${solicitacao.id}" style="display:none">
-                            <div class="dropdown-option" data-value="sub" onclick="selectPosition('${solicitacao.id}', 'sub')">
-                                <img src="${getPositionImageSync('sub')}" alt="Sub" class="position-icon">
-                                <span>Sub</span>
-                            </div>
                             <div class="dropdown-option" data-value="awp" onclick="selectPosition('${solicitacao.id}', 'awp')">
                                 <img src="${getPositionImageSync('awp')}" alt="AWP" class="position-icon">
                                 <span>AWP</span>
@@ -1384,11 +1392,11 @@ function mostrarSolicitacoes(solicitacoes) {
             `;
         solicitacoesList.appendChild(item);
         
-        // Inicializar dropdown com posição padrão (sub)
+        // Inicializar dropdown com posição padrão válida
         setTimeout(() => {
             const dropdown = document.getElementById(`dropdown-${solicitacao.id}`);
             if (dropdown) {
-                dropdown.setAttribute('data-selected', 'sub');
+                dropdown.setAttribute('data-selected', 'rifle');
             }
         }, 100);
         });
@@ -1508,32 +1516,28 @@ function selectPosition(solicitacaoId, posicao) {
     
     // Mapeamento de imagens das posições (usando cache)
     const imagensPosicoes = {
-        'capitao': getPositionImageSync('capitao'),
         'awp': getPositionImageSync('awp'),
         'entry': getPositionImageSync('entry'),
         'support': getPositionImageSync('support'),
         'igl': getPositionImageSync('igl'),
-        'sub': getPositionImageSync('sub'),
         'coach': getPositionImageSync('coach'),
         'lurker': getPositionImageSync('lurker'),
         'rifle': getPositionImageSync('rifle')
     };
     
     const nomesPosicoes = {
-        'capitao': 'Capitão',
         'awp': 'AWP',
         'entry': 'Entry',
         'support': 'Support',
         'igl': 'IGL',
-        'sub': 'Sub',
         'coach': 'Coach',
         'lurker': 'Lurker',
         'rifle': 'Rifle'
     };
     
     // Atualizar seleção
-    selectedImg.src = imagensPosicoes[posicao] || imagensPosicoes['sub'];
-    selectedText.textContent = nomesPosicoes[posicao] || 'Sub';
+    selectedImg.src = imagensPosicoes[posicao] || imagensPosicoes['rifle'];
+    selectedText.textContent = nomesPosicoes[posicao] || 'Rifle';
     
     // Fechar dropdown
     options.style.display = 'none';
@@ -1555,7 +1559,7 @@ function selectPosition(solicitacaoId, posicao) {
 // ----- OBTER POSIÇÃO SELECIONADA
 function getSelectedPosition(solicitacaoId) {
     const dropdown = document.getElementById(`dropdown-${solicitacaoId}`);
-    return dropdown.getAttribute('data-selected') || 'sub';
+    return dropdown.getAttribute('data-selected') || 'rifle';
 }
 
 // ----- SAIR DO TIME

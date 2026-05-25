@@ -1,4 +1,4 @@
--- Active: 1768406150063@@127.0.0.1@3306@mixcamp
+-- Active: 1774919521718@@127.0.0.1@3306@mixcamp
 
 -- ============================ CRIAÇÃO DO BANCO E CONEXÃO  =============================
 CREATE DATABASE IF NOT EXISTS mixcamp;
@@ -23,17 +23,25 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
     `gerencia` ENUM(
         'admin',
         'moderador',
-        'gerente',
+        'streamer',
+        'apoiador',
         'user'
     ) DEFAULT 'user',
     `organizador` ENUM(
         'premium',
-        'simples'
+        'intermediario',
+        'basico'
     ) DEFAULT NULL,
     `cores_perfil` VARCHAR(50) DEFAULT '#ffffff80',
     `cfg_cs` VARCHAR(255),
     FOREIGN KEY (`time_id`) REFERENCES `times` (`id`)
 );
+
+ALTER TABLE usuarios 
+MODIFY COLUMN gerencia ENUM('admin','moderador','streamer','apoiador','user') DEFAULT 'user';
+
+ALTER TABLE usuarios 
+MODIFY COLUMN organizador ENUM('premium','intermediario','basico') DEFAULT NULL;
 
 
 ALTER TABLE usuarios 
@@ -94,16 +102,13 @@ CREATE TABLE IF NOT EXISTS `membros_time` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `usuario_id` INT NOT NULL,
     `time_id` INT NOT NULL,
-    `funcao` ENUM('titular', 'reserva', 'coach') NOT NULL,
+    `funcao` ENUM('lider','titular','reserva','coach') NOT NULL,
     -- Posição/função em jogo (o que aparece abaixo do nome)
     `posicao` ENUM(
-        'capitao',
         'awp',
         'entry',
         'support',
         'igl',
-        'sub',
-        'coach',
         'lurker',
         'rifle'
     ) NOT NULL,
@@ -112,6 +117,51 @@ CREATE TABLE IF NOT EXISTS `membros_time` (
     FOREIGN KEY (`time_id`) REFERENCES `times` (`id`) ON DELETE CASCADE,
     UNIQUE KEY `uk_usuario_time` (`usuario_id`, `time_id`) -- Garante que um usuário só pode estar em um time uma vez
 );
+
+-- Migração para a modelagem atual: líder fica em funcao; reserva substitui posicao='sub'
+ALTER TABLE membros_time
+MODIFY COLUMN funcao ENUM('capitao','lider','titular','reserva','coach') NOT NULL;
+
+ALTER TABLE membros_time
+MODIFY COLUMN posicao ENUM('capitao','awp','entry','support','igl','sub','coach','lurker','rifle') NOT NULL DEFAULT 'rifle';
+
+UPDATE membros_time mt
+JOIN times t ON t.id = mt.time_id
+SET mt.funcao = 'lider'
+WHERE mt.usuario_id = t.lider_id;
+
+UPDATE membros_time
+SET funcao = 'reserva', posicao = 'rifle'
+WHERE posicao = 'sub';
+
+UPDATE membros_time
+SET posicao = 'rifle'
+WHERE posicao = 'capitao';
+
+UPDATE membros_time
+SET funcao = 'titular'
+WHERE funcao = 'capitao';
+
+ALTER TABLE membros_time
+MODIFY COLUMN funcao ENUM('lider','titular','reserva','coach') NOT NULL;
+
+ALTER TABLE membros_time
+MODIFY COLUMN posicao ENUM('awp','entry','support','igl','coach','lurker','rifle') NOT NULL DEFAULT 'rifle';
+
+-- Coach deixa de ser posição em jogo; passa a ser apenas função
+UPDATE membros_time
+SET funcao = 'coach'
+WHERE posicao = 'coach' AND funcao NOT IN ('lider', 'coach');
+
+UPDATE membros_time
+SET posicao = 'rifle'
+WHERE posicao = 'coach';
+
+ALTER TABLE membros_time
+MODIFY COLUMN posicao ENUM('awp','entry','support','igl','lurker','rifle') NOT NULL DEFAULT 'rifle';
+
+-- Legado: reservas antigas ainda podem ter posicao='sub' no banco
+UPDATE membros_time SET posicao = 'rifle' WHERE posicao = 'sub';
 
 -- Redes sociais do time
 CREATE TABLE IF NOT EXISTS `redes_sociais_time` (
@@ -214,11 +264,10 @@ CREATE TABLE IF NOT EXISTS `solicitacoes_time` (
         'entry',
         'support',
         'igl',
-        'sub',
         'coach',
         'rifle',
         'lurker'
-    ) NOT NULL,
+    ) NOT NULL DEFAULT 'rifle',
     `status` ENUM(
         'pendente',
         'aceita',
@@ -238,11 +287,10 @@ CREATE TABLE IF NOT EXISTS transferencias (
         'entry',
         'support',
         'igl',
-        'sub',
         'coach',
         'rifle',
         'lurker'
-    ) NOT NULL,
+    ) NOT NULL DEFAULT 'rifle',
     tipo ENUM('entrada', 'saida') NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -797,6 +845,13 @@ CREATE TABLE IF NOT EXISTS email_verificacao (
 
 CREATE INDEX idx_email ON email_verificacao(email);
 
+-- E-mail confirmado pelo código (janela para concluir o registro)
+CREATE TABLE IF NOT EXISTS email_verificado (
+    email VARCHAR(255) NOT NULL PRIMARY KEY,
+    verificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expira_em DATETIME NOT NULL
+);
+
 
 
 
@@ -849,7 +904,7 @@ CREATE TABLE IF NOT EXISTS promocao_pendente_pagamento (
 
 
 ALTER TABLE usuarios
-MODIFY COLUMN gerencia ENUM('admin','moderador','streammer','apoiador','user') DEFAULT 'user';
+MODIFY COLUMN gerencia ENUM('admin','moderador','streamer','apoiador','user') DEFAULT 'user';
 
 
 CREATE TABLE IF NOT EXISTS cupons (
@@ -962,3 +1017,53 @@ WHERE id = 3;
 SHOW CREATE TABLE inscricoes_campeonato\G
 
 SHOW CREATE TABLE chaveamentos\G
+
+-- ===============================================================================================
+-- Fase 3: sessões persistentes + auditoria de segurança
+-- ===============================================================================================
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id VARCHAR(128) NOT NULL PRIMARY KEY,
+    expires INT UNSIGNED NOT NULL,
+    data MEDIUMTEXT,
+    INDEX IDX_sessions_expires (expires)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS security_audit_log (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    ip VARCHAR(45) NULL,
+    method VARCHAR(10) NOT NULL,
+    path VARCHAR(500) NOT NULL,
+    status_code SMALLINT NOT NULL,
+    user_agent VARCHAR(300) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX IDX_audit_created (created_at),
+    INDEX IDX_audit_status (status_code),
+    INDEX IDX_audit_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
+CREATE TABLE IF NOT EXISTS marcacoes_jogos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    usuario_id INT NOT NULL,
+
+    primeiro_time_nome VARCHAR(255) NOT NULL,
+    segundo_time_nome VARCHAR(255) NOT NULL,
+
+    horario_inicio TIME NOT NULL,
+    data_do_jogo DATE NOT NULL,
+
+    campeonatos ENUM('mx_extreme', 'mx_league') NOT NULL,
+    season INT NOT NULL,
+
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id)
+        ON DELETE CASCADE
+);
+
+
+DROP TABLE marcacoes_jogos;

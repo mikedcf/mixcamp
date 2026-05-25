@@ -536,8 +536,10 @@ header.header .menu-opcoes a span {
 
 .icon-perfil {
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: clamp(30px, 4vw, 40px);
+    height: clamp(30px, 4vw, 40px);
+    object-fit: cover;
+    flex-shrink: 0;
     border: 2px solid rgba(255, 107, 53, 0.3);
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -1406,8 +1408,10 @@ header.header .menu-opcoes a span {
 
 .icon-perfil {
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: clamp(30px, 4vw, 40px);
+    height: clamp(30px, 4vw, 40px);
+    object-fit: cover;
+    flex-shrink: 0;
     border: 2px solid rgba(255, 107, 53, 0.3);
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -1926,6 +1930,7 @@ header.header .menu-opcoes a span {
     .header .icon-perfil {
         width: 32px;
         height: 32px;
+        object-fit: cover;
     }
 
     .header .box-lupa {

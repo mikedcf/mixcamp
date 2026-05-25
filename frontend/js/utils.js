@@ -3,6 +3,100 @@
 const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 
 // =================================
+// ========= API / CSRF (Fase 2) ===
+
+let _csrfToken = null;
+let _authCache = null;
+const _nativeFetch = window.fetch.bind(window);
+
+function setAuthCache(data) {
+    if (data && typeof data === 'object') _authCache = data;
+}
+
+function getAuthCache() {
+    return _authCache;
+}
+
+/** Planos de organizador (campo usuarios.organizador) */
+const ORGANIZADOR_PLANOS = Object.freeze(['premium', 'intermediario', 'basico']);
+
+function isOrganizadorPlano(plano) {
+    return ORGANIZADOR_PLANOS.includes(plano);
+}
+
+function isOrganizadorPremium(plano) {
+    return plano === 'premium';
+}
+
+/** Premium e intermediário: chaveamento com CS2 Major */
+function organizadorComChaveCs2Major(plano) {
+    return plano === 'premium' || plano === 'intermediario';
+}
+
+function getOrganizadorIconeSrc(plano) {
+    const icones = {
+        premium: '../img/icone_MXpremium.svg',
+        intermediario: '../img/icone_MXinter.svg',
+        basico: '../img/mx basic.svg'
+    };
+    return icones[plano] || null;
+}
+
+window.ORGANIZADOR_PLANOS = ORGANIZADOR_PLANOS;
+window.isOrganizadorPlano = isOrganizadorPlano;
+window.isOrganizadorPremium = isOrganizadorPremium;
+window.organizadorComChaveCs2Major = organizadorComChaveCs2Major;
+window.getOrganizadorIconeSrc = getOrganizadorIconeSrc;
+
+function setCsrfToken(token) {
+    if (token) _csrfToken = token;
+}
+
+function getCsrfToken() {
+    return _csrfToken;
+}
+
+function applyCsrfFromAuthData(data) {
+    if (data?.csrfToken) setCsrfToken(data.csrfToken);
+}
+
+function apiFetch(url, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = new Headers(options.headers || {});
+
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && _csrfToken) {
+        headers.set('X-CSRF-Token', _csrfToken);
+    }
+
+    return _nativeFetch(url, {
+        ...options,
+        credentials: 'include',
+        headers
+    }).then(async (res) => {
+        if (url.includes('/dashboard') && res.ok) {
+            try {
+                const data = await res.clone().json();
+                applyCsrfFromAuthData(data);
+                setAuthCache(data);
+            } catch (_) { /* ignore */ }
+        }
+        return res;
+    });
+}
+
+window.fetch = function (input, init = {}) {
+    const url = typeof input === 'string' ? input : (input?.url || '');
+    if (url.includes('/api/v1')) {
+        return apiFetch(url, init);
+    }
+    return _nativeFetch(input, init);
+};
+
+window.apiFetch = apiFetch;
+window.setCsrfToken = setCsrfToken;
+window.applyCsrfFromAuthData = applyCsrfFromAuthData;
+
+// =================================
 // ========= NOTIFICATIONS =========
 
 const icons = {
@@ -197,8 +291,11 @@ async function verificarNovasNotificacoes(){
     const dotnumber = document.getElementById('menuNotificationBadge');
     if (dotnumber) dotnumber.style.display = 'none';
 
-    const auth_dados = await autenticacao();
-    if (!auth_dados || !auth_dados.usuario) return;
+    let auth_dados = getAuthCache();
+    if (!auth_dados?.usuario?.id && typeof autenticacao === 'function') {
+        auth_dados = await autenticacao();
+    }
+    if (!auth_dados?.usuario?.id) return;
     const userId = auth_dados.usuario.id;
 
     const qntNotificacoes = null;
@@ -544,9 +641,12 @@ document.addEventListener('DOMContentLoaded', function() {
 // =================================
 // ========= VERIFICAR TIME DO USUÁRIO =========
 async function verificarTimeUsuario() {
-    const auth_dados = await autenticacao();
+    let auth_dados = getAuthCache();
+    if (!auth_dados && typeof autenticacao === 'function') {
+        auth_dados = await autenticacao();
+    }
     try {
-        if(auth_dados.logado) {
+        if (auth_dados?.logado) {
             const userId = auth_dados.usuario.id;
             const response = await fetch(`${API_URL}/times/by-user/${userId}`, { 
                 credentials: 'include'
@@ -1307,4 +1407,4 @@ document.addEventListener('DOMContentLoaded', function () {
 addScrollProgress();
 
 document.addEventListener('DOMContentLoaded', verificarTimeUsuario);
-setInterval(verificarNovasNotificacoes, 10000);
+setInterval(verificarNovasNotificacoes, 30000);
