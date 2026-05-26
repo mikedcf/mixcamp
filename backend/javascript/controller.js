@@ -2873,6 +2873,7 @@ async function getPerfil(req, res) {
                 sobre,
                 time_id,
                 posicoes,
+                gerencia,
                 organizador,
                 cores_perfil,
                 steamid,
@@ -2887,15 +2888,7 @@ async function getPerfil(req, res) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
-        const sessionId = req.session?.user?.id;
-        const isOwner = sessionId && parseInt(sessionId, 10) === parseInt(id, 10);
-        const [gerenciaRow] = await conexao.execute(
-            'SELECT gerencia FROM usuarios WHERE id = ?',
-            [id]
-        );
-        if (isOwner || ['admin', 'moderador'].includes(req.session?.user?.gerencia)) {
-            usuario.gerencia = gerenciaRow[0]?.gerencia || 'user';
-        }
+        usuario.gerencia = usuario.gerencia || 'user';
 
         // Converter posicoes de string separada por vírgulas para array (se existir)
         if (usuario.posicoes && typeof usuario.posicoes === 'string') {

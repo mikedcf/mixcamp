@@ -547,8 +547,8 @@ async function atualizarDadosPerfil() {
 
 
 
-    // verificar organização
-    const cargo = perfilData.usuario.gerencia
+    // verificar organização (cargo = staff; organizador = plano MX)
+    const cargo = String(perfilData.usuario.gerencia || 'user').trim().toLowerCase();
     const adm = document.getElementById('adminBadge')
     const moderadorBadge = document.getElementById('moderadorBadge')
     const streamerBadge = document.getElementById('streamerBadge')
@@ -616,18 +616,22 @@ async function atualizarDadosPerfil() {
     toggleRoleBadge(streamerBadge, cargo === 'streamer');
     toggleRoleBadge(apoiadorIcon, cargo === 'apoiador');
 
-    const planoOrg = perfilData.usuario.organizador;
+    const planoOrg = perfilData.usuario.organizador
+        ? String(perfilData.usuario.organizador).trim().toLowerCase()
+        : null;
     const iconeOrg = typeof getOrganizadorIconeSrc === 'function'
         ? getOrganizadorIconeSrc(planoOrg)
         : null;
-    if (iconeOrg) {
-        document.getElementById('mxBasicImg').src = iconeOrg;
-        document.getElementById('mxBasicImg').title = planoOrg
-            ? planoOrg.charAt(0).toUpperCase() + planoOrg.slice(1)
-            : 'Organizador';
-        planoMx.style.display = 'flex';
-    } else {
-        planoMx.style.display = 'none';
+    if (planoMx) {
+        if (iconeOrg) {
+            document.getElementById('mxBasicImg').src = iconeOrg;
+            document.getElementById('mxBasicImg').title = planoOrg
+                ? planoOrg.charAt(0).toUpperCase() + planoOrg.slice(1)
+                : 'Organizador';
+            planoMx.style.display = 'flex';
+        } else {
+            planoMx.style.display = 'none';
+        }
     }
 
 
@@ -921,6 +925,25 @@ async function inserirReels(reels, idUsuarioDoPerfil){
         if (c) c.innerHTML = '';
         return;
     }
+    
+    params = new URLSearchParams(window.location.search);
+    const userId_params = params.get('id');
+    const auth_dados = await autenticacao();
+
+    let ativo;
+    
+    if(auth_dados.logado){
+        const userId = auth_dados.usuario.id;
+        if(userId == userId_params){
+            ativo = "flex";
+        }
+        else {
+            ativo = "none";
+        }
+    }
+    else{
+        ativo = "none";
+    }
 
     const reelsContainer = document.getElementById('reelsContainer');
     reelsContainer.innerHTML = '';
@@ -931,7 +954,7 @@ async function inserirReels(reels, idUsuarioDoPerfil){
         reelItem.className = 'reel-item';
         const videoUrl = (reel && reel.video_url) ? reel.video_url : reel;
         reelItem.innerHTML = `
-            <button type="button" class="reel-delete-btn" title="Deletar vídeo" id="deleteReel" aria-label="Deletar vídeo">
+            <button type="button" class="reel-delete-btn" title="Deletar vídeo" id="deleteReel" aria-label="Deletar vídeo" style="display: ${ativo};">
                 <i class="fas fa-trash"></i>
             </button>
             <div class="reel-thumb">
@@ -1047,29 +1070,27 @@ async function inserirReels(reels, idUsuarioDoPerfil){
         reelsContainer.appendChild(reelItem);
     })
 
-    const auth_dados = await autenticacao();
-    const deleteReel = document.getElementById("deleteReel")
-    params = new URLSearchParams(window.location.search);
-    const userId_params = params.get('id');
+    // const auth_dados = await autenticacao();
+    // const deleteReel = document.getElementById("deleteReel")
+    // params = new URLSearchParams(window.location.search);
+    // const userId_params = params.get('id');
     
-    deleteReel.style.display = "none";
-    if(auth_dados.logado){
-        const userId = auth_dados.usuario.id;
-        if(userId == userId_params){
-            deleteReel.style.display = "flex";
-        }
-        else {
-            deleteReel.style.display = "none";
-        }
-    }
+    // deleteReel.style.display = "none";
+    // if(auth_dados.logado){
+    //     const userId = auth_dados.usuario.id;
+    //     if(userId == userId_params){
+    //         deleteReel.style.display = "flex";
+    //     }
+    //     else {
+    //         deleteReel.style.display = "none";
+    //     }
+    // }
     
 }
 
 // ===== DELETAR REEL =====
 async function deletarReel(videoUrl, profileUserId) {
-    // if (!confirm('Tem certeza que deseja deletar este vídeo?')) {
-    //     return;
-    // }
+    
 
     const confirmado = await showConfirmModal('Tem certeza que deseja deletar este vídeo?');
     if (!confirmado) {

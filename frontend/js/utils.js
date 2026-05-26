@@ -270,6 +270,37 @@ async function EnviarNotificacao(userId,msg){
 
 }
 
+async function resolveAuthDados() {
+    const cached = getAuthCache();
+    if (cached?.logado && cached?.usuario?.id) {
+        return cached;
+    }
+
+    if (typeof autenticacao === 'function') {
+        const dados = await autenticacao();
+        if (dados?.logado && dados?.usuario?.id) {
+            return dados;
+        }
+        return null;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/dashboard`, {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (data?.logado && data?.usuario?.id) {
+            applyCsrfFromAuthData(data);
+            setAuthCache(data);
+            return data;
+        }
+    } catch (_) { /* ignore */ }
+
+    return null;
+}
+
 async function buscarNotificacoes(){
     const response = await fetch(`${API_URL}/notificacoes`, {
         credentials: 'include'
@@ -277,25 +308,26 @@ async function buscarNotificacoes(){
     if (response.ok) {
         const data = await response.json();
         return Array.isArray(data.notificacoes) ? data.notificacoes : (Array.isArray(data) ? data : []);
-    } else {
-        console.error('Erro ao buscar notificações:', response.statusText);
+    }
+    if (response.status === 401) {
         return [];
     }
+    console.error('Erro ao buscar notificações:', response.status, response.statusText);
+    return [];
 }
 
 let notify = false;
 let notifyTemp = true;
 async function verificarNovasNotificacoes(){
-
-    const notificacoes = await buscarNotificacoes() || [];
     const dotnumber = document.getElementById('menuNotificationBadge');
     if (dotnumber) dotnumber.style.display = 'none';
 
-    let auth_dados = getAuthCache();
-    if (!auth_dados?.usuario?.id && typeof autenticacao === 'function') {
-        auth_dados = await autenticacao();
+    const auth_dados = await resolveAuthDados();
+    if (!auth_dados?.usuario?.id) {
+        return;
     }
-    if (!auth_dados?.usuario?.id) return;
+
+    const notificacoes = await buscarNotificacoes() || [];
     const userId = auth_dados.usuario.id;
 
     const qntNotificacoes = null;
