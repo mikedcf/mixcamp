@@ -10,6 +10,7 @@ const { validarEmail, validarSenha, validarCaracteres } = require('./auth');
 const { verificarPermissaoCampeonato, verificarPermissaoPorInscricaoTime } = require('./middlewares/security');
 const { rotateCsrfToken, ensureCsrfToken } = require('./middlewares/hardening');
 const { registrarAuditoria } = require('./middlewares/auditLog');
+const { logAuthDebug } = require('./middlewares/authDebug');
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
@@ -2500,6 +2501,7 @@ async function getNotificacoes(req, res) {
 
         const query = 'SELECT * FROM notificacoes WHERE user_id = ? ORDER BY criada_em DESC';
         const [dados] = await conexao.execute(query, [userId]);
+        logAuthDebug('notificacoes_ok', req, { httpStatus: 200, userId, total: dados.length });
         res.status(200).json({ notificacoes: dados });
     }
     catch (error) {
@@ -2670,7 +2672,8 @@ async function deletarNotificacao(req, res) {
 
 // ------- API GET
 async function autenticacao(req, res) {
-    if (!req.session.user) {
+    if (!req.session?.user) {
+        logAuthDebug('dashboard_sem_sessao', req, { logado: false, httpStatus: 200 });
         return res.json({ logado: false });
     }
 
@@ -2684,6 +2687,7 @@ async function autenticacao(req, res) {
 
         if (!rows[0]) {
             req.session.destroy(() => {});
+            logAuthDebug('dashboard_usuario_inexistente', req, { logado: false, httpStatus: 200 });
             return res.json({ logado: false });
         }
 
@@ -2696,6 +2700,7 @@ async function autenticacao(req, res) {
             organizador: rows[0].organizador
         };
 
+        logAuthDebug('dashboard_logado', req, { logado: true, httpStatus: 200, userId: rows[0].id });
         res.json({
             logado: true,
             usuario: req.session.user,
@@ -2974,6 +2979,11 @@ async function login(req, res) {
 
             const csrfToken = rotateCsrfToken(req);
 
+            logAuthDebug('login_sessao_criada', req, {
+                httpStatus: 200,
+                userId: usuario.id,
+                sessionIdPrefix: req.sessionID ? `${String(req.sessionID).slice(0, 8)}…` : null
+            });
             res.status(200).send({ message: 'Login com sucesso!', csrfToken });
         });
         return;

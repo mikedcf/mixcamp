@@ -39,6 +39,7 @@ const { auditMiddleware } = require('./middlewares/auditLog');
 const { mountFrontend } = require('./middlewares/frontendSecurity');
 const { createSessionStore } = require('./sessionStore');
 const { ensureSecurityTables } = require('./setupSecurityTables');
+const { logAuthDebug, logAuthDebugStartup } = require('./middlewares/authDebug');
 require('dotenv').config();
 
 const adminOnly = [requireAuth, requireGerencia('admin')];
@@ -72,6 +73,25 @@ if (mysqlSessionStore) {
 app.use(session(sessionOptions));
 app.use(auditMiddleware);
 app.use(validateCsrf);
+
+logAuthDebugStartup();
+
+if (process.env.DEBUG_AUTH === 'true' || process.env.DEBUG_AUTH === '1') {
+    const authDebugPaths = ['/api/v1/dashboard', '/api/v1/notificacoes', '/api/v1/login'];
+    app.use((req, res, next) => {
+        if (!authDebugPaths.some((p) => req.path === p || req.path.startsWith(`${p}/`))) {
+            return next();
+        }
+        const started = Date.now();
+        res.on('finish', () => {
+            logAuthDebug('http_resposta', req, {
+                httpStatus: res.statusCode,
+                durationMs: Date.now() - started
+            });
+        });
+        next();
+    });
+}
 
 
 // Configuração do multer para upload de arquivos

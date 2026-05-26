@@ -1,5 +1,6 @@
 const { conectar, desconectar } = require('../db');
 const { registrarAuditoria } = require('./auditLog');
+const { logAuthDebug } = require('./authDebug');
 
 const GERENCIAS_STAFF = ['admin', 'moderador'];
 const ORGANIZADOR_VALORES = ['premium', 'intermediario', 'basico'];
@@ -22,8 +23,15 @@ async function carregarUsuarioSessao(req) {
 
 function requireAuth(req, res, next) {
     if (!req.session?.user?.id) {
+        logAuthDebug('requireAuth_401', req, {
+            status: 401,
+            reason: req.session ? 'session_sem_user' : 'sem_session'
+        });
         registrarAuditoria({ req, status: 401, userId: null }).catch(() => {});
         return res.status(401).json({ error: 'Não autorizado', message: 'Faça login para continuar' });
+    }
+    if (req.path.includes('notificacoes')) {
+        logAuthDebug('requireAuth_ok', req, { status: 'next', userId: req.session.user.id });
     }
     next();
 }
