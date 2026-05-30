@@ -831,9 +831,26 @@ async function setupDatabase() {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `)
 
+    /*
+    =====================================================
+    1️⃣1️⃣ MARCAÇÕES DE JOGOS
+    =====================================================
+    */
 
-
-
+    await conexao.execute(`
+    CREATE TABLE IF NOT EXISTS marcacoes_jogos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        usuario_id INT NOT NULL,
+        primeiro_time_nome VARCHAR(255) NOT NULL,
+        segundo_time_nome VARCHAR(255) NOT NULL,
+        horario_inicio TIME NOT NULL,
+        data_do_jogo DATE NOT NULL,
+        campeonatos ENUM('mx_extreme', 'mx_league') NOT NULL,
+        season INT NOT NULL,
+        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `)
 
     /*
     =====================================================
@@ -12165,9 +12182,6 @@ async function DadosGeraisUser(req,res){
         conexao = await conectar();
         query = `
         SELECT 
-            -- =========================================
-            -- USUARIO
-            -- =========================================
             u.id,
             u.username,
             u.email,
@@ -12181,9 +12195,6 @@ async function DadosGeraisUser(req,res){
             u.cores_perfil,
             u.cfg_cs,
 
-            -- =========================================
-            -- REDES SOCIAIS
-            -- =========================================
             rs.discord_url,
             rs.youtube_url,
             rs.instagram_url,
@@ -12196,36 +12207,31 @@ async function DadosGeraisUser(req,res){
             rs.kick_url,
             rs.allstar_url,
 
-            -- =========================================
-            -- CONTADORES USUARIO
-            -- =========================================
-            COUNT(DISTINCT um.medalha_id) AS total_medalhas,
-            COUNT(DISTINCT d.id) AS total_destaques,
+            (
+                SELECT COUNT(DISTINCT um.medalha_id)
+                FROM usuario_medalhas um
+                WHERE um.usuario_id = u.id
+            ) AS total_medalhas,
+            (
+                SELECT COUNT(DISTINCT d.id)
+                FROM destaques d
+                WHERE d.usuario_id = u.id
+            ) AS total_destaques,
 
-            -- =========================================
-            -- TIME
-            -- =========================================
             t.nome AS nome_time,
             t.tag AS tag_time,
             t.lider_id,
             t.avatar_time_url,
             t.cores_perfil AS cores_perfil_time,
 
-            -- =========================================
-            -- MEMBRO TIME
-            -- =========================================
             mt.funcao,
             mt.posicao,
 
-            -- =========================================
-            -- CONTADORES TIME
-            -- =========================================
             (
                 SELECT COUNT(*)
                 FROM membros_time mt2
                 WHERE mt2.time_id = t.id
             ) AS total_membros,
-
             (
                 SELECT COUNT(*)
                 FROM time_conquistas tc
@@ -12233,43 +12239,10 @@ async function DadosGeraisUser(req,res){
             ) AS total_conquistas_time
 
         FROM usuarios u
-
-        -- =========================================
-        -- REDES SOCIAIS
-        -- =========================================
-        LEFT JOIN redes_sociais rs
-            ON rs.usuario_id = u.id
-
-        -- =========================================
-        -- MEDALHAS
-        -- =========================================
-        LEFT JOIN usuario_medalhas um
-            ON um.usuario_id = u.id
-
-        -- =========================================
-        -- DESTAQUES
-        -- =========================================
-        LEFT JOIN destaques d
-            ON d.usuario_id = u.id
-
-        -- =========================================
-        -- TIME
-        -- =========================================
-        LEFT JOIN times t
-            ON t.id = u.time_id
-
-        -- =========================================
-        -- MEMBRO TIME
-        -- =========================================
-        LEFT JOIN membros_time mt
-            ON mt.usuario_id = u.id
-
-        -- =========================================
-        -- USUARIO ESPECIFICO
-        -- =========================================
+        LEFT JOIN redes_sociais rs ON rs.usuario_id = u.id
+        LEFT JOIN times t ON t.id = u.time_id
+        LEFT JOIN membros_time mt ON mt.usuario_id = u.id AND mt.time_id = u.time_id
         WHERE u.id = ?
-
-        GROUP BY u.id;
         `
         const [userDados] = await conexao.execute(query, [id]);
         res.status(200).json({ userDados });
