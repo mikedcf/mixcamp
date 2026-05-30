@@ -582,6 +582,11 @@ app.get(process.env.ROUTE_DISCORD_DADOS_GERAIS_USER, validarApiKeyDiscord, Dados
 app.get(process.env.ROUTE_SEASONS_CAMPEONATOS, validarApiKeyDiscord, getSeasonDoscampeonatos);
 
 
+app.post(process.env.ROUTE_NOTIFICACOES_CRIAR_DISCORD, validarApiKeyDiscord, criarMsgNotificacao);
+
+
+
+
 // =====================================================
 // ==================================== [MARCAÇÕES DE JOGOS] ================================================
 
