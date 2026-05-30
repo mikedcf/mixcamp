@@ -12313,6 +12313,35 @@ async function getSeasonDoscampeonatos(req,res){
 }
 
 
+async function criarMsgNotificacaoDiscord(req, res) {
+    const { usuario_id, texto } = req.body;
+    
+
+    if (!texto || !String(texto).trim()) {
+        return res.status(400).json({ message: 'Texto da notificação é obrigatório' });
+    }
+
+    let conexao;
+
+    try {
+
+        conexao = await conectar();
+
+        const query = 'INSERT INTO notificacoes (user_id, texto) VALUES (?,?)';
+
+        await conexao.execute(query, [usuario_id, String(texto).trim()]);
+
+        res.status(200).json({ message: 'Notificação criada com sucesso' });
+
+    }
+    catch (error) {
+        console.error('Erro ao criar notificação:', error);
+    }
+    finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
 // =====================================================
 // ==================================== [MARCAÇÕES DE JOGOS] ================================================
 
@@ -12436,5 +12465,5 @@ module.exports = {
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
     criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao, getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
-    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,auth,getMarcacoesJogos,criarMarcacaoJogo,atualizarMarcacaoJogo,deletarMarcacaoJogo,getSeasonDoscampeonatos
+    getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,auth,getMarcacoesJogos,criarMarcacaoJogo,atualizarMarcacaoJogo,deletarMarcacaoJogo,getSeasonDoscampeonatos,criarMsgNotificacaoDiscord
 };
