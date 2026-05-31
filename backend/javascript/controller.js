@@ -12321,15 +12321,28 @@ async function getCampeoantosBySeasonTimes(req,res){
 
         conexao = await conectar();
 
+        // const query = `
+        //     SELECT times.nome
+        //     FROM inscricoes_times
+        //     JOIN times
+        //     ON inscricoes_times.time_id = times.id
+        //     WHERE inscricoes_times.inscricao_id = ?
+        // `;
+
+
         const query = `
             SELECT times.nome
-            FROM inscricoes_times
+            FROM inscricoes_campeonato
+            JOIN inscricoes_times
+                ON inscricoes_campeonato.id = inscricoes_times.inscricao_id
             JOIN times
-            ON inscricoes_times.time_id = times.id
-            WHERE inscricoes_times.inscricao_id = ?
+                ON inscricoes_times.time_id = times.id
+            WHERE inscricoes_campeonato.edicao_campeonato LIKE ?
         `;
 
-        const [rows] = await conexao.execute(query, [season]);
+        const [rows] = await conexao.execute(query, [
+            `%${season}%`
+        ]);
 
         // transforma em lista simples
         const listaTimes = rows.map(time => time.nome);
