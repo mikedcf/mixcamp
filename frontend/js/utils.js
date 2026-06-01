@@ -634,7 +634,10 @@ function aplicarFiltroTabNotificacoes() {
     }
 }
 
+let modalNotificacoesInicializado = false;
+
 function initModalNotificacoes() {
+    if (modalNotificacoesInicializado) return;
     const modal = document.getElementById('modalNotificacoes');
     const linkNotif = document.getElementById('menuNotificacoesLink');
     const btnClose = document.getElementById('modalNotificacoesClose');
@@ -690,11 +693,16 @@ function initModalNotificacoes() {
             }
         }
     });
+    modalNotificacoesInicializado = true;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initModalNotificacoes();
-});
+(function bootInitModalNotificacoes() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initModalNotificacoes, { once: true });
+    } else {
+        initModalNotificacoes();
+    }
+})();
 
 
 

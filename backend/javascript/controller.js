@@ -11,6 +11,7 @@ const { verificarPermissaoCampeonato, verificarPermissaoPorInscricaoTime } = req
 const { rotateCsrfToken, ensureCsrfToken } = require('./middlewares/hardening');
 const { registrarAuditoria } = require('./middlewares/auditLog');
 const { logAuthDebug } = require('./middlewares/authDebug');
+const { logRouteError, logRouteWarn, wrapRouteHandlers } = require('./middlewares/routeLogger');
 
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const client = new MercadoPagoConfig({ accessToken: process.env.APIKEYMERCADOPAGO });
@@ -3707,7 +3708,7 @@ async function criarTime(req, res) {
 
 
     } catch (error) {
-
+        logRouteError('criarTime', req, error);
         return res.status(500).json({ error: 'Erro interno do servidor' });
     } finally {
         if (conexao) await desconectar(conexao);
@@ -5159,7 +5160,8 @@ async function deletarMedalhas(req, res) {
         // res.status(200).send({menssage: `Medalha ${rows[0].nome} deletada com sucesso!`})
     }
     catch (error) {
-        res.status(500).send({ menssage: `Erro ao deletar medalha: ${error}` })
+        logRouteError('deletarMedalhas', req, error);
+        res.status(500).send({ menssage: `Erro ao deletar medalha: ${error.message}` })
     }
     finally {
         if (conexao) await desconectar(conexao);
@@ -5184,7 +5186,8 @@ async function atualizarMedalhas(req, res) {
         res.status(200).send({ menssage: `Medalha atualizada com sucesso!` })
     }
     catch (error) {
-        res.status(500).send({ menssage: `Erro ao atualizar medalha: ${error}` })
+        logRouteError('atualizarMedalhas', req, error);
+        res.status(500).send({ menssage: `Erro ao atualizar medalha: ${error.message}` })
     }
     finally {
         if (conexao) await desconectar(conexao);
@@ -12546,7 +12549,7 @@ cron.schedule('0 1 * * *', () => {
 
 
 
-module.exports = {
+module.exports = wrapRouteHandlers({
     getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar,
     getTimeById, getTimeByUser, deletarTime, transferirLideranca, listarMembrosParaLideranca, criarTime, atualizarTime, atualizarPosicaoMembro, removerMembro,
     solicitarEntradaTime, aceitarSolicitacao, rejeitarSolicitacao, verificarStatusSolicitacao, getTransferencias, criarTransferencia, deletarTransferencia,
@@ -12557,4 +12560,4 @@ module.exports = {
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
     criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao, getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
     getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,auth,getMarcacoesJogos,criarMarcacaoJogo,atualizarMarcacaoJogo,deletarMarcacaoJogo,getSeasonDoscampeonatos,criarMsgNotificacaoDiscord,getCampeoantosBySeasonTimes
-};
+});

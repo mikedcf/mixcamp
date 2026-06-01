@@ -737,6 +737,14 @@ body {
     cursor: pointer !important;
 }
 
+/* Leque vazio: só 7 placeholders visíveis; slots 8–11 ficam para troféus reais */
+.team2-page .medals-container.all-empty .medalha-slot.empty:nth-child(n + 8) {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+}
+
 .team2-page .medals-container.all-empty .medalha-slot.empty:nth-child(1):hover {
     transform: translateX(-50%) translateX(-280px) translateY(-4px) rotate(-25deg) scale(1.02) !important;
     z-index: 10 !important;

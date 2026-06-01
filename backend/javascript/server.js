@@ -36,11 +36,14 @@ const {
     shouldTrustProxy
 } = require('./middlewares/hardening');
 const { auditMiddleware } = require('./middlewares/auditLog');
+const { apiResponseLogMiddleware, registerProcessErrorHandlers } = require('./middlewares/routeLogger');
 const { mountFrontend } = require('./middlewares/frontendSecurity');
 const { createSessionStore } = require('./sessionStore');
 const { ensureSecurityTables } = require('./setupSecurityTables');
 const { logAuthDebug, logAuthDebugStartup } = require('./middlewares/authDebug');
 require('dotenv').config();
+
+registerProcessErrorHandlers();
 
 const adminOnly = [requireAuth, requireGerencia('admin')];
 const staffOnly = [requireAuth, requireGerencia('admin', 'moderador')];
@@ -72,6 +75,7 @@ if (mysqlSessionStore) {
 }
 app.use(session(sessionOptions));
 app.use(auditMiddleware);
+app.use(apiResponseLogMiddleware);
 app.use(validateCsrf);
 
 logAuthDebugStartup();
@@ -609,6 +613,14 @@ app.delete(process.env.ROUTE_MARCACOES_JOGOS_DELETAR,validarApiKeyDiscord, delet
 // ==================================== [FRONTEND ESTÁTICO + CSP] =================================
 
 mountFrontend(app);
+
+app.use((err, req, res, next) => {
+    const { logRouteError } = require('./middlewares/routeLogger');
+    logRouteError('express-error-handler', req, err);
+    if (!res.headersSent) {
+        res.status(err.status || err.statusCode || 500).json({ message: 'Erro interno do servidor' });
+    }
+});
 
 // ===============================================================================================
 // ==================================== [PORTA DA API] ==========================================
