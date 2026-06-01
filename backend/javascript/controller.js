@@ -10365,6 +10365,35 @@ async function buscarSessaoVetosPorToken(req, res) {
             acoes = [];
         }
 
+        let timeAInfo = null;
+        let timeBInfo = null;
+        if (sessao.time_a_id) {
+            const [rowsA] = await conexao.execute(
+                'SELECT id, nome, avatar_time_url FROM times WHERE id = ?',
+                [sessao.time_a_id]
+            );
+            if (rowsA[0]) {
+                timeAInfo = {
+                    id: rowsA[0].id,
+                    nome: rowsA[0].nome,
+                    logo: rowsA[0].avatar_time_url || null
+                };
+            }
+        }
+        if (sessao.time_b_id) {
+            const [rowsB] = await conexao.execute(
+                'SELECT id, nome, avatar_time_url FROM times WHERE id = ?',
+                [sessao.time_b_id]
+            );
+            if (rowsB[0]) {
+                timeBInfo = {
+                    id: rowsB[0].id,
+                    nome: rowsB[0].nome,
+                    logo: rowsB[0].avatar_time_url || null
+                };
+            }
+        }
+
         res.status(200).json({
             sessao: {
                 id: sessao.id,
@@ -10382,7 +10411,11 @@ async function buscarSessaoVetosPorToken(req, res) {
                 sorteio_realizado: sessao.sorteio_realizado || false,
                 partida_id: sessao.partida_id || null
             },
-            acoes: acoes
+            acoes: acoes,
+            times: {
+                time_a: timeAInfo,
+                time_b: timeBInfo
+            }
         });
     } catch (error) {
         console.error('Erro ao buscar sessão de vetos:', error);

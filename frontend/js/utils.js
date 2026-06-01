@@ -7,7 +7,23 @@ const API_URL = 'https://mixcamp-production.up.railway.app/api/v1';
 
 let _csrfToken = null;
 let _authCache = null;
+let _rateLimitedUntil = 0;
 const _nativeFetch = window.fetch.bind(window);
+
+function isApiRateLimited() {
+    return Date.now() < _rateLimitedUntil;
+}
+
+function markApiRateLimited(response) {
+    const retryAfter = response?.headers?.get?.('Retry-After');
+    const waitMs = retryAfter
+        ? Math.max(parseInt(retryAfter, 10) || 1, 1) * 1000
+        : 60000;
+    _rateLimitedUntil = Math.max(_rateLimitedUntil, Date.now() + waitMs);
+}
+
+window.isApiRateLimited = isApiRateLimited;
+window.markApiRateLimited = markApiRateLimited;
 
 function setAuthCache(data) {
     if (data && typeof data === 'object') _authCache = data;
@@ -63,7 +79,6 @@ function applyCsrfFromAuthData(data) {
 function apiFetch(url, options = {}) {
     const method = (options.method || 'GET').toUpperCase();
     const headers = new Headers(options.headers || {});
-    const maxRetries = method === 'GET' ? 2 : 0;
 
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && _csrfToken) {
         headers.set('X-CSRF-Token', _csrfToken);
@@ -75,28 +90,26 @@ function apiFetch(url, options = {}) {
         headers
     };
 
-    return (async () => {
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            const res = await _nativeFetch(url, fetchOptions);
+    if (isApiRateLimited()) {
+        return Promise.resolve(new Response(null, { status: 429, statusText: 'Too Many Requests' }));
+    }
 
-            if (res.status !== 429 || attempt >= maxRetries) {
-                if (url.includes('/dashboard') && res.ok) {
-                    try {
-                        const data = await res.clone().json();
-                        applyCsrfFromAuthData(data);
-                        setAuthCache(data);
-                    } catch (_) { /* ignore */ }
-                }
-                return res;
-            }
-
-            const retryAfter = res.headers.get('Retry-After');
-            const waitMs = retryAfter
-                ? Math.max(parseInt(retryAfter, 10) || 1, 1) * 1000
-                : Math.min(1000 * Math.pow(2, attempt), 5000);
-            await new Promise((resolve) => setTimeout(resolve, waitMs));
+    return _nativeFetch(url, fetchOptions).then((res) => {
+        if (res.status === 429) {
+            markApiRateLimited(res);
+            return res;
         }
-    })();
+        if (url.includes('/dashboard') && res.ok) {
+            try {
+                const dataPromise = res.clone().json();
+                dataPromise.then((data) => {
+                    applyCsrfFromAuthData(data);
+                    setAuthCache(data);
+                }).catch(() => { /* ignore */ });
+            } catch (_) { /* ignore */ }
+        }
+        return res;
+    });
 }
 
 window.fetch = function (input, init = {}) {
@@ -1454,4 +1467,6 @@ document.addEventListener('DOMContentLoaded', function () {
 addScrollProgress();
 
 document.addEventListener('DOMContentLoaded', verificarTimeUsuario);
-setInterval(verificarNovasNotificacoes, 30000);
+if (!/\/vetos\.html$/i.test(window.location.pathname)) {
+    setInterval(verificarNovasNotificacoes, 30000);
+}

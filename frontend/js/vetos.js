@@ -8,7 +8,193 @@ let imagensMapas = {};
 let intervaloAtualizacao = null;
 let intervaloRoleta = null;
 let roletaGirando = false;
-let roletaIniciadaEm = null; // Timestamp de quando a roleta começou a girar
+let roletaIniciadaEm = null;
+
+const INTERVALO_POLL_MS = 8000;
+const INTERVALO_ROleta_MS = 3000;
+const LOGO_TIME_PADRAO = 'https://cdn-icons-png.flaticon.com/128/5726/5726775.png';
+const IMGMAP_CACHE_KEY = 'mixcamp_vetos_imgmap';
+const cacheTimesVetos = new Map();
+let ultimoFingerprintSessao = '';
+let pollEmAndamento = false;
+let carregamentoIniciado = false;
+
+function roletaEstaGirandoAgora() {
+    const roleta = document.getElementById('roleta');
+    return roletaGirando ||
+        (roleta && roleta.classList.contains('girando')) ||
+        (roleta && roleta.hasAttribute('data-roleta-protegida'));
+}
+
+function pararPolling() {
+    if (intervaloAtualizacao) {
+        clearInterval(intervaloAtualizacao);
+        intervaloAtualizacao = null;
+    }
+}
+
+function iniciarPolling() {
+    if (intervaloAtualizacao) return;
+    intervaloAtualizacao = setInterval(tickPolling, INTERVALO_POLL_MS);
+}
+
+function fingerprintSessao(data) {
+    const s = data?.sessao || {};
+    const acoes = (data?.acoes || [])
+        .map((a) => `${a.ordem}:${a.mapa}:${a.acao}:${a.lado_inicial || ''}`)
+        .join('|');
+    return [
+        s.status,
+        s.turno_atual,
+        s.pode_jogar,
+        s.sorteio_realizado,
+        s.time_a_pronto,
+        s.time_b_pronto,
+        acoes
+    ].join(';');
+}
+
+function aplicarTimesDaSessao(data) {
+    if (!data?.sessao) return;
+    const s = data.sessao;
+    if (data.times?.time_a && s.time_a_id) {
+        cacheTimesVetos.set(Number(s.time_a_id), {
+            id: s.time_a_id,
+            nome: data.times.time_a.nome || 'Time A',
+            logo: data.times.time_a.logo || LOGO_TIME_PADRAO
+        });
+    }
+    if (data.times?.time_b && s.time_b_id) {
+        cacheTimesVetos.set(Number(s.time_b_id), {
+            id: s.time_b_id,
+            nome: data.times.time_b.nome || 'Time B',
+            logo: data.times.time_b.logo || LOGO_TIME_PADRAO
+        });
+    }
+}
+
+async function garantirCacheTimes() {
+    aplicarTimesDaSessao(sessaoVetos);
+    const timeAId = sessaoVetos?.sessao?.time_a_id;
+    const timeBId = sessaoVetos?.sessao?.time_b_id;
+    const temA = !timeAId || cacheTimesVetos.has(Number(timeAId));
+    const temB = !timeBId || cacheTimesVetos.has(Number(timeBId));
+    if (temA && temB) return;
+    if (typeof isApiRateLimited === 'function' && isApiRateLimited()) return;
+
+    try {
+        const response = await fetch(`${API_URL}/times/list`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (response.status === 429) {
+            if (typeof markApiRateLimited === 'function') markApiRateLimited(response);
+            return;
+        }
+        if (!response.ok) return;
+        const data = await response.json();
+        const lista = Array.isArray(data.dados) ? data.dados : [];
+        for (const t of lista) {
+            cacheTimesVetos.set(Number(t.id), {
+                id: t.id,
+                nome: t.nome || `Time #${t.id}`,
+                logo: t.avatar_time_url || LOGO_TIME_PADRAO
+            });
+        }
+    } catch (_) { /* ignore */ }
+}
+
+function getTimeDoCache(timeId, fallbackNome) {
+    if (!timeId) return null;
+    return cacheTimesVetos.get(Number(timeId)) || {
+        id: timeId,
+        nome: fallbackNome,
+        logo: LOGO_TIME_PADRAO
+    };
+}
+
+async function tickPolling() {
+    if (roletaEstaGirandoAgora() || pollEmAndamento) return;
+    if (typeof isApiRateLimited === 'function' && isApiRateLimited()) return;
+
+    pollEmAndamento = true;
+    try {
+        const mudou = await atualizarSessao();
+        if (!sessaoVetos) return;
+
+        const status = sessaoVetos.sessao?.status;
+        if (status === 'finalizado') {
+            pararPolling();
+            await renderizarInterface();
+            return;
+        }
+
+        if (mudou && status === 'em_andamento') {
+            await renderizarInterface();
+            verificarModalCTTR();
+        }
+    } finally {
+        pollEmAndamento = false;
+    }
+}
+
+async function carregarImagensMapas() {
+    try {
+        const cached = sessionStorage.getItem(IMGMAP_CACHE_KEY);
+        if (cached) {
+            imagensMapas = JSON.parse(cached);
+            return;
+        }
+    } catch (_) { /* ignore */ }
+
+    if (typeof isApiRateLimited === 'function' && isApiRateLimited()) {
+        imagensMapas = {};
+        return;
+    }
+
+    const response = await fetch(`${API_URL}/imgmap`);
+    if (response.status === 429) {
+        if (typeof markApiRateLimited === 'function') markApiRateLimited(response);
+        imagensMapas = {};
+        return;
+    }
+    if (!response.ok) {
+        imagensMapas = {};
+        return;
+    }
+
+    const dataImagens = await response.json();
+    if (dataImagens && Array.isArray(dataImagens) && dataImagens.length > 0) {
+        imagensMapas = dataImagens[0];
+    } else if (dataImagens && typeof dataImagens === 'object' && !Array.isArray(dataImagens)) {
+        imagensMapas = dataImagens;
+    } else {
+        imagensMapas = {};
+    }
+
+    try {
+        sessionStorage.setItem(IMGMAP_CACHE_KEY, JSON.stringify(imagensMapas));
+    } catch (_) { /* ignore */ }
+}
+
+async function processarEstadoPosAtualizacao(data) {
+    if (data.sessao?.status === 'finalizado') {
+        pararPolling();
+        const partidaId = data.sessao.partida_id;
+        if (partidaId) {
+            setTimeout(() => {
+                window.location.href = `resultado.html?id=${partidaId}`;
+            }, 2000);
+        }
+        return;
+    }
+
+    if (data.sessao && !data.sessao.sorteio_realizado) {
+        mostrarModalRoleta();
+        atualizarStatusRoleta();
+    }
+}
 
 // Carregar dados iniciais
 async function carregarDados() {
@@ -16,181 +202,72 @@ async function carregarDados() {
         mostrarErro('Token não encontrado na URL');
         return;
     }
+    if (carregamentoIniciado) return;
+    carregamentoIniciado = true;
 
     try {
-        // Carregar imagens dos mapas
-        const responseImagens = await fetch(`${API_URL}/imgmap`);
-        const dataImagens = await responseImagens.json();
-        
-        console.log('Dados de imagens recebidos:', dataImagens);
-        
-        if (dataImagens && Array.isArray(dataImagens) && dataImagens.length > 0) {
-            imagensMapas = dataImagens[0]; // Pega o primeiro registro
-        } else if (dataImagens && typeof dataImagens === 'object' && !Array.isArray(dataImagens)) {
-            imagensMapas = dataImagens;
-        } else {
-            console.warn('Formato de dados de imagens não reconhecido');
-            imagensMapas = {};
-        }
-        
-        console.log('Imagens de mapas processadas:', imagensMapas);
+        await carregarImagensMapas();
 
-        // Carregar sessão de vetos
-        await atualizarSessao();
-        
-        // Se a sessão já foi carregada, renderizar novamente com as imagens
-        if (sessaoVetos) {
-            renderizarMapas();
+        if (typeof isApiRateLimited === 'function' && isApiRateLimited()) {
+            mostrarErro('Muitas requisições. Aguarde cerca de 1 minuto e recarregue a página.');
+            return;
         }
-        
-        // Iniciar atualização automática
-        // Mas não atualizar se a roleta estiver girando
-        console.log('🚀 Iniciando intervalo de atualização automática');
-        intervaloAtualizacao = setInterval(async () => {
-            // Não atualizar sessão se a roleta estiver girando
-            const roleta = document.getElementById('roleta');
-            const roletaEstaGirando = roletaGirando || 
-                                     (roleta && roleta.classList.contains('girando')) ||
-                                     (roleta && roleta.hasAttribute('data-roleta-protegida'));
-            
-            if (roletaEstaGirando) {
-                return;
-            }
-            
-            await atualizarSessao();
-            
-            // Verificar se há picks pendentes de escolha CT/TR
-            if (sessaoVetos && sessaoVetos.acoes) {
-                const picksPendentes = sessaoVetos.acoes.filter(a => 
-                    a.acao === 'pick' && !a.lado_inicial
-                );
-                if (picksPendentes.length > 0) {
-                    verificarModalCTTR();
-                }
-            }
-            
-            // SEMPRE renderizar se a sessão estiver em andamento ou tiver ações
-            // Isso garante que todas as mudanças sejam visíveis automaticamente
-            const status = sessaoVetos?.sessao?.status;
-            const acoesCount = sessaoVetos?.acoes?.length || 0;
-            
-            if (status === 'em_andamento' || acoesCount > 0) {
-                console.log('🎨 Renderizando interface (intervalo principal):', { 
-                    status, 
-                    acoesCount,
-                    turno_atual: sessaoVetos?.sessao?.turno_atual,
-                    pode_jogar: sessaoVetos?.sessao?.pode_jogar
-                });
-                renderizarInterface();
-            }
-        }, 2000); // Atualiza a cada 2 segundos
+
+        await atualizarSessao();
+        await garantirCacheTimes();
+
+        if (sessaoVetos) {
+            await renderizarInterface();
+        }
+
+        if (sessaoVetos?.sessao?.status === 'em_andamento') {
+            iniciarPolling();
+        }
     } catch (error) {
         console.error('Erro ao carregar dados:', error);
         mostrarErro('Erro ao carregar dados');
     }
 }
 
-// Atualizar sessão de vetos
+// Atualizar sessão de vetos (sem re-render automático; retorna true se o estado mudou)
 async function atualizarSessao() {
     try {
+        if (typeof isApiRateLimited === 'function' && isApiRateLimited()) {
+            return false;
+        }
+
         const response = await fetch(`${API_URL}/vetos/sessao/${token}`);
-        
+
+        if (response.status === 429) {
+            if (typeof markApiRateLimited === 'function') markApiRateLimited(response);
+            pararPolling();
+            return false;
+        }
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-            mostrarErro(errorData.message || `Erro ${response.status}: ${response.statusText}`);
-            return;
+            if (response.status !== 404) {
+                mostrarErro(errorData.message || `Erro ${response.status}: ${response.statusText}`);
+            }
+            return false;
         }
-        
+
         const data = await response.json();
+        const fp = fingerprintSessao(data);
+        const mudou = fp !== ultimoFingerprintSessao;
+        ultimoFingerprintSessao = fp;
         sessaoVetos = data;
-        
-        console.log('📥 Dados da sessão atualizados:', {
-            turno_atual: data.sessao?.turno_atual,
-            pode_jogar: data.sessao?.pode_jogar,
-            status: data.sessao?.status,
-            acoes_count: data.acoes?.length || 0,
-            acoes: data.acoes?.map(a => `${a.mapa} (${a.acao})`) || []
-        });
-        
-        // Se a sessão foi finalizada (BO1 completo), mostrar mensagem
-        if (data.sessao_finalizada && data.mapa_final) {
-            const nomeMapaFinal = data.mapa_final.charAt(0).toUpperCase() + data.mapa_final.slice(1);
-            console.log(`Sessão finalizada! Mapa do jogo: ${nomeMapaFinal}`);
-        }
-        
-        // Verificar se a sessão foi finalizada e redirecionar para página de resultado
-        if (data.sessao && data.sessao.status === 'finalizado') {
-            const partidaId = data.sessao.partida_id;
-            if (partidaId) {
-                console.log('🔄 Vetos finalizados! Redirecionando para página de resultado. Partida ID:', partidaId);
-                // Aguardar 2 segundos para o usuário ver que finalizou antes de redirecionar
-                setTimeout(() => {
-                    window.location.href = `resultado.html?id=${partidaId}`;
-                }, 2000);
-                return; // Sair da função para não continuar processando
-            } else {
-                console.log('⚠️ Sessão finalizada mas partida_id não encontrado');
-            }
-        }
-        
-        // Verificar se precisa mostrar o modal da roleta
-        if (data.sessao && !data.sessao.sorteio_realizado) {
-            mostrarModalRoleta();
-            atualizarStatusRoleta(); // Atualizar status sem recarregar sessão
-        } else if (data.sessao && data.sessao.sorteio_realizado) {
-            // Se o sorteio foi realizado, NÃO fazer nada se a roleta já está girando
-            // Isso evita reiniciar a animação
-            const roleta = document.getElementById('roleta');
-            const roletaEstaGirando = roletaGirando || 
-                                     (roleta && roleta.classList.contains('girando')) ||
-                                     (roleta && roleta.hasAttribute('data-roleta-protegida'));
-            
-            if (!roletaEstaGirando) {
-                // Se ainda não está girando, SEMPRE renderizar interface
-                // Isso garante que as atualizações sejam visíveis
-                console.log('🎨 Renderizando interface após atualizar sessão (sorteio realizado)');
-                renderizarInterface();
-            }
-            // Se já está girando, não fazer nada - deixar a animação continuar
-        } else {
-            // Se não há roleta ou sorteio já foi realizado, sempre renderizar
-            console.log('🎨 Renderizando interface após atualizar sessão (sem roleta)');
-            renderizarInterface();
-        }
+        aplicarTimesDaSessao(data);
+
+        await processarEstadoPosAtualizacao(data);
+        return mudou;
     } catch (error) {
         console.error('Erro ao atualizar sessão:', error);
-        mostrarErro('Erro de conexão. Verifique se o servidor está rodando.');
+        return false;
     }
 }
 
-// Buscar dados de um time por ID
-async function buscarTimePorId(timeId) {
-    if (!timeId) return null;
-    
-    try {
-        const response = await fetch(`${API_URL}/times/${timeId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            return null;
-        }
-
-        const data = await response.json();
-        return {
-            id: timeId,
-            nome: data.time?.nome || 'Time',
-            logo: data.time?.avatar_time_url || 'https://cdn-icons-png.flaticon.com/128/5726/5726775.png'
-        };
-    } catch (error) {
-        console.error('Erro ao buscar time:', error);
-        return null;
-    }
-}
-
-// Atualizar header com informações dos times
+// Atualizar header com informações dos times (somente cache — sem GET /times/:id)
 async function atualizarHeaderTimes() {
     if (!sessaoVetos || !sessaoVetos.sessao) return;
 
@@ -205,35 +282,20 @@ async function atualizarHeaderTimes() {
     const timeAId = sessaoVetos.sessao.time_a_id;
     const timeBId = sessaoVetos.sessao.time_b_id;
 
-    // Se não houver IDs dos times, esconder o header
     if (!timeAId || !timeBId) {
         vetosTimesHeader.style.display = 'none';
         return;
     }
 
-    // Buscar dados dos times
-    const [timeA, timeB] = await Promise.all([
-        buscarTimePorId(timeAId),
-        buscarTimePorId(timeBId)
-    ]);
+    await garantirCacheTimes();
 
-    if (timeA) {
-        vetosTimeALogo.src = timeA.logo;
-        vetosTimeANome.textContent = timeA.nome;
-    } else {
-        vetosTimeALogo.src = 'https://cdn-icons-png.flaticon.com/128/5726/5726775.png';
-        vetosTimeANome.textContent = 'Time A';
-    }
+    const timeA = getTimeDoCache(timeAId, 'Time A');
+    const timeB = getTimeDoCache(timeBId, 'Time B');
 
-    if (timeB) {
-        vetosTimeBLogo.src = timeB.logo;
-        vetosTimeBNome.textContent = timeB.nome;
-    } else {
-        vetosTimeBLogo.src = 'https://cdn-icons-png.flaticon.com/128/5726/5726775.png';
-        vetosTimeBNome.textContent = 'Time B';
-    }
-
-    // Mostrar o header
+    vetosTimeALogo.src = timeA.logo;
+    vetosTimeANome.textContent = timeA.nome;
+    vetosTimeBLogo.src = timeB.logo;
+    vetosTimeBNome.textContent = timeB.nome;
     vetosTimesHeader.style.display = 'flex';
 }
 
@@ -243,14 +305,13 @@ async function renderizarInterface() {
 
     // Verificar se a sessão foi finalizada e redirecionar
     if (sessaoVetos.sessao && sessaoVetos.sessao.status === 'finalizado') {
+        pararPolling();
         const partidaId = sessaoVetos.sessao.partida_id;
         if (partidaId) {
-            console.log('🔄 Vetos finalizados! Redirecionando para página de resultado. Partida ID:', partidaId);
-            // Aguardar 2 segundos para o usuário ver que finalizou antes de redirecionar
             setTimeout(() => {
                 window.location.href = `resultado.html?id=${partidaId}`;
             }, 2000);
-            return; // Sair da função para não continuar renderizando
+            return;
         }
     }
 
@@ -334,22 +395,16 @@ let logosTimesCache = {
 // Buscar logos dos times e cachear
 async function buscarLogosTimes() {
     if (!sessaoVetos || !sessaoVetos.sessao) return;
-    
+
+    await garantirCacheTimes();
     const timeAId = sessaoVetos.sessao.time_a_id;
     const timeBId = sessaoVetos.sessao.time_b_id;
-    
-    if (timeAId && !logosTimesCache.time_a) {
-        const timeA = await buscarTimePorId(timeAId);
-        if (timeA) {
-            logosTimesCache.time_a = timeA.logo;
-        }
+
+    if (timeAId) {
+        logosTimesCache.time_a = getTimeDoCache(timeAId, 'Time A').logo;
     }
-    
-    if (timeBId && !logosTimesCache.time_b) {
-        const timeB = await buscarTimePorId(timeBId);
-        if (timeB) {
-            logosTimesCache.time_b = timeB.logo;
-        }
+    if (timeBId) {
+        logosTimesCache.time_b = getTimeDoCache(timeBId, 'Time B').logo;
     }
 }
 
@@ -618,22 +673,16 @@ function renderizarAcoes() {
 // Realizar ação (pick/ban)
 // Tornar função global para ser acessível via onclick
 window.realizarAcao = async function realizarAcao(mapa, acao) {
-    console.log('🎯 realizarAcao chamada:', { mapa, acao, pode_jogar: sessaoVetos?.sessao?.pode_jogar });
-    
     if (!sessaoVetos || !sessaoVetos.sessao || !sessaoVetos.sessao.pode_jogar) {
-        console.log('❌ Não é o turno do jogador');
         alert('Não é o seu turno!');
         showNotification('error', 'Não é o seu turno!');
         return;
     }
 
-    // Verificar se a ação está correta para a ordem atual
     const acoes = sessaoVetos.acoes || [];
     const ordemAtual = acoes.length + 1;
     const acaoEsperada = determinarProximaAcao(sessaoVetos.sessao.formato, ordemAtual);
-    
-    console.log('📋 Verificação de ação:', { ordemAtual, acaoEsperada, acao });
-    
+
     if (acao !== acaoEsperada) {
         alert(`Ação incorreta! Você deve fazer ${acaoEsperada === 'pick' ? 'PICK' : 'VETO'} agora.`);
         showNotification('error', `Ação incorreta! Você deve fazer ${acaoEsperada === 'pick' ? 'PICK' : 'VETO'} agora.`);
@@ -646,8 +695,6 @@ window.realizarAcao = async function realizarAcao(mapa, acao) {
     if (!confirmou) return;
 
     try {
-        console.log('📤 Enviando ação para o backend:', { token, mapa, acao });
-        
         const response = await fetch(`${API_URL}/vetos/acao`, {
             method: 'POST',
             headers: {
@@ -659,8 +706,6 @@ window.realizarAcao = async function realizarAcao(mapa, acao) {
                 acao
             })
         });
-
-        console.log('📥 Resposta recebida:', { status: response.status, ok: response.ok });
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -674,75 +719,25 @@ window.realizarAcao = async function realizarAcao(mapa, acao) {
             return;
         }
 
-        const data = await response.json();
-        console.log('✅ Ação realizada com sucesso:', data);
-
-        console.log('📊 Próximo turno:', data.proximo_turno);
+        await response.json();
         showNotification('success', `Ação realizada com sucesso: ${textoAcao} o mapa ${mapa.toUpperCase()}`);
 
-        // Atualizar sessão imediatamente para pegar o novo turno
         await atualizarSessao();
-        
-        // Se foi um pick, verificar se o outro time precisa escolher CT/TR (exceto decider)
-        if (acao === 'pick') {
-            // Verificar se é decider antes de mostrar modal
-            await atualizarSessao();
-            const acoes = sessaoVetos?.acoes || [];
-            const formato = sessaoVetos?.sessao?.formato;
-            const status = sessaoVetos?.sessao?.status;
-            
-            // Buscar a ação de pick que acabou de ser feita
-            const acaoPickAtual = acoes.find(a => a.mapa === mapa && a.acao === 'pick');
-            if (acaoPickAtual) {
-                // Verificar se é decider usando a função auxiliar
-                const isDecider = isMapaDecider(mapa, acaoPickAtual, formato, acoes, status);
-                
-                // Só verificar CT/TR se NÃO for decider
-                if (!isDecider) {
-                    setTimeout(async () => {
-                        await atualizarSessao();
-                        verificarEscolhaCTTR(mapa);
-                    }, 1000);
-                }
+        await renderizarInterface();
+
+        if (acao === 'pick' && sessaoVetos?.sessao?.status === 'em_andamento') {
+            const acoesAtualizadas = sessaoVetos.acoes || [];
+            const acaoPickAtual = acoesAtualizadas.find((a) => a.mapa === mapa && a.acao === 'pick');
+            if (acaoPickAtual && !isMapaDecider(mapa, acaoPickAtual, sessaoVetos.sessao.formato, acoesAtualizadas, sessaoVetos.sessao.status)) {
+                setTimeout(() => verificarEscolhaCTTR(mapa), 800);
             }
         }
-        console.log('🔄 Sessão atualizada após ação');
-        console.log('📊 Turno atual na sessão:', sessaoVetos?.sessao?.turno_atual);
-        console.log('🎮 Pode jogar:', sessaoVetos?.sessao?.pode_jogar);
-        
-        // Renderizar interface novamente para atualizar visualmente
-        await renderizarInterface();
-        console.log('🎨 Interface renderizada após ação');
-        
-        // Garantir que o intervalo de atualização está rodando para o outro time ver
-        if (!intervaloAtualizacao) {
-            console.log('🔄 Reiniciando intervalo de atualização');
-            intervaloAtualizacao = setInterval(async () => {
-                // Não atualizar sessão se a roleta estiver girando
-                const roleta = document.getElementById('roleta');
-                const roletaEstaGirando = roletaGirando || 
-                                         (roleta && roleta.classList.contains('girando')) ||
-                                         (roleta && roleta.hasAttribute('data-roleta-protegida'));
-                
-                if (roletaEstaGirando) {
-                    return;
-                }
-                
-                await atualizarSessao();
-                
-                // SEMPRE renderizar se a sessão estiver em andamento
-                // Isso garante que todas as mudanças sejam visíveis
-                const status = sessaoVetos?.sessao?.status;
-                const acoesCount = sessaoVetos?.acoes?.length || 0;
-                
-                if (status === 'em_andamento' || acoesCount > 0) {
-                    console.log('🎨 Renderizando interface (intervalo após ação)');
-                    renderizarInterface();
-                }
-            }, 2000);
+
+        if (sessaoVetos?.sessao?.status === 'em_andamento') {
+            iniciarPolling();
         }
     } catch (error) {
-        console.error('❌ Erro ao realizar ação:', error);
+        console.error('Erro ao realizar ação:', error);
         alert('Erro ao realizar ação: ' + error.message);
     }
 }
@@ -761,8 +756,9 @@ function mostrarErro(mensagem) {
 
 // Limpar intervalo ao sair da página
 window.addEventListener('beforeunload', () => {
-    if (intervaloAtualizacao) {
-        clearInterval(intervaloAtualizacao);
+    pararPolling();
+    if (intervaloRoleta) {
+        clearInterval(intervaloRoleta);
     }
 });
 
@@ -805,44 +801,22 @@ function mostrarModalRoleta() {
     // Atualizar mais frequentemente para que ambos os times vejam quando o outro clica
     if (intervaloRoleta) clearInterval(intervaloRoleta);
     intervaloRoleta = setInterval(async () => {
-        // VERIFICAÇÃO CRÍTICA: NÃO fazer NADA se a roleta estiver girando
-        const roleta = document.getElementById('roleta');
-        const roletaEstaGirando = roletaGirando || 
-                                 (roleta && roleta.classList.contains('girando')) ||
-                                 (roleta && roleta.hasAttribute('data-roleta-protegida'));
-        
-        if (roletaEstaGirando) {
-            // Se a roleta estiver girando, SAIR IMEDIATAMENTE sem fazer nada
-            console.log('⏸️ Intervalo ignorado - roleta está girando');
-            return; // Sair da função imediatamente
-        }
-        
-        // Atualizar sessão apenas se a roleta NÃO estiver girando
-        await atualizarSessao();
-        
-        // Verificar novamente após atualizarSessao (pode ter mudado)
-        const aindaNaoEstaGirando = !roletaGirando && 
-                                   !(roleta && roleta.classList.contains('girando')) &&
-                                   !(roleta && roleta.hasAttribute('data-roleta-protegida'));
-        
-        // Se o sorteio foi realizado e a roleta ainda não está girando, iniciar animação
-        if (aindaNaoEstaGirando && sessaoVetos && sessaoVetos.sessao && sessaoVetos.sessao.sorteio_realizado) {
-            const btnClicarRoleta = document.getElementById('btnClicarRoleta');
-            
-            if (aindaNaoEstaGirando) {
-                // Esconder botão antes de iniciar animação
-                if (btnClicarRoleta) {
-                    btnClicarRoleta.style.display = 'none';
-                }
-                // Chamar diretamente - a função vai verificar novamente antes de iniciar
-                console.log('🎰 Intervalo iniciando animação da roleta');
-                girarRoleta(sessaoVetos.sessao.turno_atual);
-            }
-        }
-        
-        // Atualizar apenas o status visual (sem chamar girarRoleta novamente)
+        if (roletaEstaGirandoAgora()) return;
+        if (typeof isApiRateLimited === 'function' && isApiRateLimited()) return;
+
+        const mudou = await atualizarSessao();
         atualizarStatusRoleta();
-    }, 500); // Atualizar a cada 500ms para resposta mais rápida
+
+        if (
+            mudou &&
+            sessaoVetos?.sessao?.sorteio_realizado &&
+            !roletaEstaGirandoAgora()
+        ) {
+            const btnClicarRoleta = document.getElementById('btnClicarRoleta');
+            if (btnClicarRoleta) btnClicarRoleta.style.display = 'none';
+            girarRoleta(sessaoVetos.sessao.turno_atual);
+        }
+    }, INTERVALO_ROleta_MS);
 }
 
 // Esconder modal da roleta
@@ -860,40 +834,28 @@ function esconderModalRoleta() {
 // Atualizar avatares na roleta
 async function atualizarAvataresRoleta() {
     if (!sessaoVetos || !sessaoVetos.sessao) return;
-    
+
+    await garantirCacheTimes();
+
     const roletaTimeALogo = document.getElementById('roletaTimeALogo');
     const roletaTimeBLogo = document.getElementById('roletaTimeBLogo');
     const vetosTimeALogo = document.getElementById('vetosTimeALogo');
     const vetosTimeBLogo = document.getElementById('vetosTimeBLogo');
     const vetosTimeANome = document.getElementById('vetosTimeANome');
     const vetosTimeBNome = document.getElementById('vetosTimeBNome');
-    
+
     if (sessaoVetos.sessao.time_a_id) {
-        const timeA = await buscarTimePorId(sessaoVetos.sessao.time_a_id);
-        if (timeA && roletaTimeALogo) {
-            roletaTimeALogo.src = timeA.logo;
-        }
-        // Também atualizar header principal, se existir
-        if (timeA && vetosTimeALogo) {
-            vetosTimeALogo.src = timeA.logo;
-        }
-        if (timeA && vetosTimeANome) {
-            vetosTimeANome.textContent = timeA.nome || 'Time A';
-        }
+        const timeA = getTimeDoCache(sessaoVetos.sessao.time_a_id, 'Time A');
+        if (roletaTimeALogo) roletaTimeALogo.src = timeA.logo;
+        if (vetosTimeALogo) vetosTimeALogo.src = timeA.logo;
+        if (vetosTimeANome) vetosTimeANome.textContent = timeA.nome;
     }
-    
+
     if (sessaoVetos.sessao.time_b_id) {
-        const timeB = await buscarTimePorId(sessaoVetos.sessao.time_b_id);
-        if (timeB && roletaTimeBLogo) {
-            roletaTimeBLogo.src = timeB.logo;
-        }
-        // Também atualizar header principal, se existir
-        if (timeB && vetosTimeBLogo) {
-            vetosTimeBLogo.src = timeB.logo;
-        }
-        if (timeB && vetosTimeBNome) {
-            vetosTimeBNome.textContent = timeB.nome || 'Time B';
-        }
+        const timeB = getTimeDoCache(sessaoVetos.sessao.time_b_id, 'Time B');
+        if (roletaTimeBLogo) roletaTimeBLogo.src = timeB.logo;
+        if (vetosTimeBLogo) vetosTimeBLogo.src = timeB.logo;
+        if (vetosTimeBNome) vetosTimeBNome.textContent = timeB.nome;
     }
 }
 
@@ -941,52 +903,32 @@ function atualizarStatusRoleta() {
 
 // Girar a roleta
 async function girarRoleta(vencedor) {
-    // Verificar se já está girando ANTES de fazer qualquer coisa
-    if (roletaGirando) {
-        console.log('Roleta já está girando, ignorando chamada duplicada');
-        return;
-    }
-    
-    // Verificar se a roleta já tem a classe girando (animação CSS já iniciada)
+    if (roletaGirando) return;
+
     const roleta = document.getElementById('roleta');
     if (roleta && roleta.classList.contains('girando')) {
-        console.log('Roleta já tem classe girando, ignorando chamada duplicada');
-        roletaGirando = true; // Sincronizar flag com estado real
+        roletaGirando = true;
         return;
     }
-    
-    // Verificar se a roleta está protegida (animação em andamento)
+
     if (roleta && roleta.hasAttribute('data-roleta-protegida')) {
-        console.log('Roleta está protegida contra alterações, ignorando chamada duplicada');
         roletaGirando = true;
         return;
     }
-    
-    // Verificar se há uma rotação final já definida (animação já iniciada)
+
     if (roleta && roleta.hasAttribute('data-rotacao-final')) {
-        console.log('Roleta já tem rotação final definida, ignorando chamada duplicada');
         roletaGirando = true;
         return;
     }
-    
-    // Setar flag e timestamp imediatamente para evitar chamadas duplicadas
+
     roletaGirando = true;
-    roletaIniciadaEm = Date.now(); // Registrar quando a animação começou
-    
-    console.log('🔒 BLOQUEANDO todos os intervalos - roleta iniciando animação');
-    
-    // Parar TODOS os intervalos de atualização para não interferir na animação
+    roletaIniciadaEm = Date.now();
+
     if (intervaloRoleta) {
         clearInterval(intervaloRoleta);
         intervaloRoleta = null;
-        console.log('✅ Intervalo roleta parado');
     }
-    // Parar também o intervalo principal de atualização
-    if (intervaloAtualizacao) {
-        clearInterval(intervaloAtualizacao);
-        intervaloAtualizacao = null;
-        console.log('✅ Intervalo principal parado');
-    }
+    pararPolling();
     
     // Buscar elementos
     const btnClicarRoleta = document.getElementById('btnClicarRoleta');
@@ -1010,16 +952,13 @@ async function girarRoleta(vencedor) {
     const rotacaoExtra = Math.random() * 180; // Adicionar variação
     const rotacaoFinal = rotacaoBase + rotacaoExtra + 8640; // 24 voltas completas + rotação final (30 segundos)
     
-    console.log('Iniciando animação da roleta. Vencedor:', vencedor, 'Rotação final:', rotacaoFinal);
-    
     // Armazenar a rotação final em um atributo data para não ser alterada
     roleta.setAttribute('data-rotacao-final', rotacaoFinal.toString());
     roleta.setAttribute('data-roleta-protegida', 'true');
     
     // CRÍTICO: Não fazer NADA se a classe já estiver presente
     if (roleta.classList.contains('girando')) {
-        console.log('ERRO: Tentativa de reiniciar roleta que já está girando!');
-        return; // Sair imediatamente sem fazer nada
+        return;
     }
     
     // Definir a rotação final ANTES de qualquer manipulação visual
@@ -1033,17 +972,12 @@ async function girarRoleta(vencedor) {
     const handleAnimationEnd = (e) => {
         // Verificar se é a animação da roleta (não de outro elemento)
         if (e.target === roleta && e.animationName === 'girar') {
-            console.log('Animação da roleta terminou corretamente');
             roleta.removeEventListener('animationend', handleAnimationEnd);
         }
     };
-    
+
     roleta.addEventListener('animationend', handleAnimationEnd);
-    
-    // Log para debug
-    console.log('Animação iniciada. Classe girando:', roleta.classList.contains('girando'));
-    console.log('Rotação final definida:', roleta.style.getPropertyValue('--rotacao-final'));
-    
+
     // Após a animação (30 segundos), mostrar resultado
     setTimeout(async () => {
         // Buscar dados do time vencedor
@@ -1051,10 +985,10 @@ async function girarRoleta(vencedor) {
             ? sessaoVetos.sessao.time_a_id 
             : sessaoVetos.sessao.time_b_id;
         
-        let timeVencedor = null;
-        if (timeVencedorId) {
-            timeVencedor = await buscarTimePorId(timeVencedorId);
-        }
+        await garantirCacheTimes();
+        const timeVencedor = timeVencedorId
+            ? getTimeDoCache(timeVencedorId, vencedor === 'time_a' ? 'Time A' : 'Time B')
+            : null;
         
         // Mostrar resultado
         if (resultadoRoleta) {
@@ -1103,81 +1037,12 @@ async function girarRoleta(vencedor) {
                 roleta.classList.remove('girando');
             }
             
-            console.log('🧹 Limpeza completa da roleta:', {
-                roletaGirando,
-                temClasseGirando: roleta?.classList.contains('girando'),
-                temProtecao: roleta?.hasAttribute('data-roleta-protegida')
-            });
-            
-            // Atualizar sessão para pegar o status atualizado (em_andamento)
             await atualizarSessao();
-            renderizarInterface();
-            
-            // SEMPRE REINICIAR o intervalo de atualização após a roleta terminar
-            // Limpar o intervalo anterior se existir
-            if (intervaloAtualizacao) {
-                clearInterval(intervaloAtualizacao);
-                intervaloAtualizacao = null;
+            await renderizarInterface();
+
+            if (sessaoVetos?.sessao?.status === 'em_andamento') {
+                iniciarPolling();
             }
-            
-            // Criar novo intervalo IMEDIATAMENTE
-            console.log('🔄 Reiniciando intervalo de atualização após roleta');
-                intervaloAtualizacao = setInterval(async () => {
-                    console.log('⏰ Intervalo reiniciado rodando...');
-                    // Verificar se o modal ainda está aberto (mais confiável que verificar atributos)
-                    const modalRoleta = document.getElementById('modalRoleta');
-                    const modalAberto = modalRoleta && modalRoleta.style.display !== 'none' && modalRoleta.style.display !== '';
-                    
-                    // Se o modal estiver aberto, não atualizar (roleta ainda em andamento)
-                    if (modalAberto) {
-                        console.log('⏸️ Intervalo reiniciado pausado - modal da roleta ainda aberto');
-                        return;
-                    }
-                
-                console.log('🔄 Intervalo reiniciado - atualizando sessão...');
-                await atualizarSessao();
-                
-                // SEMPRE renderizar se a sessão estiver em andamento ou tiver ações
-                const status = sessaoVetos?.sessao?.status;
-                const acoesCount = sessaoVetos?.acoes?.length || 0;
-                
-                console.log('🔍 Verificando se deve renderizar:', { status, acoesCount });
-                
-                if (status === 'em_andamento' || acoesCount > 0) {
-                    console.log('🎨 Renderizando interface (reiniciado após roleta):', { 
-                        status, 
-                        acoesCount,
-                        turno_atual: sessaoVetos?.sessao?.turno_atual,
-                        pode_jogar: sessaoVetos?.sessao?.pode_jogar
-                    });
-                    renderizarInterface();
-                } else {
-                    console.log('⏭️ Não renderizando - status:', status, 'acoes:', acoesCount);
-                }
-            }, 2000); // Atualiza a cada 2 segundos
-            
-            // Executar uma atualização IMEDIATA para não esperar os 2 segundos
-            console.log('🚀 Executando atualização imediata após reiniciar intervalo');
-            setTimeout(async () => {
-                // Verificar se o modal ainda está aberto
-                const modalRoleta = document.getElementById('modalRoleta');
-                const modalAberto = modalRoleta && modalRoleta.style.display !== 'none';
-                
-                // Se o modal estiver fechado, pode atualizar
-                if (!modalAberto) {
-                    console.log('🔄 Atualização imediata - modal fechado, atualizando...');
-                    await atualizarSessao();
-                    const status = sessaoVetos?.sessao?.status;
-                    const acoesCount = sessaoVetos?.acoes?.length || 0;
-                    
-                    if (status === 'em_andamento' || acoesCount > 0) {
-                        console.log('🎨 Renderizando interface (atualização imediata)');
-                        renderizarInterface();
-                    }
-                } else {
-                    console.log('⏸️ Atualização imediata pausada - modal ainda aberto');
-                }
-            }, 500); // Executar após 500ms
         }, 5000);
     }, 30000); // 30 segundos de animação
 }
@@ -1188,7 +1053,6 @@ async function clicarRoleta() {
     
     // Bloquear espectadores
     if (sessaoVetos?.sessao?.is_spectator === true) {
-        console.log('Espectadores não podem clicar na roleta');
         return;
     }
     
@@ -1384,15 +1248,8 @@ async function salvarEscolhaCTTR(mapa, lado) {
         const modal = document.getElementById('modalCTTR');
         if (modal) modal.style.display = 'none';
         
-        // Atualizar sessão e renderizar imediatamente
         await atualizarSessao();
         await renderizarInterface();
-        
-        // Forçar atualização rápida para garantir que o card mostre a escolha
-        setTimeout(async () => {
-            await atualizarSessao();
-            await renderizarInterface();
-        }, 500);
     } catch (error) {
         console.error('Erro ao salvar escolha CT/TR:', error);
         alert('Erro ao salvar escolha');
