@@ -9,15 +9,78 @@ function logChampionDebug(etapa, payload = {}) {
     // debug desativado em produção
 }
 
+async function fetchJsonSafe(url, fallback = null) {
+    try {
+        if (typeof isApiRateLimited === 'function' && isApiRateLimited()) {
+            return fallback;
+        }
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (response.status === 429) {
+            if (typeof markApiRateLimited === 'function') markApiRateLimited(response);
+            return fallback;
+        }
+        if (!response.ok) return fallback;
+        const text = await response.text();
+        if (!text || !text.trim()) return fallback;
+        return JSON.parse(text);
+    } catch (error) {
+        console.error('fetchJsonSafe:', url, error);
+        return fallback;
+    }
+}
+
+let timesListCacheMap = null;
+let timesListCacheAt = 0;
+const TIMES_LIST_CACHE_MS = 60000;
+
+async function carregarMapaTimes() {
+    const agora = Date.now();
+    if (timesListCacheMap && (agora - timesListCacheAt) < TIMES_LIST_CACHE_MS) {
+        return timesListCacheMap;
+    }
+    const data = await fetchJsonSafe(`${API_URL}/times/list`, { dados: [] });
+    const lista = Array.isArray(data?.dados) ? data.dados : (Array.isArray(data?.times) ? data.times : []);
+    timesListCacheMap = new Map(lista.map((t) => [Number(t.id), t]));
+    timesListCacheAt = agora;
+    return timesListCacheMap;
+}
+
+async function resolverTimesPorIds(timeIds) {
+    if (!timeIds?.length) return [];
+    const mapa = await carregarMapaTimes();
+    return timeIds.map((timeId) => {
+        const time = mapa.get(Number(timeId));
+        if (!time) {
+            return { id: timeId, nome: `Time #${timeId}`, logo: null };
+        }
+        return {
+            id: timeId,
+            nome: time.nome || `Time #${timeId}`,
+            logo: time.avatar_time_url || null
+        };
+    });
+}
+
+function restaurarBotaoConfirmarResultado() {
+    const btn = document.getElementById('btnConfirmarMD3');
+    if (!btn) return;
+    btn.style.pointerEvents = 'auto';
+    btn.style.opacity = '1';
+    btn.textContent = 'Confirmar';
+    btn.disabled = false;
+}
+
 // =================================
 // ========= POSITION IMAGES =======
 // =================================
 
 // Função para buscar imagens de posições do banco de dados
 async function buscarImgPosition() {
-    const response = await fetch(`${API_URL}/positionimg`);
-    const data = await response.json();
-    return data;
+    return fetchJsonSafe(`${API_URL}/positionimg`, []);
 }
 
 // Função para obter imagem de posição (síncrona - usa cache)
@@ -185,14 +248,7 @@ async function buscarDadosTrofeu(trofeuId) {
 
 // Função para buscar dados do campeonato
 async function getCardDados() {
-    try {
-        const response = await fetch(`${API_URL}/inscricoes/campeonato`);
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Erro ao buscar dados do campeonato:', error);
-        return { inscricoes: [] };
-    }
+    return fetchJsonSafe(`${API_URL}/inscricoes/campeonato`, { inscricoes: [] });
 }
 
 // Função para buscar um campeonato específico por id
@@ -948,14 +1004,26 @@ async function salvarResultadoPartidaNoBanco(chaveamentoId, matchId, timeVencedo
             body: JSON.stringify(body)
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Erro ao salvar resultado');
+        if (response.status === 429) {
+            if (typeof markApiRateLimited === 'function') markApiRateLimited(response);
+            throw new Error('Servidor ocupado (429). Aguarde e tente novamente.');
         }
 
-        const data = await response.json();
+        if (!response.ok) {
+            let msg = 'Erro ao salvar resultado';
+            try {
+                const text = await response.text();
+                if (text?.trim()) {
+                    const error = JSON.parse(text);
+                    msg = error.error || msg;
+                }
+            } catch (_) { /* corpo vazio ou não-JSON */ }
+            throw new Error(msg);
+        }
 
-        return data;
+        const text = await response.text();
+        if (!text?.trim()) return {};
+        return JSON.parse(text);
     } catch (error) {
         console.error('Erro ao salvar resultado:', error);
         throw error;
@@ -4777,29 +4845,13 @@ window.addEventListener('load', () => {
             const apiUrl = window.API_URL || API_URL_DEFAULT;
 
             try {
-                // Buscar IDs dos times inscritos
-                const response = await fetch(`${API_URL}/inscricoes/times`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Erro ao buscar times inscritos');
-                }
-
-                const data = await response.json();
-                const times_inscritos = [];
-
-                // Filtrar times do campeonato atual
-                for (let i = 0; i < data.inscricoes.length; i++) {
-                    if (data.inscricoes[i].inscricao_id == campeonatoId) {
-                        times_inscritos.push(data.inscricoes[i].time_id);
-                    }
-                }
+                const data = await fetchJsonSafe(`${API_URL}/inscricoes/times`, { inscricoes: [] });
+                const inscricoes = Array.isArray(data?.inscricoes) ? data.inscricoes : [];
+                const times_inscritos = inscricoes
+                    .filter((item) => String(item.inscricao_id) === String(campeonatoId))
+                    .map((item) => item.time_id);
 
                 if (times_inscritos.length === 0) {
-                    // Se não houver times inscritos, usar localStorage ou exemplo
                     const stored = JSON.parse(localStorage.getItem('cs2-teams') || '[]');
                     const teams = stored.length ? stored : Array.from({ length: 10 }, (_, i) => ({
                         nome: `Time ${i + 1}`,
@@ -4809,36 +4861,7 @@ window.addEventListener('load', () => {
                     return;
                 }
 
-                // Buscar informações de cada time
-                const promises = times_inscritos.map(async (timeId) => {
-                    try {
-                        const response = await fetch(`${API_URL}/times/${timeId}`, {
-                            method: 'GET',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'include'
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`Erro ao buscar time ${timeId}`);
-                        }
-
-                        const data = await response.json();
-                        return {
-                            id: timeId, // Incluir ID do time
-                            nome: data.time?.nome || 'Time',
-                            logo: data.time?.avatar_time_url || null
-                        };
-                    } catch (error) {
-                        console.error(`Erro ao buscar informações do time ${timeId}:`, error);
-                        return null;
-                    }
-                });
-
-                // Aguardar todas as requisições
-                const results = await Promise.all(promises);
-                const teams = results.filter(t => t !== null);
-
-                // Atualizar carrossel com os times reais
+                const teams = await resolverTimesPorIds(times_inscritos);
                 atualizarCarrossel(teams);
 
                 // Salvar no localStorage para uso futuro (incluindo IDs)
@@ -6426,16 +6449,14 @@ window.addEventListener('load', () => {
                             // Obter informações dos times do match box
                             const matchBox = document.querySelector(`[data-match-id="${matchId}"]`);
                             if (!matchBox) {
-                                console.warn('Match box não encontrado para:', matchId);
-                                return;
+                                throw new Error('Partida não encontrada na tela. Recarregue a página e tente novamente.');
                             }
 
                             const time1Row = matchBox.querySelector('.team-row[data-team="1"]');
                             const time2Row = matchBox.querySelector('.team-row[data-team="2"]');
 
                             if (!time1Row || !time2Row) {
-                                console.warn('Times não encontrados no match box:', matchId);
-                                return;
+                                throw new Error('Times da partida não encontrados. Recarregue a página.');
                             }
 
                             const time1Nome = time1Row.querySelector('.team-name')?.textContent;
@@ -6614,12 +6635,15 @@ window.addEventListener('load', () => {
                         }
                     } catch (error) {
                         console.error('Erro ao salvar resultado:', error);
-                        // Fallback para localStorage
+                        if (chaveamentoIdAtual) {
+                            throw error;
+                        }
                         try {
                             registrarResultadoLocal(matchId, resultado);
                             atualizarDisponibilidadeBotaoEmbaralhar();
                         } catch (e) {
                             console.error('Erro ao salvar no localStorage:', e);
+                            throw e;
                         }
                     }
                 },
@@ -7251,116 +7275,114 @@ window.addEventListener('load', () => {
                     const btnConfirmar = document.getElementById('btnConfirmarMD3');
                     if (btnConfirmar) {
                         btnConfirmar.addEventListener('click', async () => {
+                            const score1Input = document.getElementById('scoreTime1');
+                            const score2Input = document.getElementById('scoreTime2');
+
+                            if (!score1Input || !score2Input) return;
+
+                            const score1 = parseInt(score1Input.value, 10) || 0;
+                            const score2 = parseInt(score2Input.value, 10) || 0;
+
+                            const placarValido =
+                                (score1 === 2 && score2 === 0) || (score1 === 2 && score2 === 1) ||
+                                (score1 === 0 && score2 === 2) || (score1 === 1 && score2 === 2);
+
+                            if (!placarValido) {
+                                showNotification('error', 'Placar inválido! Deve ser 2x0 ou 2x1.');
+                                return;
+                            }
+
+                            if (typeof isApiRateLimited === 'function' && isApiRateLimited()) {
+                                showNotification('alert', 'Muitas requisições. Aguarde um minuto e tente novamente.');
+                                return;
+                            }
+
+                            btnConfirmar.style.pointerEvents = 'none';
+                            btnConfirmar.style.opacity = '0.6';
+                            btnConfirmar.textContent = 'Salvando...';
+                            btnConfirmar.disabled = true;
+
+                            const winner = score1 > score2 ? 1 : 2;
+
                             try {
-                                const score1Input = document.getElementById('scoreTime1');
-                                const score2Input = document.getElementById('scoreTime2');
+                                await resultadosStorage.save(matchId, {
+                                    winner,
+                                    score1,
+                                    score2,
+                                    format: 'MD3'
+                                });
 
-                                if (!score1Input || !score2Input) return;
+                                try {
+                                    const time1Row = matchBox.querySelector('.team-row[data-team="1"]');
+                                    const time2Row = matchBox.querySelector('.team-row[data-team="2"]');
+                                    const time1Id = time1Row ? time1Row.getAttribute('data-time-id') : null;
+                                    const time2Id = time2Row ? time2Row.getAttribute('data-time-id') : null;
+                                    const campeonato = dadosCampeonatoAtual || window.campeonatoAtualDados;
 
-                                const score1 = parseInt(score1Input.value) || 0;
-                                const score2 = parseInt(score2Input.value) || 0;
+                                    let ehFinal = false;
+                                    if (campeonato && matchId) {
+                                        const isGrandFinalPartida = matchId === 'grand_final_1';
+                                        let isFinalSingleElimPartida = false;
 
-                                // Validar placar (deve ser 2x0 ou 2x1)
-                                if ((score1 === 2 && score2 === 0) || (score1 === 2 && score2 === 1) ||
-                                    (score1 === 0 && score2 === 2) || (score1 === 1 && score2 === 2)) {
+                                        if (!isGrandFinalPartida && matchId.startsWith('upper_')) {
+                                            const lowerBracketArea = document.getElementById('lowerBracketArea');
+                                            const isDoubleElimination = lowerBracketArea && lowerBracketArea.style.display !== 'none';
 
-                                    // Desabilitar botão durante o salvamento
-                                    btnConfirmar.style.pointerEvents = 'none';
-                                    btnConfirmar.style.opacity = '0.6';
-                                    btnConfirmar.textContent = 'Salvando...';
-
-                                    // Determinar vencedor
-                                    const winner = score1 > score2 ? 1 : 2;
-
-                                    // Salvar resultado
-                                    await resultadosStorage.save(matchId, {
-                                        winner,
-                                        score1,
-                                        score2,
-                                        format: 'MD3'
-                                    });
-
-                                    // Atualizar ranking e histórico dos players dos dois times
-                                    try {
-                                        const time1Row = matchBox.querySelector('.team-row[data-team="1"]');
-                                        const time2Row = matchBox.querySelector('.team-row[data-team="2"]');
-                                        const time1Id = time1Row ? time1Row.getAttribute('data-time-id') : null;
-                                        const time2Id = time2Row ? time2Row.getAttribute('data-time-id') : null;
-                                        const campeonato = dadosCampeonatoAtual || window.campeonatoAtualDados;
-
-                                        // Detectar se esta partida é a grande final ou a final do single elimination
-                                        let ehFinal = false;
-                                        if (campeonato && matchId) {
-                                            const isGrandFinalPartida = matchId === 'grand_final_1';
-                                            let isFinalSingleElimPartida = false;
-
-                                            if (!isGrandFinalPartida && matchId.startsWith('upper_')) {
-                                                const lowerBracketArea = document.getElementById('lowerBracketArea');
-                                                const isDoubleElimination = lowerBracketArea && lowerBracketArea.style.display !== 'none';
-
-                                                if (!isDoubleElimination) {
-                                                    const quantidadeTimes = window.dadosChaveamento?.quantidade_times || window.numTeams || 8;
-                                                    if (quantidadeTimes) {
-                                                        let bracketSize = 1;
-                                                        while (bracketSize < quantidadeTimes) bracketSize *= 2;
-                                                        const totalRounds = Math.log2(bracketSize);
-                                                        const matchParts = matchId.split('_');
-                                                        const roundNum = parseInt(matchParts[1]) || 0;
-                                                        isFinalSingleElimPartida = (roundNum === totalRounds);
-                                                    }
+                                            if (!isDoubleElimination) {
+                                                const quantidadeTimes = window.dadosChaveamento?.quantidade_times || window.numTeams || 8;
+                                                if (quantidadeTimes) {
+                                                    let bracketSize = 1;
+                                                    while (bracketSize < quantidadeTimes) bracketSize *= 2;
+                                                    const totalRounds = Math.log2(bracketSize);
+                                                    const matchParts = matchId.split('_');
+                                                    const roundNum = parseInt(matchParts[1], 10) || 0;
+                                                    isFinalSingleElimPartida = (roundNum === totalRounds);
                                                 }
                                             }
-
-                                            ehFinal = isGrandFinalPartida || isFinalSingleElimPartida;
                                         }
 
-                                        if (time1Id) {
-                                            await atualizarRankingParaTime(time1Id, winner === 1, ehFinal);              // players
-                                            await registrarHistoricoMatchsParaTime(time1Id, winner === 1);              // players
-                                            await atualizarRankingTimeComIncrementos(time1Id, winner === 1, campeonato, ehFinal); // times
-                                            await registrarHistoricoMatchsTime(time1Id, winner === 1);                  // times
-                                        }
-                                        if (time2Id) {
-                                            await atualizarRankingParaTime(time2Id, winner === 2, ehFinal);              // players
-                                            await registrarHistoricoMatchsParaTime(time2Id, winner === 2);              // players
-                                            await atualizarRankingTimeComIncrementos(time2Id, winner === 2, campeonato, ehFinal); // times
-                                            await registrarHistoricoMatchsTime(time2Id, winner === 2);                  // times
-                                        }
-                                    } catch (rankingError) {
-                                        console.error('Erro ao processar ranking/histórico para partida MD3:', rankingError);
+                                        ehFinal = isGrandFinalPartida || isFinalSingleElimPartida;
                                     }
 
-                                    // Atualizar card
-                                    atualizarCardResultado(matchBox, { winner, score1, score2, format: 'MD3' });
-
-                                    // Fechar modal
-                                    if (modal) modal.style.display = 'none';
-
-                                    // Recarregar dados do banco para atualizar posições dos times
-                                    if (chaveamentoIdAtual && campeonatoIdAtual) {
-                                        setTimeout(async () => {
-                                            try {
-                                                const dadosAtualizados = await buscarChaveamentoDoBanco(campeonatoIdAtual);
-                                                if (dadosAtualizados && dadosAtualizados.partidas) {
-                                                    await atualizarBracketComDadosDoBanco(dadosAtualizados);
-                                                }
-                                            } catch (error) {
-                                                console.warn('Erro ao recarregar chaveamento:', error);
-                                            }
-                                        }, 1500);
+                                    if (time1Id) {
+                                        await atualizarRankingParaTime(time1Id, winner === 1, ehFinal);
+                                        await registrarHistoricoMatchsParaTime(time1Id, winner === 1);
+                                        await atualizarRankingTimeComIncrementos(time1Id, winner === 1, campeonato, ehFinal);
+                                        await registrarHistoricoMatchsTime(time1Id, winner === 1);
                                     }
-                                } else {
-                                    
-                                    showNotification("error", "Placar inválido! Deve ser 2x0 ou 2x1.");
+                                    if (time2Id) {
+                                        await atualizarRankingParaTime(time2Id, winner === 2, ehFinal);
+                                        await registrarHistoricoMatchsParaTime(time2Id, winner === 2);
+                                        await atualizarRankingTimeComIncrementos(time2Id, winner === 2, campeonato, ehFinal);
+                                        await registrarHistoricoMatchsTime(time2Id, winner === 2);
+                                    }
+                                } catch (rankingError) {
+                                    console.error('Erro ao processar ranking/histórico para partida MD3:', rankingError);
                                 }
+
+                                atualizarCardResultado(matchBox, { winner, score1, score2, format: 'MD3' });
+                                if (modal) modal.style.display = 'none';
+
+                                if (chaveamentoIdAtual && campeonatoIdAtual) {
+                                    setTimeout(async () => {
+                                        try {
+                                            const dadosAtualizados = await buscarChaveamentoDoBanco(campeonatoIdAtual);
+                                            if (dadosAtualizados?.partidas) {
+                                                await atualizarBracketComDadosDoBanco(dadosAtualizados);
+                                            }
+                                        } catch (error) {
+                                            console.warn('Erro ao recarregar chaveamento:', error);
+                                        }
+                                    }, 1500);
+                                }
+
+                                showNotification('success', 'Resultado salvo com sucesso.');
                             } catch (e) {
-                                console.warn('Erro ao processar confirmação MD3:', e);
-                                // Reabilitar botão em caso de erro
-                                if (btnConfirmar) {
-                                    btnConfirmar.style.pointerEvents = 'auto';
-                                    btnConfirmar.style.opacity = '1';
-                                    btnConfirmar.textContent = 'Confirmar';
-                                }
+                                console.error('Erro ao processar confirmação MD3:', e);
+                                const msg = e?.message || 'Não foi possível salvar o resultado.';
+                                showNotification('error', msg.includes('429') ? 'Servidor ocupado. Aguarde e tente novamente.' : msg);
+                            } finally {
+                                restaurarBotaoConfirmarResultado();
                             }
                         });
                     }
@@ -7448,6 +7470,7 @@ window.addEventListener('load', () => {
                     // Função para fechar o modal
                     const fecharModal = (e) => {
                         if (e) e.stopPropagation();
+                        restaurarBotaoConfirmarResultado();
                         modal.style.display = 'none';
                     };
 

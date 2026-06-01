@@ -39,6 +39,11 @@ body {
   position: relative;
 }
 
+/* Espaço para o header fixo (header.css: ~90px desktop, ~70px tablet, ~64px mobile) */
+body.chaveamento-page {
+  padding-top: clamp(88px, 11vh, 108px);
+}
+
 
 
 
@@ -66,15 +71,16 @@ body {
   padding: 24px;
   position: relative;
   z-index: 1;
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 
 
-/* Título do Campeonato */
+/* Título do Campeonato — abaixo do header fixo, alinhado ao conteúdo */
 .championship-title-container {
   width: 95%;
-  margin: 20px auto 0;
+  max-width: 1600px;
+  margin: 0 auto 16px;
   padding: 20px 40px;
   background: rgba(10, 10, 10, 0.6);
   backdrop-filter: blur(10px);
@@ -82,7 +88,25 @@ body {
   border: 1px solid rgba(245, 110, 8, 0.3);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   text-align: center;
+  position: relative;
+  z-index: 2;
   animation: fadeInDown 0.5s ease;
+}
+
+@media (max-width: 768px) {
+  body.chaveamento-page {
+    padding-top: clamp(78px, 10vh, 92px);
+  }
+
+  .championship-title-container {
+    width: 98%;
+    padding: 16px 20px;
+  }
+
+  .championship-title {
+    font-size: 1.75rem;
+    letter-spacing: 1px;
+  }
 }
 
 .championship-title {

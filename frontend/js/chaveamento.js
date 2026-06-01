@@ -12,30 +12,42 @@ async function autenticacao() {
             credentials: 'include'
         });
 
+        if (response.status === 429) {
+            if (typeof markApiRateLimited === 'function') markApiRateLimited(response);
+            return { logado: false };
+        }
+
         if (!response.ok) {
             if (response.status === 401) {
                 window.location.href = 'login.html';
             }
-            throw new Error(`Erro HTTP: ${response.status}`);
+            return { logado: false };
         }
 
-        const data = await response.json();
-        return data;
+        const text = await response.text();
+        if (!text || !text.trim()) {
+            return { logado: false };
+        }
 
-
+        return JSON.parse(text);
     } catch (error) {
         console.error('Erro na inicialização:', error);
+        return { logado: false };
     }
 }
 
 
 async function verificar_auth() {
-    const auth_dados = await autenticacao(); 
-    
-    
-    if (auth_dados.logado) {
-        const userId = auth_dados.usuario.id;
-        const perfil_data = await buscarDadosPerfil();
+    const auth_dados = await autenticacao();
+
+    if (!auth_dados?.logado) {
+        return;
+    }
+
+    const userId = auth_dados.usuario.id;
+    const perfil_data = await buscarDadosPerfil();
+
+    if (perfil_data?.perfilData?.usuario) {
         
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
@@ -110,6 +122,9 @@ async function logout() {
 async function buscarDadosPerfil() {
 
     const auth_dados = await autenticacao();
+    if (!auth_dados?.logado || !auth_dados.usuario?.id) {
+        return null;
+    }
     const userId = auth_dados.usuario.id;
     try {
 
@@ -158,7 +173,7 @@ async function buscarDadosPerfil() {
 // ========= VERIFICAR TIME DO USUÁRIO =========
 async function verificarTimeUsuario() {
     const auth_dados = await autenticacao();
-    if (!auth_dados.logado) {
+    if (!auth_dados?.logado) {
         return;
     }
     const userId = auth_dados.usuario.id;
@@ -217,6 +232,10 @@ async function criarTime() {
     criandoTimeChaveamento = true;
 
     const auth_dados = await autenticacao();
+    if (!auth_dados?.logado || !auth_dados.usuario?.id) {
+        criandoTimeChaveamento = false;
+        return;
+    }
     const userId = auth_dados.usuario.id;
     const form = document.getElementById('formCriarTime');
     const formData = new FormData(form);
