@@ -63,25 +63,40 @@ function applyCsrfFromAuthData(data) {
 function apiFetch(url, options = {}) {
     const method = (options.method || 'GET').toUpperCase();
     const headers = new Headers(options.headers || {});
+    const maxRetries = method === 'GET' ? 2 : 0;
 
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && _csrfToken) {
         headers.set('X-CSRF-Token', _csrfToken);
     }
 
-    return _nativeFetch(url, {
+    const fetchOptions = {
         ...options,
         credentials: 'include',
         headers
-    }).then(async (res) => {
-        if (url.includes('/dashboard') && res.ok) {
-            try {
-                const data = await res.clone().json();
-                applyCsrfFromAuthData(data);
-                setAuthCache(data);
-            } catch (_) { /* ignore */ }
+    };
+
+    return (async () => {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const res = await _nativeFetch(url, fetchOptions);
+
+            if (res.status !== 429 || attempt >= maxRetries) {
+                if (url.includes('/dashboard') && res.ok) {
+                    try {
+                        const data = await res.clone().json();
+                        applyCsrfFromAuthData(data);
+                        setAuthCache(data);
+                    } catch (_) { /* ignore */ }
+                }
+                return res;
+            }
+
+            const retryAfter = res.headers.get('Retry-After');
+            const waitMs = retryAfter
+                ? Math.max(parseInt(retryAfter, 10) || 1, 1) * 1000
+                : Math.min(1000 * Math.pow(2, attempt), 5000);
+            await new Promise((resolve) => setTimeout(resolve, waitMs));
         }
-        return res;
-    });
+    })();
 }
 
 window.fetch = function (input, init = {}) {

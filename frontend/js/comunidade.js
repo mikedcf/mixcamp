@@ -227,19 +227,8 @@ async function TransferenciaDeDados() {
             ? dadosTimes.dadosMembros.filter(m => m.time_id === time.id).length
             : 0;
 
-        // Buscar dados do líder
         const lider_id = time.lider_id;
-        let nickLider = 'Sem líder';
-
-        try {
-            const LiderPerfil = await buscarDadosPerfil(lider_id);
-            if (LiderPerfil && LiderPerfil.usuario) {
-                nickLider = LiderPerfil.usuario.username || LiderPerfil.usuario.nome || 'Sem líder';
-            }
-
-        } catch (error) {
-            console.error(`Erro ao buscar perfil do líder ${lider_id}:`, error);
-        }
+        const nickLider = time.lider_nome || 'Sem líder';
 
         // Criar objeto com dados do time
         const dadosDoTime = {
@@ -266,6 +255,25 @@ async function TransferenciaDeDados() {
 
 // =================================
 // ========= DATA LOADING =========  
+function parsePosicoesUsuario(posicoes) {
+    if (Array.isArray(posicoes)) {
+        return posicoes
+            .map((p) => String(p).replace(/^"|"$/g, '').trim())
+            .filter(Boolean);
+    }
+    if (posicoes && typeof posicoes === 'string') {
+        const limpa = posicoes.replace(/^"|"$/g, '');
+        return limpa.split(',').map((p) => p.trim().replace(/^"|"$/g, '')).filter(Boolean);
+    }
+    return [];
+}
+
+function playerTemPosicao(posicoes, filtro) {
+    if (!filtro) return true;
+    const filtroNorm = filtro.trim().toLowerCase();
+    return parsePosicoesUsuario(posicoes).some((pos) => pos.toLowerCase() === filtroNorm);
+}
+
 function mapPosicaoEmoji(posicao) {
     switch (posicao) {
         case 'capitao': return '<img src="https://cdn-icons-png.flaticon.com/128/1253/1253686.png" alt="Capitão" class="posicao-icon">';
@@ -299,39 +307,15 @@ async function loadData() {
 
     const dadosPlayers = await DadosPlayersLista();
 
-    let position = []
-
     for (let i = 0; i < dadosPlayers.length; i++) {
         const player = dadosPlayers[i];
 
-
-        const perfil_data = await buscarDadosPerfil(player.id);
-
-        // Verificar se perfil_data é válido
-        if (!perfil_data || !perfil_data.usuario) {
-
-            continue;
+        let posicoesArray = parsePosicoesUsuario(player.posicoes);
+        if (posicoesArray.length === 0) {
+            posicoesArray = ['player'];
         }
-
-        let position = perfil_data.usuario.posicoes
-
-
-        if (position == null) {
-
-            position = ['player']; // Posição padrão para players sem posição definida
-        }
-        else {
-            let posicoesArray = [];
-
-            position = position.join(',')
-            position = `"${position}"`
-
-        }
-
 
         let time_nome = player.time_nome;
-
-        // Normalizar nome do time e definir status (com time / sem time)
         if (!time_nome) {
             time_nome = 'Sem time';
         }
@@ -341,7 +325,7 @@ async function loadData() {
             id: player.id,
             username: player.username,
             avatar: player.avatar_url,
-            posicao: position,
+            posicao: posicoesArray,
             time: time_nome,
             status: statusPlayer
         })
@@ -393,20 +377,22 @@ async function loadData() {
 
 async function loadTransfersAndDepartures() {
     try {
-        // Buscar dados completos das entradas e saídas (com player e team details)
-        const entradasCompletas = await buscarDadosCompletosEntradas();
-        const saidasCompletas = await buscarDadosCompletosSaidas();
+        const todas = await listarTransferencias();
+        const entradasCompletas = todas
+            .filter((t) => t.tipo === 'entrada')
+            .map(mapTransferenciaCompleta)
+            .sort((a, b) => new Date(b.dataOriginal || 0) - new Date(a.dataOriginal || 0));
+        const saidasCompletas = todas
+            .filter((t) => t.tipo === 'saida')
+            .map(mapTransferenciaCompleta)
+            .sort((a, b) => new Date(b.dataOriginal || 0) - new Date(a.dataOriginal || 0));
 
-
-
-        // Renderizar com dados completos
         renderTransfers(entradasCompletas);
         renderDepartures(saidasCompletas);
         setupCarousels();
     } catch (error) {
         console.error('Erro ao carregar transferências:', error);
 
-        // Em caso de erro, mostrar mensagem de erro em vez de mocks
         renderTransfers([]);
         renderDepartures([]);
         setupCarousels();
@@ -454,14 +440,7 @@ async function filterData() {
 
 
             if (position) {
-                // Verificar se a posição está no array de posições do player (case-insensitive)
-                const positionLower = position.toLowerCase();
-                const hasPosition = Array.isArray(item.posicao) ?
-                    item.posicao.some(pos => pos.toLowerCase() === positionLower) :
-                    item.posicao.toLowerCase() === positionLower;
-
-
-                matchesFilters = matchesFilters && hasPosition;
+                matchesFilters = matchesFilters && playerTemPosicao(item.posicao, position);
             }
             if (status) {
                 const hasStatus = item.status === status;
@@ -1530,251 +1509,56 @@ function formatarData(dataISO) {
     }
 }
 
-async function buscarDadosCompletosEntradas() {
-    const entradas = await listarEntrada();
+function mapTransferenciaCompleta(registro) {
+    const usuarioId = registro.usuario_id;
+    const timeId = registro.time_id;
+    const posicao = registro.posicao || 'N/A';
+    const dataOriginal = registro.data_criacao || registro.data || registro.created_at || registro.timestamp;
 
-    const dadosCompletos = [];
-
-    for (let i = 0; i < entradas.length; i++) {
-        const entrada = entradas[i];
-        const posicao = entrada.posicao;
-        const usuarioId = entrada.usuario_id;
-        const timeId = entrada.time_id;
-
-        try {
-            // Buscar dados do player
-            const perfilResponse = await fetch(`${API_URL}/perfil/${usuarioId}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
-
-            // Buscar dados do time
-            const timeResponse = await fetch(`${API_URL}/times/${timeId}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
-
-            let playerData = { nome: `User ${usuarioId}`, avatar: '' };
-            let teamData = { nome: `Team ${timeId}`, logo: '', posicao: posicao };
-
-            if (perfilResponse.ok) {
-                const perfilJson = await perfilResponse.json();
-
-
-                // Tentar diferentes estruturas de dados
-                const usuario = perfilJson.perfilData?.usuario || perfilJson.usuario || perfilJson;
-
-
-                playerData = {
-                    nome: usuario.nome || usuario.username || usuario.nome_completo || `User ${usuarioId}`,
-                    avatar: usuario.avatar_url || usuario.avatar || '',
-                    posicao: usuario.posicao || 'N/A'
-                };
-
-            }
-
-            if (timeResponse.ok) {
-                const timeJson = await timeResponse.json();
-
-                const time = timeJson.time || {};
-                const membros = timeJson.membros || [];
-
-
-                // Buscar posição do primeiro membro (ou líder)
-                let dad = [];
-                let posicaoTime = {};
-                if (membros.length > 0) {
-                    posicaoTime = membros[0].posicao || 'N/A';
-                    for (let j = 0; j < membros.length; j++) {
-
-
-                        posicaoTime = { usuario_id: membros[j].usuario_id, position: membros[j].posicao }
-                        dad.push(posicaoTime)
-
-                    }
-                }
-                teamData = {
-                    nome: time.nome || `Team ${timeId}`,
-                    logo: time.avatar_time_url || '../img/cs2.png',
-                    posicao: posicao
-                };
-
-
-            }
-
-            // Montar objeto completo para o card
-            const dataOriginal = entrada.data_criacao || entrada.data || entrada.created_at || entrada.timestamp;
-            const dadosCompletosItem = {
-                id: entrada.id,
-                player: {
-                    id: usuarioId,
-                    nome: playerData.nome,
-                    avatar: playerData.avatar,
-                    posicao: playerData.posicao || 'N/A'
-                },
-                team: {
-                    id: timeId,
-                    nome: teamData.nome,
-                    logo: teamData.logo,
-                    posicao: teamData.posicao
-                },
-                tipo: entrada.tipo,
-                data: formatarData(dataOriginal),
-                dataOriginal: dataOriginal // Salvar data original para ordenação
-            };
-
-            dadosCompletos.push(dadosCompletosItem);
-
-
-        } catch (error) {
-
-            // Adicionar dados básicos em caso de erro
-            const dataOriginal = entrada.data_criacao || entrada.data || entrada.created_at || entrada.timestamp;
-            dadosCompletos.push({
-                id: entrada.id,
-                player: {
-                    id: usuarioId, nome: `User ${usuarioId}`, avatar: '', posicao: 'N / A' },
-                team: { id: timeId, nome: `Team ${timeId}`, logo: '' },
-                tipo: entrada.tipo,
-                data: formatarData(dataOriginal),
-                dataOriginal: dataOriginal // Salvar data original para ordenação
-            });
-    }
+    return {
+        id: registro.id,
+        player: {
+            id: usuarioId,
+            nome: registro.player_username || `User ${usuarioId}`,
+            avatar: registro.player_avatar || '',
+            posicao
+        },
+        team: {
+            id: timeId,
+            nome: registro.time_nome || `Team ${timeId}`,
+            logo: registro.time_logo || '../img/cs2.png',
+            posicao
+        },
+        tipo: registro.tipo,
+        data: formatarData(dataOriginal),
+        dataOriginal
+    };
 }
 
-// Ordenar por data decrescente (mais recentes primeiro)
-dadosCompletos.sort((a, b) => {
-    const dataA = new Date(a.dataOriginal || 0);
-    const dataB = new Date(b.dataOriginal || 0);
-    return dataB - dataA; // Ordem decrescente
-});
+async function buscarDadosCompletosEntradas() {
+    const entradas = await listarEntrada();
+    const dadosCompletos = entradas.map(mapTransferenciaCompleta);
 
-return dadosCompletos;
+    dadosCompletos.sort((a, b) => {
+        const dataA = new Date(a.dataOriginal || 0);
+        const dataB = new Date(b.dataOriginal || 0);
+        return dataB - dataA;
+    });
+
+    return dadosCompletos;
 }
 
 async function buscarDadosCompletosSaidas() {
     const saidas = await listarSaida();
+    const dadosCompletos = saidas.map(mapTransferenciaCompleta);
 
+    dadosCompletos.sort((a, b) => {
+        const dataA = new Date(a.dataOriginal || 0);
+        const dataB = new Date(b.dataOriginal || 0);
+        return dataB - dataA;
+    });
 
-    const dadosCompletos = [];
-
-    for (let i = 0; i < saidas.length; i++) {
-        const saida = saidas[i];
-        const usuarioId = saida.usuario_id;
-        const timeId = saida.time_id;
-        const posicao = saida.posicao;
-
-
-        try {
-            // Buscar dados do player
-            const perfilResponse = await fetch(`${API_URL}/perfil/${usuarioId}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
-
-            // Buscar dados do time
-            const timeResponse = await fetch(`${API_URL}/times/${timeId}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
-
-            let playerData = {
-                nome: `User ${usuarioId}`, avatar: '' };
-            let teamData = { nome: `Team ${timeId}`, logo: '', posicao: posicao };
-
-                if(perfilResponse.ok) {
-                    const perfilJson = await perfilResponse.json();
-
-
-            // Tentar diferentes estruturas de dados
-            const usuario = perfilJson.perfilData?.usuario || perfilJson.usuario || perfilJson;
-
-
-            playerData = {
-                nome: usuario.nome || usuario.username || usuario.nome_completo || `User ${usuarioId}`,
-                avatar: usuario.avatar_url || usuario.avatar || '',
-                    posicao: usuario.posicao || 'N/A'
-            };
-
-        }
-            
-            if (timeResponse.ok) {
-            const timeJson = await timeResponse.json();
-
-            const time = timeJson.time || {};
-            const membros = timeJson.membros || [];
-
-
-            // Buscar posição do primeiro membro (ou líder)
-            // let posicaoTime = 'N/A';
-            // if (membros.length > 0) {
-            //     for(let j = 0; j < membros.length; j++){
-            //         posicaoTime = membros[j].posicao || 'N/A';
-            //     }
-            // }
-
-
-
-            teamData = {
-                nome: time.nome || `Team ${timeId}`,
-                logo: time.avatar_time_url || '',
-                posicao: posicao
-            };
-
-        }
-
-        // Montar objeto completo para o card
-        const dataOriginal = saida.data_criacao || saida.data || saida.created_at || saida.timestamp;
-        const dadosCompletosItem = {
-            id: saida.id,
-            player: {
-                id: usuarioId,
-                nome: playerData.nome,
-                avatar: playerData.avatar,
-                posicao: playerData.posicao || 'N/A'
-            },
-            team: {
-                id: timeId,
-                nome: teamData.nome,
-                logo: teamData.logo,
-                posicao: teamData.posicao
-            },
-            tipo: saida.tipo,
-            data: formatarData(dataOriginal),
-            dataOriginal: dataOriginal // Salvar data original para ordenação
-        };
-
-        dadosCompletos.push(dadosCompletosItem);
-
-
-    } catch (error) {
-        console.error(`Erro ao buscar dados para saída ${i + 1}:`, error);
-        // Adicionar dados básicos em caso de erro
-        const dataOriginal = saida.data_criacao || saida.data || saida.created_at || saida.timestamp;
-        dadosCompletos.push({
-            id: saida.id,
-            player: {
-                id: usuarioId, nome: `User ${usuarioId}`, avatar: '', posicao: 'N / A' },
-                team: { id: timeId, nome: `Team ${timeId}`, logo: '' },
-            tipo: saida.tipo,
-            data: formatarData(dataOriginal),
-            dataOriginal: dataOriginal // Salvar data original para ordenação
-            });
-}
-    }
-
-// Ordenar por data decrescente (mais recentes primeiro)
-dadosCompletos.sort((a, b) => {
-    const dataA = new Date(a.dataOriginal || 0);
-    const dataB = new Date(b.dataOriginal || 0);
-    return dataB - dataA; // Ordem decrescente
-});
-
-return dadosCompletos;
+    return dadosCompletos;
 }
 
 
@@ -1784,24 +1568,10 @@ return dadosCompletos;
 
 // Versão híbrida que tenta buscar do banco, mas funciona síncrona
 function getPositionBadges(posicoes) {
+    const posicoesArray = parsePosicoesUsuario(posicoes);
 
-    if (!posicoes || (Array.isArray(posicoes) && posicoes.length === 0)) {
+    if (posicoesArray.length === 0) {
         return '<div class="position-badge-container"></div>';
-    }
-
-    let posicoesArray = [];
-
-    // Se é um array, usar diretamente
-    if (Array.isArray(posicoes)) {
-        posicoesArray = posicoes;
-    }
-    // Se é uma string com vírgulas, dividir
-    else if (typeof posicoes === 'string' && posicoes.includes(',')) {
-        posicoesArray = posicoes.split(',').map(p => p.trim());
-    }
-    // Se é uma string simples
-    else {
-        posicoesArray = [posicoes];
     }
 
     // Sistema inteligente baseado na quantidade de posições
@@ -1824,10 +1594,8 @@ function getPositionBadges(posicoes) {
     else {
         // 4+ posições: mostrar as 2 principais + indicador
         const posicoesPrincipais = posicoesArray.slice(0, 2);
-        badgesHTML = posicoesPrincipais.map((posicao, index) => {
-
+        badgesHTML = posicoesPrincipais.map((posicao) => {
             const imageUrl = getPositionImageSync(posicao);
-            console.log(posicao)
             return `<img src="${imageUrl}" alt="${posicao}" class="position-badge position-badge-stack">`;
         }).join('');
 
