@@ -2856,6 +2856,7 @@ async function getplayers(req, res) {
             u.id,
             u.username,
             u.avatar_url,
+            u.posicoes,
             m.posicao,
             t.nome AS time_nome
         FROM usuarios u
@@ -3054,8 +3055,17 @@ async function register(req, res) {
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const query = 'INSERT INTO usuarios (username, email, senha) VALUES (?,?,?)';
+        let query = 'INSERT INTO usuarios (username, email, senha) VALUES (?,?,?)';
         await conexao.execute(query, [username, email, hashedPassword]);
+
+        query = 'SELECT * FROM usuarios WHERE email = ?';
+        const [usuario] = await conexao.execute(query, [email]);
+        const userId = usuario[0].id;
+        const msg = `Bem-vindo ao MIXCAMP!\nO site ainda está em processo de desenvolvimento, por isso algumas funcionalidades podem estar indisponíveis ou com bugs e com isso peço para que seja paciente e reporte quaisquer problemas que encontrar atraves do canal de suporte do discord.\n
+        Lembrando que para participar dos campeonatos é necessário participar de um time além de atualizar o seu perfil com link do perfil da steam e faceit.\n É não esqueça de entrar no discord para ficar informado sobre as novidades e eventos.\ndiscord link: https://discord.gg/kyquNqw9c3`;
+
+        await conexao.execute('INSERT INTO notificacoes (user_id, texto) VALUES (?, ?)', [userId, msg]);
+
 
         res.status(201).json({ message: 'Usuário registrado com sucesso' });
 
@@ -4830,7 +4840,18 @@ async function getTransferencias(req, res) {
     try {
         conexao = await conectar();
 
-        let query = 'SELECT * FROM transferencias'
+        let query = `
+            SELECT
+                tr.*,
+                u.username AS player_username,
+                u.avatar_url AS player_avatar,
+                t.nome AS time_nome,
+                t.avatar_time_url AS time_logo
+            FROM transferencias tr
+            LEFT JOIN usuarios u ON u.id = tr.usuario_id
+            LEFT JOIN times t ON t.id = tr.time_id
+            ORDER BY tr.timestamp DESC
+        `;
 
         const [transferencias] = await conexao.execute(query)
 
@@ -12320,15 +12341,6 @@ async function getCampeoantosBySeasonTimes(req,res){
     try{
 
         conexao = await conectar();
-
-        // const query = `
-        //     SELECT times.nome
-        //     FROM inscricoes_times
-        //     JOIN times
-        //     ON inscricoes_times.time_id = times.id
-        //     WHERE inscricoes_times.inscricao_id = ?
-        // `;
-
 
         const query = `
             SELECT times.nome
