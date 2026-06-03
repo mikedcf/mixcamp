@@ -949,8 +949,9 @@ body {
     transition: max-height 0.3s ease, opacity 0.25s ease, visibility 0.25s ease, margin 0.25s ease, padding 0.25s ease, border-width 0.2s ease;
 }
 
-.form-group:focus-within .password-requirements-box {
-    max-height: 180px;
+.form-group:focus-within .password-requirements-box,
+.form-group.password-requirements-visible .password-requirements-box {
+    max-height: 220px;
     opacity: 1;
     visibility: visible;
     margin-top: 10px;
@@ -993,8 +994,78 @@ body {
 
 .password-requirements-list li i {
     flex-shrink: 0;
-    color: rgba(76, 175, 80, 0.9);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+    width: 1rem;
+    text-align: center;
+    transition: color 0.2s ease;
+}
+
+.password-requirements-list li.req-pending i {
+    color: #ff6b6b;
+}
+
+.password-requirements-list li.req-ok i {
+    color: #4caf50;
+}
+
+.password-requirements-list li.req-ok {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.password-requirements-list li.req-pending {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.input-container.input-valid {
+    border-color: #4caf50;
+    box-shadow: 0 0 16px rgba(76, 175, 80, 0.35);
+}
+
+.input-container.input-valid:focus-within {
+    border-color: #4caf50;
+    box-shadow: 0 0 16px rgba(76, 175, 80, 0.4);
+}
+
+.input-container.input-valid .input-icon {
+    color: #81c784;
+}
+
+.input-container.input-error {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 16px rgba(255, 107, 107, 0.35);
+}
+
+.input-container.input-error:focus-within {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 16px rgba(255, 107, 107, 0.4);
+}
+
+.input-container.input-error .input-icon {
+    color: #ff8a80;
+}
+
+.field-hint {
+    min-height: 1.25rem;
+    margin: 8px 4px 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.35;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.field-hint.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.field-hint.match-ok {
+    color: #81c784;
+}
+
+.field-hint.match-error {
+    color: #ff8a80;
 }
 
 .password-requirements-list li code {
@@ -1532,10 +1603,39 @@ body {
 
 .email-code-footer {
     margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
 }
 
 .email-code-hint {
     display: block;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.email-code-btn.resend {
+    width: 100%;
+    max-width: 280px;
+    background: transparent;
+    color: #ff8c5a;
+    border: 2px solid rgba(255, 140, 90, 0.55);
+}
+
+.email-code-btn.resend:hover:not(:disabled) {
+    background: rgba(255, 107, 53, 0.15);
+    border-color: #ff6b35;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.email-code-btn.resend:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }

@@ -2394,22 +2394,53 @@ async function consumirEmailVerificado(conexao, email) {
 }
 
 async function enviarEmail(email, code) {
+    const from = process.env.FROM_TEXT_EMAIL;
+    if (!process.env.RESEND_KEY) {
+        console.error('[email] RESEND_KEY não configurada');
+        return { ok: false, message: 'Serviço de e-mail não configurado' };
+    }
+    if (!from) {
+        console.error('[email] FROM_TEXT_EMAIL não configurado');
+        return { ok: false, message: 'Remetente de e-mail não configurado' };
+    }
+
     try {
-        const response = await resend.emails.send({
-            from: process.env.FROM_TEXT_EMAIL,
+        const { data, error } = await resend.emails.send({
+            from,
             to: [email],
             subject: 'MIXCAMP - Código de verificação',
             html: `
             <h1>Seu código de verificação: ${code}</h1>
             <p>Este código expira em 10 minutos.</p>
+            <p>Se você não solicitou este código, ignore este e-mail.</p>
             `
         });
 
-        return true
-    } catch (erro) {
-        console.error("ERRO AO ENVIAR:", erro);
-        return false
+        if (error) {
+            console.error('[email] Resend rejeitou envio:', JSON.stringify({
+                to: email,
+                from,
+                message: error.message,
+                name: error.name,
+                statusCode: error.statusCode
+            }));
+            return {
+                ok: false,
+                message: error.message || 'Resend rejeitou o envio',
+                resendStatus: error.statusCode || null
+            };
+        }
 
+        if (!data?.id) {
+            console.error('[email] Resend retornou sem id de mensagem:', { to: email, from });
+            return { ok: false, message: 'Resend não confirmou o envio' };
+        }
+
+        console.log('[email] Código enviado via Resend:', { to: email, messageId: data.id });
+        return { ok: true, messageId: data.id };
+    } catch (erro) {
+        console.error('[email] ERRO AO ENVIAR:', erro);
+        return { ok: false, message: erro.message || 'Erro ao enviar e-mail' };
     }
 }
 
@@ -2442,10 +2473,25 @@ async function enviarCodigoEmail(req, res) {
 
         const enviado = await enviarEmail(email, code);
 
-        if (enviado) {
+        if (enviado.ok) {
             res.status(200).json({ message: 'Código enviado com sucesso, verifique sua caixa de entrada' });
         } else {
-            res.status(500).json({ message: 'Erro ao enviar código de e-mail' });
+            const msgResend = enviado.message || '';
+            const dominioNaoVerificado =
+                /only send testing emails to your own email|verify a domain|not authorized to send|validation_error/i.test(msgResend);
+
+            if (dominioNaoVerificado) {
+                console.error('[email] Domínio Resend não verificado — só o e-mail da conta recebe:', msgResend);
+                return res.status(503).json({
+                    message: 'Envio de e-mail temporariamente indisponível para este endereço. Verifique o domínio no Resend ou tente com o e-mail da conta do serviço.',
+                    code: 'EMAIL_DOMAIN_NOT_VERIFIED'
+                });
+            }
+
+            res.status(500).json({
+                message: 'Erro ao enviar código de e-mail. Tente novamente em alguns minutos.',
+                ...(process.env.DEBUG_API === 'true' ? { debug: msgResend } : {})
+            });
         }
 
     }
@@ -2500,6 +2546,119 @@ async function verificarCodigoEmail(req, res) {
         res.status(500).json({ message: 'Erro interno do servidor' });
     }
     finally {
+        if (conexao) await desconectar(conexao);
+    }
+}
+
+function gerarSenhaTemporaria() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
+    // gera entre 10 e 12 caracteres para ter boa chance de passar em validarSenha
+    const tamanho = 10 + Math.floor(Math.random() * 3);
+    let senha = '';
+    for (let i = 0; i < tamanho; i++) {
+        senha += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return senha;
+}
+
+async function enviarEmailRecuperacaoSenha(email, novaSenha) {
+    const from = process.env.FROM_TEXT_EMAIL;
+    if (!process.env.RESEND_KEY) {
+        console.error('[email-recuperacao] RESEND_KEY não configurada');
+        return { ok: false, message: 'Serviço de e-mail não configurado' };
+    }
+    if (!from) {
+        console.error('[email-recuperacao] FROM_TEXT_EMAIL não configurado');
+        return { ok: false, message: 'Remetente de e-mail não configurado' };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from,
+            to: [email],
+            subject: 'MIXCAMP - Recuperação de senha',
+            html: `
+            <h1>Sua nova senha temporária</h1>
+            <p>Você solicitou a recuperação de senha na MIXCAMP.</p>
+            <p><strong>Senha temporária:</strong> ${novaSenha}</p>
+            <p>Use essa senha para entrar no site e, em seguida, altere-a nas configurações da sua conta.</p>
+            <p>Se você não fez essa solicitação, recomendamos alterar sua senha após acessar a conta.</p>
+            `
+        });
+
+        if (error) {
+            console.error('[email-recuperacao] Resend rejeitou envio:', {
+                to: email,
+                from,
+                message: error.message,
+                name: error.name,
+                statusCode: error.statusCode
+            });
+            return {
+                ok: false,
+                message: error.message || 'Resend rejeitou o envio',
+                resendStatus: error.statusCode || null
+            };
+        }
+
+        if (!data?.id) {
+            console.error('[email-recuperacao] Resend retornou sem id de mensagem:', { to: email, from });
+            return { ok: false, message: 'Resend não confirmou o envio' };
+        }
+
+        console.log('[email-recuperacao] Senha temporária enviada via Resend:', { to: email, messageId: data.id });
+        return { ok: true, messageId: data.id };
+    } catch (erro) {
+        console.error('[email-recuperacao] ERRO AO ENVIAR:', erro);
+        return { ok: false, message: erro.message || 'Erro ao enviar e-mail' };
+    }
+}
+
+async function recuperarSenha(req, res) {
+    const email = normalizarEmail(req.body?.email);
+
+    if (!email || !validarEmail(email)) {
+        return res.status(400).json({ message: 'Email inválido' });
+    }
+
+    let conexao;
+    try {
+        conexao = await conectar();
+
+        const [usuarios] = await conexao.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
+        if (usuarios.length === 0) {
+            // resposta genérica para não expor quais e-mails existem
+            return res.status(200).json({
+                message: 'Se o e-mail estiver cadastrado, enviaremos uma nova senha em instantes.'
+            });
+        }
+
+        const userId = usuarios[0].id;
+
+        let senhaTemporaria;
+        do {
+            senhaTemporaria = gerarSenhaTemporaria();
+        } while (!validarSenha(senhaTemporaria));
+
+        const hash = await bcrypt.hash(senhaTemporaria, saltRounds);
+
+        await conexao.execute('UPDATE usuarios SET senha = ? WHERE id = ?', [hash, userId]);
+
+        const enviado = await enviarEmailRecuperacaoSenha(email, senhaTemporaria);
+        if (!enviado.ok) {
+            console.error('[recuperar-senha] Falha ao enviar e-mail:', enviado.message);
+            return res.status(500).json({
+                message: 'Não foi possível enviar o e-mail de recuperação. Tente novamente em alguns minutos.'
+            });
+        }
+
+        return res.status(200).json({
+            message: 'Se o e-mail estiver cadastrado, enviaremos uma nova senha em instantes.'
+        });
+    } catch (error) {
+        console.error('Erro na recuperação de senha:', error);
+        return res.status(500).json({ message: 'Erro interno do servidor' });
+    } finally {
         if (conexao) await desconectar(conexao);
     }
 }
@@ -12558,6 +12717,6 @@ module.exports = wrapRouteHandlers({
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato, getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoCampeonato, deletarInscricaoTimes, CreatePreference, CreatePreferencePromocao,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao, getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros, steamIdFromUrl, statuscs, buscarTimeGame, buscarInfoMatchIdStatus, buscarInfoMatchIdStats, buscarStatusplayer, enviarCodigoEmail, verificarCodigoEmail, recuperarSenha, setupDatabase, autenticacao, logout, getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao, getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner, getcupom, criarcupom, atualizarcupom, deletarcupom,
     getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans, getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingTimes, OrdenarArrayRankingPlayers,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,auth,getMarcacoesJogos,criarMarcacaoJogo,atualizarMarcacaoJogo,deletarMarcacaoJogo,getSeasonDoscampeonatos,criarMsgNotificacaoDiscord,getCampeoantosBySeasonTimes
 });

@@ -103,6 +103,7 @@ async function verificarDadosRegistro(dados){
 
     
     if (password !== confirmPassword) {
+        validatePasswordMatch(true);
         return {'status': false, 'message': 'As senhas não coincidem verifique novamente'};
     }
 
@@ -117,13 +118,7 @@ async function verificarDadosRegistro(dados){
     }
     
     
-    let verifypassword = false;
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,12}$/;
-    let validacao = regex.test(password)
-
-    if (validacao == true) {
-        verifypassword = true;
-    }
+    const verifypassword = senhaAtendeTodosRequisitos(password);
 
 
 
@@ -154,10 +149,57 @@ async function verificarDadosRegistro(dados){
     }
 }
 
-async function enviarCodigoEmail(email){
-    
+const REENVIO_CODIGO_COOLDOWN_SEG = 60;
+let emailResendIntervalId = null;
 
-    try{
+function pararContadorReenvioCodigo() {
+    if (emailResendIntervalId) {
+        clearInterval(emailResendIntervalId);
+        emailResendIntervalId = null;
+    }
+}
+
+function formatarTempoReenvio(segundosRestantes) {
+    const min = Math.floor(segundosRestantes / 60);
+    const sec = segundosRestantes % 60;
+    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function atualizarUiContadorReenvio(segundosRestantes) {
+    const hint = document.getElementById('emailCodeResendHint');
+    const btn = document.getElementById('btnReenviarCodigoEmail');
+    if (!hint) return;
+
+    if (segundosRestantes > 0) {
+        hint.textContent = `Não recebeu o código? Aguarde ${formatarTempoReenvio(segundosRestantes)} para reenviar.`;
+        if (btn) btn.disabled = true;
+    } else {
+        hint.textContent = 'Não recebeu o código? Você pode reenviar agora.';
+        if (btn) btn.disabled = false;
+    }
+}
+
+function iniciarContadorReenvioCodigo() {
+    pararContadorReenvioCodigo();
+
+    let segundosRestantes = REENVIO_CODIGO_COOLDOWN_SEG;
+    atualizarUiContadorReenvio(segundosRestantes);
+
+    emailResendIntervalId = setInterval(() => {
+        segundosRestantes -= 1;
+        if (segundosRestantes <= 0) {
+            pararContadorReenvioCodigo();
+            atualizarUiContadorReenvio(0);
+            return;
+        }
+        atualizarUiContadorReenvio(segundosRestantes);
+    }, 1000);
+}
+
+async function enviarCodigoEmail(email, opcoes = {}) {
+    const { abrirModal = true, notificarSucesso = true } = opcoes;
+
+    try {
         const response = await fetch(`${API_URL}/email/register`, {
             method: 'POST',
             headers: {
@@ -169,18 +211,58 @@ async function enviarCodigoEmail(email){
         const data = await response.json();
 
         if (response.ok) {
-            showNotification("alert", `${data.message}`);
-            abrirModalCodigoEmail();
-            
-            
+            if (notificarSucesso) {
+                showNotification('alert', data.message || 'Novo código enviado. Verifique sua caixa de entrada.');
+            }
+            if (abrirModal) {
+                abrirModalCodigoEmail();
+            } else {
+                iniciarContadorReenvioCodigo();
+            }
+            return true;
         }
-        else{
-            showNotification("error", `${data.message}`);
+        if (response.status === 429) {
+            showNotification('error', 'Muitas tentativas de envio. Aguarde cerca de 1 hora e tente novamente.');
+        } else if (data.code === 'EMAIL_DOMAIN_NOT_VERIFIED') {
+            showNotification('error', data.message || 'E-mail não pôde ser enviado. O domínio precisa estar verificado no Resend.');
+        } else {
+            showNotification('error', data.message || data.debug || 'Erro ao enviar código');
         }
-    }
-    catch(error){
+        return false;
+    } catch (error) {
         console.error('Erro de rede:', error);
-        showNotification("error", `${error}`);
+        showNotification('error', 'Erro de conexão ao enviar o código.');
+        return false;
+    }
+}
+
+async function reenviarCodigoEmail() {
+    const btn = document.getElementById('btnReenviarCodigoEmail');
+    if (btn?.disabled) return;
+
+    const pendente = obterRegistroPendente();
+    if (!pendente?.email) {
+        showNotification('error', 'Dados do cadastro não encontrados. Preencha o formulário novamente.');
+        fecharModalCodigoEmail();
+        return;
+    }
+
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    const enviado = await enviarCodigoEmail(pendente.email, {
+        abrirModal: false,
+        notificarSucesso: true
+    });
+
+    btn.textContent = textoOriginal;
+
+    if (enviado) {
+        const input = document.getElementById('emailCodeInput');
+        if (input) input.value = '';
+    } else {
+        atualizarUiContadorReenvio(0);
     }
 }
 
@@ -240,8 +322,8 @@ async function abrirModalCodigoEmail() {
         console.error('Elemento #emailCodeModal não encontrado.');
         return;
     }
-    modal.style.display = 'flex'; // ou 'block', depende do seu CSS
-    return 
+    modal.style.display = 'flex';
+    iniciarContadorReenvioCodigo();
 }
 
 async function RegistrarUsuario(){
@@ -291,51 +373,151 @@ async function RegistrarUsuario(){
 
 // Fecha a modal de código de e-mail
 function fecharModalCodigoEmail() {
+    pararContadorReenvioCodigo();
     const modal = document.getElementById('emailCodeModal');
     if (!modal) return;
     modal.style.display = 'none';
     const input = document.getElementById('emailCodeInput');
     if (input) input.value = '';
+    const btn = document.getElementById('btnReenviarCodigoEmail');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Reenviar código';
+    }
 }
 
 
 
 // =================================
-// ========= PASSWORD TOGGLE =========
+// ========= SENHA — UX (requisitos, confirmação, olho) =========
+
+const SENHA_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,12}$/;
+const passwordRevealTimers = {};
+
+function avaliarRequisitosSenha(senha) {
+    return {
+        upper: /[A-Z]/.test(senha),
+        lower: /[a-z]/.test(senha),
+        digit: /\d/.test(senha),
+        special: /[@$!%*?&]/.test(senha),
+        length: senha.length >= 8 && senha.length <= 12
+    };
+}
+
+function senhaAtendeTodosRequisitos(senha) {
+    return SENHA_REGEX.test(senha);
+}
+
+function atualizarListaRequisitosSenha(senha) {
+    const requisitos = avaliarRequisitosSenha(senha);
+    document.querySelectorAll('#passwordRequirementsList li[data-req]').forEach((li) => {
+        const key = li.getAttribute('data-req');
+        const ok = Boolean(requisitos[key]);
+        const icon = li.querySelector('i');
+        li.classList.toggle('req-ok', ok);
+        li.classList.toggle('req-pending', !ok);
+        if (icon) {
+            icon.className = ok ? 'fas fa-check' : 'fas fa-times';
+        }
+    });
+}
 
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
-    const toggleBtn = input.parentElement.querySelector('.password-toggle i');
+    if (!input) return;
 
-    if (input.type === 'password') {
-        input.type = 'text';
-        toggleBtn.classList.remove('fa-eye');
-        toggleBtn.classList.add('fa-eye-slash');
-    } else {
+    const toggleBtn = input.parentElement.querySelector('.password-toggle i');
+    if (!toggleBtn) return;
+
+    if (passwordRevealTimers[inputId]) {
+        clearTimeout(passwordRevealTimers[inputId]);
+        passwordRevealTimers[inputId] = null;
+    }
+
+    input.type = 'text';
+    toggleBtn.classList.remove('fa-eye');
+    toggleBtn.classList.add('fa-eye-slash');
+
+    passwordRevealTimers[inputId] = setTimeout(() => {
         input.type = 'password';
         toggleBtn.classList.remove('fa-eye-slash');
         toggleBtn.classList.add('fa-eye');
-    }
+        passwordRevealTimers[inputId] = null;
+    }, 3000);
 }
 
-
-function validatePasswordMatch() {
+function validatePasswordMatch(showHint) {
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirmPassword');
-    const confirmContainer = confirmPassword.closest('.input-container');
+    const confirmContainer = document.getElementById('confirmPasswordContainer')
+        || confirmPassword?.closest('.input-container');
+    const hint = document.getElementById('confirmPasswordHint');
 
-    if (confirmPassword.value.length > 0) {
-        if (password.value === confirmPassword.value) {
-            confirmContainer.classList.add('valid');
-            confirmContainer.classList.remove('error');
-            return true;
-        } else {
-            confirmContainer.classList.remove('valid');
-            confirmContainer.classList.add('error');
-            return false;
-        }
+    if (!password || !confirmPassword || !confirmContainer) {
+        return true;
     }
-    return true;
+
+    const valor = confirmPassword.value;
+
+    if (valor.length === 0) {
+        confirmContainer.classList.remove('input-valid', 'input-error');
+        if (hint) {
+            hint.textContent = '';
+            hint.classList.remove('is-visible', 'match-ok', 'match-error');
+        }
+        return true;
+    }
+
+    const coincide = password.value === valor;
+
+    confirmContainer.classList.toggle('input-valid', coincide);
+    confirmContainer.classList.toggle('input-error', !coincide);
+
+    if (showHint && hint) {
+        hint.textContent = coincide
+            ? 'Senhas coincidem'
+            : 'As senhas não coincidem';
+        hint.classList.add('is-visible');
+        hint.classList.toggle('match-ok', coincide);
+        hint.classList.toggle('match-error', !coincide);
+    }
+
+    return coincide;
+}
+
+let confirmPasswordDebounceTimer = null;
+
+function initRegistroPasswordUx() {
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    const passwordFormGroup = passwordInput?.closest('.form-group');
+
+    if (passwordInput && passwordFormGroup) {
+        const syncRequirements = () => {
+            const valor = passwordInput.value;
+            atualizarListaRequisitosSenha(valor);
+            passwordFormGroup.classList.toggle('password-requirements-visible', valor.length > 0);
+            if (confirmInput?.value.length > 0) {
+                validatePasswordMatch(true);
+            }
+        };
+
+        passwordInput.addEventListener('input', syncRequirements);
+        passwordInput.addEventListener('focus', syncRequirements);
+        syncRequirements();
+    }
+
+    if (confirmInput) {
+        const onConfirmChange = () => {
+            clearTimeout(confirmPasswordDebounceTimer);
+            confirmPasswordDebounceTimer = setTimeout(() => {
+                validatePasswordMatch(true);
+            }, 400);
+        };
+
+        confirmInput.addEventListener('input', onConfirmChange);
+        confirmInput.addEventListener('blur', () => validatePasswordMatch(true));
+    }
 }
 
 // =================================
@@ -357,6 +539,8 @@ function hideLoading() {
 
 // Add entrance animation to form
 document.addEventListener('DOMContentLoaded', function () {
+    initRegistroPasswordUx();
+
     const form = document.querySelector('.register-form');
     if (form) {
         form.style.opacity = '0';

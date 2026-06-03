@@ -163,13 +163,7 @@ async function enviarRecuperacaoSenha(event) {
     }
     
     try {
-        // Aqui você pode adicionar a chamada para a API de recuperação de senha
-        // Por enquanto, apenas mostra uma mensagem
-        showNotification("info", "Funcionalidade de recuperação de senha será implementada em breve");
-        
-        // Exemplo de como seria a chamada:
-        /*
-        const response = await fetch(`${API_URL}/password/recover`, {
+        const response = await fetch(`${API_URL}/password/forgot`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -180,14 +174,13 @@ async function enviarRecuperacaoSenha(event) {
         const data = await response.json();
         
         if (response.ok) {
-            showNotification("success", "Email de recuperação enviado! Verifique sua caixa de entrada.");
+            showNotification("success", data.message || "Se o e-mail estiver cadastrado, enviaremos uma nova senha em instantes.");
             setTimeout(() => {
                 voltarParaLogin(event);
-            }, 2000);
+            }, 2500);
         } else {
             showNotification("error", data.message || "Erro ao enviar email de recuperação");
         }
-        */
     } catch (error) {
         console.error('Erro ao enviar recuperação de senha:', error);
         showNotification("error", "Erro ao processar solicitação");

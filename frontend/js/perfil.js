@@ -700,16 +700,16 @@ async function redesSociais(redes) {
             nome: 'TikTok',
             img: "../img/tiktok.png"
         },
-        // {
-        //     campo: redes[0].kick_url,
-        //     nome: 'Kick',
-        //     img: "../img/kick.png"
-        // },
-        // {
-        //     campo: redes[0].allstar_url,
-        //     nome: 'Allstar',
-        //     img: "../img/Allstar.jpg"
-        // }
+        {
+            campo: redes[0].kick_url,
+            nome: 'Kick',
+            img: "../img/kick.jpg"
+        },
+        {
+            campo: redes[0].allstar_url,
+            nome: 'Allstar',
+            img: "../img/Allstar.jpg"
+        }
     ]
 
     const socialGrid = document.getElementById('socialGrid');
