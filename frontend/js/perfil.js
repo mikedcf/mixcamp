@@ -575,17 +575,29 @@ async function atualizarDadosPerfil() {
     const faceit_link = redeSocialData ? (redeSocialData.faceit_url || '') : '';
     const steam_link = redeSocialData ? (redeSocialData.steam_url || '') : '';
 
-    if(faceit_link == null || faceit_link == undefined || faceit_link == '' || steam_link == null || steam_link == undefined || steam_link == ''){
-        if (faceit_link) {
-            
+    const verifyImg = verify ? verify.querySelector('.verified-gif') : null;
+    const temFaceit = faceit_link && String(faceit_link).trim() !== '';
+    const temSteam = steam_link && String(steam_link).trim() !== '';
+    const ehStaffSelo = cargo === 'admin' || cargo === 'moderador';
+
+    if (temFaceit && temSteam) {
+        verify.style.display = 'flex';
+        atualizarLevelFaceit(faceit_link);
+    } else {
+        if (temFaceit) {
             atualizarLevelFaceit(faceit_link);
         }
         verify.style.display = 'none';
-        
     }
-    else{
+
+    // Selo staff (verify-adm.gif) — admin ou moderador, após regra FaceIT + Steam
+    if (ehStaffSelo && verify && verifyImg) {
+        verifyImg.src = '../img/verify-adm.gif';
+        verifyImg.alt = cargo === 'admin' ? 'Administrador verificado' : 'Moderador verificado';
         verify.style.display = 'flex';
-        atualizarLevelFaceit(faceit_link);
+    } else if (verifyImg) {
+        verifyImg.src = '../img/verify.gif';
+        verifyImg.alt = 'Verificado';
     }
 
     // if (verify) {
