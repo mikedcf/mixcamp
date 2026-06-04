@@ -865,65 +865,6 @@ function iniciarAutoPlayBanner() {
 // ========= CAMPEONATOS CARDS =========
 // =================================
 
-// Dados de exemplo - substituir pela API
-const campeonatosExemplo = [
-    {
-        id: 1,
-        imagem: '../img/cs2.png',
-        titulo: 'MIXCAMP 1º Edição',
-        descricao: 'O maior campeonato de CS2 da comunidade brasileira com prêmios incríveis e muita competição.',
-        organizador: 'oficial',
-        data: '15/03/2025',
-        status: 'disponivel',
-        preco: 'R$ 50,00',
-        premiacao: 'R$ 10.000,00',
-        previsaoInicio: '20/03/2025',
-        embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        qntTimes: '16'
-    },
-    {
-        id: 2,
-        imagem: '../img/cs2.png',
-        titulo: 'Torneio Semanal #45',
-        descricao: 'Competição semanal com premiação garantida para os melhores times.',
-        organizador: 'oficial',
-        status: 'embreve',
-        data: '25/03/2025',
-        preco: 'R$ 30,00',
-        premiacao: 'R$ 2.500,00',
-        previsaoInicio: '30/03/2025',
-        embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        qntTimes: '8'
-    },
-    {
-        id: 3,
-        imagem: '../img/cs2.png',
-        titulo: 'Copa Comunidade',
-        descricao: 'Torneio organizado pela comunidade para todos os níveis.',
-        organizador: 'comum',
-        status: 'disponivel',
-        data: '10/04/2025',
-        preco: 'Gratuito',
-        premiacao: 'R$ 1.000,00',
-        previsaoInicio: '15/04/2025',
-        qntTimes: '4'
-    },
-    {
-        id: 4,
-        imagem: '../img/cs2.png',
-        titulo: 'MIXCAMP 2º Edição',
-        descricao: 'Segunda edição do campeonato principal com ainda mais prêmios.',
-        organizador: 'oficial',
-        status: 'encerrado',
-        data: '01/02/2025',
-        preco: 'R$ 50,00',
-        premiacao: 'R$ 12.000,00',
-        previsaoInicio: '05/02/2025',
-        embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        qntTimes: '32'
-    }
-];
-
 function formatCurrencyBRL(valor) {
     if (valor === undefined || valor === null || valor === '') return 'A definir';
     const numero = typeof valor === 'number' ? valor : Number(valor);
@@ -978,7 +919,18 @@ function renderizarCampeonatos(lista) {
     if (!grid) return;
 
     if (!lista || lista.length === 0) {
-        grid.innerHTML = `
+        const semCampeonatosNoBanco = !listaCampeonatosCompleta || listaCampeonatosCompleta.length === 0;
+        grid.innerHTML = semCampeonatosNoBanco
+            ? `
+            <div class="empty-state-campeonatos">
+                <div class="empty-state-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h3 class="empty-state-title">Nenhum campeonato disponível</h3>
+                <p class="empty-state-message">No momento não há campeonatos cadastrados na plataforma.</p>
+                <p class="empty-state-hint">Volte em breve ou acompanhe as novidades no Discord.</p>
+            </div>`
+            : `
             <div class="empty-state-campeonatos">
                 <div class="empty-state-icon">
                     <i class="fas fa-search"></i>
@@ -1156,14 +1108,12 @@ async function criarCardsCampeonatos() {
             qntTimes: item.qnt_times || '0'
         }));
 
-        
     } catch (e) {
-        console.error('Falha ao carregar dados da API, usando dados de exemplo.', e);
-    }
-
-    // Fallback para mocks se vazio
-    if (!lista || lista.length === 0) {
-        lista = campeonatosExemplo;
+        console.error('Falha ao carregar campeonatos da API:', e);
+        lista = [];
+        if (typeof showNotification === 'function') {
+            showNotification('error', 'Não foi possível carregar os campeonatos. Tente recarregar a página.');
+        }
     }
 
     // Guarda lista completa para filtro
