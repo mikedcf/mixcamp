@@ -143,12 +143,15 @@ body {
 /* Hero Section */
 .hero-section {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    min-height: 80vh;
-    padding: 60px 0;
+    justify-content: center;
+    min-height: calc(100vh - clamp(80px, 12vh, 120px));
+    padding: clamp(48px, 8vh, 100px) 24px;
     position: relative;
     overflow: hidden;
+    text-align: center;
+    width: 100%;
 }
 
 .hero-section::before {
@@ -164,17 +167,27 @@ body {
 }
 
 .hero-content {
-    flex: 1;
-    max-width: 600px;
-    z-index: 2;
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 32px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .hero-title {
-    font-size: 4.5em;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
     color: #ffffff;
-    margin-bottom: 20px;
-    line-height: 1.2;
+    margin-bottom: 24px;
+    line-height: 1.15;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    text-align: center;
 }
 
 .gradient-text {
@@ -198,17 +211,18 @@ body {
 }
 
 .hero-subtitle {
-    font-size: 1.4em;
+    font-size: clamp(1.05rem, 2.2vw, 1.4rem);
     color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 40px;
-    line-height: 1.6;
+    margin: 0 auto 36px;
+    line-height: 1.65;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    max-width: 680px;
+    width: 100%;
+    text-align: center;
 }
 
 .hero-stats {
-    display: flex;
-    gap: 40px;
-    margin-top: 40px;
+    display: none;
 }
 
 .stat-item {
@@ -236,7 +250,10 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    margin-top: 32px;
+    margin-top: 8px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 .hero-ctas .cta-btn {
@@ -244,20 +261,19 @@ body {
 }
 
 .hero-aviso-inicio {
-    margin-top: 20px;
+    margin-top: 24px;
     font-size: 1em;
     color: rgba(255, 255, 255, 0.85);
     font-weight: 600;
+    text-align: center;
+    max-width: 560px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .hero-aviso-inicio::before {
-    content: '';
-    display: inline-block;
-    width: 4px;
-    height: 1em;
-    background: #ff6b35;
-    margin-right: 8px;
-    vertical-align: middle;
+    display: none;
 }
 
 @keyframes countUp {
@@ -273,18 +289,27 @@ body {
 }
 
 .hero-image {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: 2;
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin-top: 0;
+    pointer-events: none;
+    opacity: 1;
 }
 
 .floating-cards {
-    position: relative;
-    width: 400px;
-    height: 400px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: 1400px;
+    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    pointer-events: none;
 }
 
 .floating-card {
@@ -294,6 +319,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
     padding: 20px;
+    min-width: 130px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -301,11 +327,19 @@ body {
     color: #ffffff;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     animation: float 6s ease-in-out infinite;
+    z-index: 2;
 }
 
 .floating-card i {
     font-size: 2em;
     color: #ff6b35;
+}
+
+.floating-card-icon-img {
+    width: 2em;
+    height: 2em;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(255, 107, 53, 0.35));
 }
 
 .floating-card span {
@@ -314,22 +348,54 @@ body {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* Esquerda: Premiações, Comunidade, Chaveamento */
 .card-1 {
-    top: 0;
-    left: 0;
+    top: 18%;
+    left: clamp(12px, 4vw, 72px);
+    right: auto;
+    bottom: auto;
     animation-delay: 0s;
 }
 
 .card-2 {
-    top: 50%;
-    right: 0;
-    animation-delay: 2s;
+    top: 38%;
+    left: clamp(12px, 4vw, 72px);
+    right: auto;
+    bottom: auto;
+    animation-delay: 1.2s;
 }
 
+.card-4 {
+    top: 58%;
+    left: clamp(12px, 4vw, 72px);
+    right: auto;
+    bottom: auto;
+    animation-delay: 2.4s;
+}
+
+/* Direita: CS2, Discord, FACEIT */
 .card-3 {
-    bottom: 0;
-    left: 50%;
-    animation-delay: 4s;
+    top: 18%;
+    right: clamp(12px, 4vw, 72px);
+    left: auto;
+    bottom: auto;
+    animation-delay: 0.6s;
+}
+
+.card-5 {
+    top: 38%;
+    right: clamp(12px, 4vw, 72px);
+    left: auto;
+    bottom: auto;
+    animation-delay: 1.8s;
+}
+
+.card-6 {
+    top: 58%;
+    right: clamp(12px, 4vw, 72px);
+    left: auto;
+    bottom: auto;
+    animation-delay: 3s;
 }
 
 @keyframes float {
@@ -368,14 +434,35 @@ body {
 
 .section-header {
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: 72px;
+    width: 100%;
 }
 
 .section-title {
-    font-size: 3.5em;
-    color: #ffffff;
-    margin-bottom: 20px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.section-header > h2.section-title {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(2.75rem, 7vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    line-height: 1.15;
+    text-shadow: none;
+}
+
+h3.section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-shadow: none;
 }
 
 .section-subtitle {
@@ -1055,30 +1142,87 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-    .hero-section {
-        flex-direction: column;
-        text-align: center;
-        gap: 40px;
-        padding-top: 80px;
-    }
-
-    .hero-title {
-        font-size: 3em;
-    }
-
-    .hero-stats {
-        justify-content: center;
-        gap: 30px;
+@media (max-width: 1024px) {
+    .hero-image {
+        position: relative;
+        inset: auto;
+        height: auto;
+        margin-top: clamp(36px, 5vh, 52px);
     }
 
     .floating-cards {
-        width: 300px;
-        height: 300px;
+        position: relative;
+        inset: auto;
+        left: auto;
+        transform: none;
+        height: auto;
+        width: min(520px, 94vw);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(3, auto);
+        gap: 14px;
+        align-items: stretch;
     }
 
-    .section-title {
-        font-size: 2.5em;
+    .floating-card {
+        position: relative;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 0 !important;
+        min-width: 0;
+        width: 100%;
+        padding: 16px;
+    }
+
+    .card-1 {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .card-2 {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .card-4 {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .card-3 {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: stretch;
+    }
+
+    .card-5 {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    .card-6 {
+        grid-column: 2;
+        grid-row: 3;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: auto;
+        padding: 64px 20px 72px;
+        gap: 0;
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 9vw, 3rem);
+    }
+
+    .section-header > h2.section-title {
+        font-size: clamp(2.25rem, 8vw, 3rem);
+        margin-bottom: 20px;
     }
 
     .beneficios-grid,
@@ -1111,8 +1255,9 @@ body {
         font-size: 2.5em;
     }
 
-    .section-title {
-        font-size: 2em;
+    .section-header > h2.section-title {
+        font-size: clamp(2rem, 9vw, 2.75rem);
+        margin-bottom: 18px;
     }
 }
 
@@ -1378,11 +1523,9 @@ body {
         gap: 20px;
     }
 
-    .section-title {
-        font-size: 2em;
+    .section-header > h2.section-title {
+        font-size: clamp(2rem, 9vw, 2.75rem);
     }
-
-    .beneficio-card,
     .plano-card,
     .depoimento-card {
         padding: 25px 20px;

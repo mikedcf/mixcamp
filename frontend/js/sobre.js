@@ -701,7 +701,8 @@ function inicializarPagina() {
     addConfettiEffect();
     addScrollProgress();
 
-    // Animar contadores quando a página carregar
+    // Timeline glow (após layout; altura correta da .timeline)
+    inicializarEfeitoLuzTimeline();
     setTimeout(() => {
         animateCounters();
     }, 1000);
@@ -997,181 +998,144 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // =================================
-// ========= EFEITO DE LUZ NA TIMELINE =========
+// ========= TIMELINE GLOW (CSS + JS puro) =========
 // =================================
-// Esta função cria um efeito de luz que acompanha o scroll na linha vertical da timeline
-// A luz desce quando o usuário rola para baixo e sobe quando rola para cima
-
-// =================================
-// ========= EFEITO DE LUZ NA TIMELINE - VERSÃO SIMPLIFICADA =========
-// =================================
-// Vamos começar simples e ir ajustando passo a passo conforme você me guiar
+// ultils.css: scroll no body — listeners no body, não na window
 
 function inicializarEfeitoLuzTimeline() {
-    // Elemento da luz na timeline
-    const timelineLight = document.getElementById('timelineLight');
-    // Elemento da linha iluminada (que fica atrás da luz)
-    const timelineLineGlow = document.getElementById('timelineLineGlow');
-    // Header
-    const header = document.querySelector('.header');
-    // Título MIXCAMP
-    const heroTitle = document.querySelector('.hero-title');
-    // Seção de stats (jogadores, times, edições, premiação)
-    const heroStats = document.querySelector('.hero-stats');
-    // Título "Nossa História"
-    const historiaTitle = document.querySelector('.historia .section-title');
-    // Container da timeline
     const timeline = document.querySelector('.timeline');
-    // Timeline items para identificar os ícones
-    const timelineItems = document.querySelectorAll('.timeline-item');
-    
-    // Verifica se os elementos existem
-    if (!timelineLight || !timelineLineGlow || !header || !heroTitle || !heroStats || !historiaTitle || !timeline) {
-        
-        return;
+    const glow = document.getElementById('timelineGlow');
+    const lineFill = document.getElementById('timelineLineFill');
+
+    if (!timeline || !glow || !lineFill) return;
+
+    const items = Array.from(timeline.querySelectorAll('.timeline-item'));
+    if (items.length === 0) return;
+
+    const scroller = document.body;
+    const SNAP_THRESHOLD = 48;
+    const FADE_IN_RANGE = 140;
+
+    let rafId = null;
+    let lastY = -1;
+    let lastOpacity = -1;
+
+    function clamp(valor, min, max) {
+        return Math.max(min, Math.min(max, valor));
     }
-    
-    // Remove qualquer elemento duplicado de luz
-    const todasLuzes = document.querySelectorAll('.timeline-light');
-    if (todasLuzes.length > 1) {
-        for (let i = 1; i < todasLuzes.length; i++) {
-            todasLuzes[i].remove();
+
+    function lerp(a, b, t) {
+        return a + (b - a) * t;
+    }
+
+    function centroViewport(el) {
+        const r = el.getBoundingClientRect();
+        return r.top + r.height / 2;
+    }
+
+    function centroIconeRelativo(iconEl) {
+        const tr = timeline.getBoundingClientRect();
+        const ir = iconEl.getBoundingClientRect();
+        return ir.top + ir.height / 2 - tr.top;
+    }
+
+    function linhaReferencia() {
+        return window.innerHeight * 0.5;
+    }
+
+    function calcularEstado() {
+        const align = linhaReferencia();
+        const tr = timeline.getBoundingClientRect();
+        const altura = timeline.offsetHeight;
+
+        if (altura <= 0 || tr.bottom < 0 || tr.top > window.innerHeight) {
+            return { y: 0, opacity: 0 };
+        }
+
+        const icones = items.map(item =>
+            centroIconeRelativo(item.querySelector('.timeline-icon'))
+        );
+        const cards = items.map(item =>
+            centroViewport(item.querySelector('.timeline-content'))
+        );
+
+        const playY = icones[0];
+        const ultimoIdx = items.length - 1;
+        const ultimoY = icones[ultimoIdx];
+
+        // Antes de "O Início" centralizar — glow oculto no play
+        if (cards[0] > align) {
+            const opacity = cards[0] - align < FADE_IN_RANGE
+                ? 1 - (cards[0] - align) / FADE_IN_RANGE
+                : 0;
+            return { y: playY, opacity: clamp(opacity, 0, 1) };
+        }
+
+        // Encaixe preciso quando card centraliza
+        for (let i = 0; i < items.length; i++) {
+            if (Math.abs(cards[i] - align) < SNAP_THRESHOLD) {
+                return { y: icones[i], opacity: 1 };
+            }
+        }
+
+        // Após CS2 sair do centro — continua até o fim da linha
+        if (cards[ultimoIdx] < align) {
+            if (tr.bottom <= align) {
+                return { y: altura, opacity: 1 };
+            }
+            const t = clamp(
+                (align - cards[ultimoIdx]) / (tr.bottom - cards[ultimoIdx]),
+                0,
+                1
+            );
+            return { y: lerp(ultimoY, altura, t), opacity: 1 };
+        }
+
+        // Entre dois cards: interpola entre ícones conforme scroll
+        for (let i = 0; i < items.length - 1; i++) {
+            const c0 = cards[i];
+            const c1 = cards[i + 1];
+            if (c0 <= align && c1 >= align) {
+                const t = clamp((align - c0) / (c1 - c0), 0, 1);
+                return { y: lerp(icones[i], icones[i + 1], t), opacity: 1 };
+            }
+        }
+
+        return { y: playY, opacity: 1 };
+    }
+
+    function aplicarEstado({ y, opacity }) {
+        if (Math.abs(y - lastY) > 0.25 || Math.abs(opacity - lastOpacity) > 0.01) {
+            timeline.style.setProperty('--glow-y', `${y}px`);
+            timeline.style.setProperty('--line-fill-h', `${y}px`);
+            timeline.style.setProperty('--glow-opacity', String(opacity));
+            lastY = y;
+            lastOpacity = opacity;
         }
     }
-    
-    // Função que atualiza a posição da luz baseado na posição do header
-    function atualizarPosicaoLuz() {
-        const scrollAtual = window.pageYOffset || document.documentElement.scrollTop;
-        const headerBottom = header.getBoundingClientRect().bottom + scrollAtual;
-        const timelineHeight = timeline.offsetHeight;
-        
-        // Ponto 1: Header cobre metade do título MIXCAMP - luz no topo (0%)
-        const heroTitleRect = heroTitle.getBoundingClientRect();
-        const heroTitleTopAbsoluto = scrollAtual + heroTitleRect.top;
-        const heroTitleHeight = heroTitleRect.height;
-        const heroTitleMeio = heroTitleTopAbsoluto + (heroTitleHeight / 2);
-        const ponto1 = heroTitleMeio;
-        
-        // Ponto 2: Header no final de hero-stats - luz chegando na fa-chart-line (2º item)
-        const heroStatsRect = heroStats.getBoundingClientRect();
-        const heroStatsBottomAbsoluto = scrollAtual + heroStatsRect.bottom;
-        const ponto2 = heroStatsBottomAbsoluto;
-        const iconChartLine = timelineItems[1]?.querySelector('.timeline-icon');
-        const posicaoIconChartLine = iconChartLine ? 
-            (scrollAtual + iconChartLine.getBoundingClientRect().top) - (scrollAtual + timeline.getBoundingClientRect().top) : 
-            timelineHeight * 0.25;
-        
-        // Ponto 3: Header no topo de "Nossa História" - luz chegando na fa-trophy (3º item)
-        const historiaTitleRect = historiaTitle.getBoundingClientRect();
-        const historiaTitleTopAbsoluto = scrollAtual + historiaTitleRect.top;
-        const ponto3 = historiaTitleTopAbsoluto;
-        const iconTrophy = timelineItems[2]?.querySelector('.timeline-icon');
-        const posicaoIconTrophy = iconTrophy ? 
-            (scrollAtual + iconTrophy.getBoundingClientRect().top) - (scrollAtual + timeline.getBoundingClientRect().top) : 
-            timelineHeight * 0.4;
-        
-        // Ponto 4: Header no início da div com fa-play - luz em cima do fa-discord (4º item)
-        const iconPlay = timelineItems[0]?.querySelector('.timeline-icon');
-        const iconPlayTopAbsoluto = iconPlay ? scrollAtual + iconPlay.getBoundingClientRect().top : 0;
-        const ponto4 = iconPlayTopAbsoluto;
-        const iconDiscord = timelineItems[3]?.querySelector('.timeline-icon');
-        const posicaoIconDiscord = iconDiscord ? 
-            (scrollAtual + iconDiscord.getBoundingClientRect().top) - (scrollAtual + timeline.getBoundingClientRect().top) : 
-            timelineHeight * 0.6;
-        
-        // Ponto 5: Header na metade do título "O Crescimento" - luz chegando na fa-rocket (5º item)
-        const itemCrescimento = timelineItems[1];
-        const tituloCrescimento = itemCrescimento?.querySelector('h3');
-        const tituloCrescimentoRect = tituloCrescimento?.getBoundingClientRect();
-        const tituloCrescimentoMeio = tituloCrescimentoRect ? 
-            scrollAtual + tituloCrescimentoRect.top + (tituloCrescimentoRect.height / 2) : 0;
-        const ponto5 = tituloCrescimentoMeio;
-        const iconRocket = timelineItems[4]?.querySelector('.timeline-icon');
-        const posicaoIconRocket = iconRocket ? 
-            (scrollAtual + iconRocket.getBoundingClientRect().top) - (scrollAtual + timeline.getBoundingClientRect().top) : 
-            timelineHeight * 0.8;
-        
-        // Ponto 6: Header no meio da div com fa-discord - luz no final (100%)
-        const itemDiscord = timelineItems[3];
-        const itemDiscordRect = itemDiscord?.getBoundingClientRect();
-        const itemDiscordMeio = itemDiscordRect ? 
-            scrollAtual + itemDiscordRect.top + (itemDiscordRect.height / 2) : 0;
-        const ponto6 = itemDiscordMeio;
-        
-        // Calcula progresso baseado na posição do header
-        let progresso = 0;
-        let posicaoY = 0;
-        
-        if (headerBottom < ponto1) {
-            // Antes do ponto 1 - luz no topo
-            progresso = 0;
-            posicaoY = 0;
-        } else if (headerBottom >= ponto1 && headerBottom < ponto2) {
-            // Entre ponto 1 e 2 - luz vai do topo até fa-chart-line
-            const range = ponto2 - ponto1;
-            const progressoAtual = headerBottom - ponto1;
-            const percentual = progressoAtual / range;
-            posicaoY = percentual * posicaoIconChartLine;
-            progresso = (posicaoY / timelineHeight) * 100;
-        } else if (headerBottom >= ponto2 && headerBottom < ponto3) {
-            // Entre ponto 2 e 3 - luz vai de fa-chart-line até fa-trophy
-            const range = ponto3 - ponto2;
-            const progressoAtual = headerBottom - ponto2;
-            const percentual = progressoAtual / range;
-            posicaoY = posicaoIconChartLine + (percentual * (posicaoIconTrophy - posicaoIconChartLine));
-            progresso = (posicaoY / timelineHeight) * 100;
-        } else if (headerBottom >= ponto3 && headerBottom < ponto4) {
-            // Entre ponto 3 e 4 - luz vai de fa-trophy até fa-discord
-            const range = ponto4 - ponto3;
-            const progressoAtual = headerBottom - ponto3;
-            const percentual = progressoAtual / range;
-            posicaoY = posicaoIconTrophy + (percentual * (posicaoIconDiscord - posicaoIconTrophy));
-            progresso = (posicaoY / timelineHeight) * 100;
-        } else if (headerBottom >= ponto4 && headerBottom < ponto5) {
-            // Entre ponto 4 e 5 - luz vai de fa-discord até fa-rocket
-            const range = ponto5 - ponto4;
-            const progressoAtual = headerBottom - ponto4;
-            const percentual = progressoAtual / range;
-            posicaoY = posicaoIconDiscord + (percentual * (posicaoIconRocket - posicaoIconDiscord));
-            progresso = (posicaoY / timelineHeight) * 100;
-        } else if (headerBottom >= ponto5 && headerBottom < ponto6) {
-            // Entre ponto 5 e 6 - luz vai de fa-rocket até final
-            const range = ponto6 - ponto5;
-            const progressoAtual = headerBottom - ponto5;
-            const percentual = progressoAtual / range;
-            posicaoY = posicaoIconRocket + (percentual * (timelineHeight - posicaoIconRocket));
-            progresso = (posicaoY / timelineHeight) * 100;
-        } else {
-            // Depois do ponto 6 - luz no final
-            progresso = 100;
-            posicaoY = timelineHeight;
-        }
-        
-        // Limita entre 0% e 100%
-        progresso = Math.max(0, Math.min(100, progresso));
-        posicaoY = Math.max(0, Math.min(timelineHeight, posicaoY));
-        
-        // Atualiza posição da luz
-        timelineLight.style.top = posicaoY + 'px';
-        
-        // Atualiza altura da linha iluminada
-        timelineLineGlow.style.height = posicaoY + 'px';
-        
-        // Ajusta opacidade baseado no progresso
-        const intensidade = progresso / 100;
-        timelineLineGlow.style.opacity = 0.6 + (intensidade * 0.4);
+
+    function atualizar() {
+        rafId = null;
+        aplicarEstado(calcularEstado());
     }
-    
-    // Adiciona listener de scroll
-    window.addEventListener('scroll', atualizarPosicaoLuz, { passive: true });
-    window.addEventListener('resize', atualizarPosicaoLuz, { passive: true });
-    
-    // Atualiza posição inicial
-    setTimeout(() => atualizarPosicaoLuz(), 100);
+
+    function agendarAtualizacao() {
+        if (rafId !== null) return;
+        rafId = requestAnimationFrame(atualizar);
+    }
+
+    scroller.addEventListener('scroll', agendarAtualizacao, { passive: true });
+    window.addEventListener('resize', agendarAtualizacao, { passive: true });
+    window.addEventListener('load', agendarAtualizacao, { passive: true });
+
+    if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(agendarAtualizacao);
+        ro.observe(timeline);
+        items.forEach(item => ro.observe(item));
+    }
+
+    agendarAtualizacao();
 }
 
 // Inicializar quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', inicializarPagina);
-document.addEventListener('DOMContentLoaded', inicializarEfeitoLuzTimeline);
-// Adicionar barra de progresso
-addScrollProgress();

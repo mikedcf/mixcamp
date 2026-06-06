@@ -219,8 +219,9 @@ body {
     max-width: 700px;
 }
 
+/* Stats do hero (Jogadores, Times, Edições, Premiação) — ocultas até uso futuro */
 .hero-stats {
-    display: flex;
+    display: none;
     gap: 30px;
     margin-bottom: 40px;
     justify-content: center;
@@ -345,67 +346,107 @@ body {
     background: rgba(255, 255, 255, 0.02);
 }
 
+.historia .section-title,
+.como-funciona .section-title,
+.recursos .section-title,
+.faq-section .section-title {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(2.75rem, 7vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 72px;
+    line-height: 1.15;
+}
+
 .timeline {
     position: relative;
     max-width: 800px;
     margin: 0 auto;
     z-index: 0;
+    overflow: visible;
+    isolation: isolate;
+    --timeline-axis-x: 50%;
+    --glow-y: 0px;
+    --line-fill-h: 0px;
+    --glow-opacity: 0;
 }
 
-.timeline::before {
-    content: '';
+/* Linha vertical base (camada 1) */
+.timeline-line {
     position: absolute;
-    left: 50%;
+    left: var(--timeline-axis-x);
     top: 0;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(180deg, #ff6b35, #ff8c42);
     transform: translateX(-50%);
-    z-index: -1;
-}
-
-/* Linha iluminada em cima da timeline - fica mais forte e pulsando */
-.timeline-line-glow {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 4px;
-    height: 0;
-    background: linear-gradient(180deg, #ff4500, #ff6b35, #ff8c42);
-    transform: translateX(-50%);
-    z-index: -1;
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.8), 0 0 20px rgba(255, 140, 66, 0.6);
-    animation: pulseGlow 2s ease-in-out infinite;
+    background: linear-gradient(180deg, rgba(255, 107, 53, 0.35), rgba(255, 140, 66, 0.25));
+    z-index: 1;
     pointer-events: none;
-    transition: height 0.1s ease-out;
+    overflow: visible;
 }
 
-/* Animação de pulso para a linha iluminada */
-@keyframes pulseGlow {
+/* Trecho energizado que acompanha o glow (camada 2 — acima da linha base) */
+.timeline-line__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: var(--line-fill-h);
+    background: linear-gradient(180deg, #ff4500, #ff7a2f, #ff8c42);
+    box-shadow:
+        0 0 8px rgba(255, 122, 47, 0.85),
+        0 0 18px rgba(255, 107, 53, 0.55);
+    transition: height 0.1s linear;
+    will-change: height;
+}
+
+/* Esfera luminosa (camada 3 — atrás dos ícones, acima da linha) */
+.timeline-glow {
+    position: absolute;
+    left: var(--timeline-axis-x);
+    top: var(--glow-y);
+    width: 22px;
+    height: 22px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    opacity: var(--glow-opacity);
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.95) 0%,
+        #ff7a2f 38%,
+        rgba(255, 122, 47, 0.45) 62%,
+        transparent 72%
+    );
+    filter: blur(0.5px);
+    box-shadow:
+        0 0 12px rgba(255, 122, 47, 0.95),
+        0 0 28px rgba(255, 122, 47, 0.75),
+        0 0 48px rgba(255, 107, 53, 0.45);
+    transition: top 0.1s linear, opacity 0.25s ease;
+    will-change: top, opacity;
+    animation: timelineGlowPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes timelineGlowPulse {
     0%, 100% {
-        opacity: 0.8;
-        box-shadow: 0 0 10px rgba(255, 107, 53, 0.8), 0 0 20px rgba(255, 140, 66, 0.6);
+        filter: blur(0.5px) brightness(1);
+        box-shadow:
+            0 0 12px rgba(255, 122, 47, 0.9),
+            0 0 28px rgba(255, 122, 47, 0.7),
+            0 0 44px rgba(255, 107, 53, 0.4);
     }
     50% {
-        opacity: 1;
-        box-shadow: 0 0 15px rgba(255, 107, 53, 1), 0 0 30px rgba(255, 140, 66, 0.9);
+        filter: blur(1px) brightness(1.2);
+        box-shadow:
+            0 0 18px rgba(255, 122, 47, 1),
+            0 0 36px rgba(255, 122, 47, 0.85),
+            0 0 56px rgba(255, 107, 53, 0.55);
     }
-}
-
-/* Efeito de luz que acompanha o scroll na linha vertical */
-.timeline-light {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 12px;
-    height: 12px;
-    background: radial-gradient(circle, #ff6b35 0%, rgba(255, 107, 53, 0.8) 40%, transparent 70%);
-    border-radius: 50%;
-    transform: translateX(-50%) translateY(-6px);
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.8), 0 0 40px rgba(255, 140, 66, 0.6);
-    z-index: 0;
-    transition: top 0.1s ease-out;
-    pointer-events: none;
 }
 
 .timeline-item {
@@ -430,10 +471,11 @@ body {
     justify-content: center;
     position: absolute;
     top: 0;
-    left: 50%;
+    left: var(--timeline-axis-x);
     transform: translateX(-50%);
     z-index: 10;
-    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.35);
+    isolation: isolate;
 }
 
 .timeline-icon i {
@@ -1023,19 +1065,8 @@ footer {
         flex-wrap: wrap;
     }
 
-    .timeline::before {
-        left: 30px;
-    }
-
-    .timeline-line-glow {
-        left: 30px;
-        transform: translateX(-50%);
-        z-index: -1;
-    }
-
-    .timeline-light {
-        left: 30px;
-        transform: translateX(-50%) translateY(-6px);
+    .timeline {
+        --timeline-axis-x: 30px;
     }
 
     .timeline-item {
@@ -1046,7 +1077,7 @@ footer {
 
     .timeline-icon {
         top: 0;
-        left: 30px;
+        left: var(--timeline-axis-x);
         transform: translateX(-50%);
         z-index: 10;
     }
@@ -1090,6 +1121,14 @@ footer {
 
     .section-title {
         font-size: 2rem;
+    }
+
+    .historia .section-title,
+    .como-funciona .section-title,
+    .recursos .section-title,
+    .faq-section .section-title {
+        font-size: clamp(2.25rem, 9vw, 3.25rem);
+        margin-bottom: 48px;
     }
 
     .cta-content h2 {
