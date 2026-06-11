@@ -421,8 +421,8 @@ CREATE TABLE IF NOT EXISTS inscricoes_campeonato (
     previsao_data_inicio DATETIME NOT NULL,
     data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_organizador) REFERENCES usuarios (id) ON DELETE CASCADE,
-    FOREIGN KEY (trofeu_id) REFERENCES time_conquistas (id) ON DELETE CASCADE,
-    FOREIGN KEY (medalha_id) REFERENCES medalhas (id) ON DELETE CASCADE
+    FOREIGN KEY (trofeu_id) REFERENCES trofeus (id) ON DELETE SET NULL,
+    FOREIGN KEY (medalha_id) REFERENCES medalhas (id) ON DELETE SET NULL
 );
 
 ALTER TABLE inscricoes_campeonato ADD COLUMN link_whatsapp VARCHAR(255) DEFAULT NULL;

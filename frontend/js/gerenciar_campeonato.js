@@ -1326,8 +1326,8 @@ function atualizarVisibilidadeTrofeuMedalha() {
     trofeuInput.required = mostrar;
     medalhaInput.required = mostrar;
     if (!mostrar) {
-        if (!trofeuInput.value) trofeuInput.value = '1';
-        if (!medalhaInput.value) medalhaInput.value = '1';
+        trofeuInput.value = '';
+        medalhaInput.value = '';
     }
 }
 
@@ -1507,11 +1507,16 @@ async function salvarCampeonato(event) {
     console.log(dados.tipo);
     // Troféu/medalha customizados: só admin + campeonato oficial
     if (podeEditarTrofeuMedalha(gerencia, tipoCampeonato)) {
-        dados.trofeu_id = parseInt(formData.get('trofeu_id'), 10) || 1;
-        dados.medalha_id = parseInt(formData.get('medalha_id'), 10) || 1;
+        const trofeuRaw = formData.get('trofeu_id');
+        const medalhaRaw = formData.get('medalha_id');
+        dados.trofeu_id = trofeuRaw ? parseInt(trofeuRaw, 10) : null;
+        dados.medalha_id = medalhaRaw ? parseInt(medalhaRaw, 10) : null;
+
+        if (Number.isNaN(dados.trofeu_id)) dados.trofeu_id = null;
+        if (Number.isNaN(dados.medalha_id)) dados.medalha_id = null;
     } else {
-        dados.trofeu_id = 1;
-        dados.medalha_id = 1;
+        dados.trofeu_id = null;
+        dados.medalha_id = null;
     }
     
     // Validações básicas

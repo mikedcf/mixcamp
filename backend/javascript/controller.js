@@ -84,6 +84,37 @@ function validarLimiteFuncao(counts, novaFuncao) {
     return null;
 }
 
+/** Corrige FK errada: inscricoes_campeonato.trofeu_id -> time_conquistas (deve ser trofeus) */
+async function corrigirFkTrofeuInscricoesCampeonato(conexao) {
+    try {
+        const [fks] = await conexao.execute(`
+            SELECT CONSTRAINT_NAME, REFERENCED_TABLE_NAME
+            FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'inscricoes_campeonato'
+              AND COLUMN_NAME = 'trofeu_id'
+              AND REFERENCED_TABLE_NAME IS NOT NULL
+        `);
+
+        for (const fk of fks) {
+            if (fk.REFERENCED_TABLE_NAME === 'time_conquistas') {
+                await conexao.execute(
+                    `ALTER TABLE inscricoes_campeonato DROP FOREIGN KEY \`${fk.CONSTRAINT_NAME}\``
+                );
+                await conexao.execute(`
+                    ALTER TABLE inscricoes_campeonato
+                    ADD CONSTRAINT fk_inscricoes_trofeu
+                    FOREIGN KEY (trofeu_id) REFERENCES trofeus(id)
+                    ON DELETE SET NULL
+                `);
+                console.log('[migrate] FK trofeu_id corrigida: time_conquistas -> trofeus');
+            }
+        }
+    } catch (err) {
+        console.warn('[migrate] Não foi possível corrigir FK trofeu_id:', err.message);
+    }
+}
+
 async function setupDatabase() {
     const conexao = await conectar()
 
@@ -935,12 +966,12 @@ async function setupDatabase() {
          ON DELETE CASCADE;`,
 
         `ALTER TABLE inscricoes_campeonato ADD CONSTRAINT fk_inscricoes_trofeu
-         FOREIGN KEY (trofeu_id) REFERENCES time_conquistas(id)
-         ON DELETE CASCADE;`,
+         FOREIGN KEY (trofeu_id) REFERENCES trofeus(id)
+         ON DELETE SET NULL;`,
 
         `ALTER TABLE inscricoes_campeonato ADD CONSTRAINT fk_inscricoes_medalha
          FOREIGN KEY (medalha_id) REFERENCES medalhas(id)
-         ON DELETE CASCADE;`,
+         ON DELETE SET NULL;`,
 
         `ALTER TABLE inscricoes_times ADD CONSTRAINT fk_inscricoes_times_inscricao
          FOREIGN KEY (inscricao_id) REFERENCES inscricoes_campeonato(id)
@@ -1026,6 +1057,8 @@ async function setupDatabase() {
     for (const fk of foreignKeys) {
         await conexao.execute(fk).catch(() => { })
     }
+
+    await corrigirFkTrofeuInscricoesCampeonato(conexao);
 
     await conexao.execute(`SET FOREIGN_KEY_CHECKS = 1;`)
 
