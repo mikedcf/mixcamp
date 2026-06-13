@@ -84,1018 +84,6 @@ function validarLimiteFuncao(counts, novaFuncao) {
     return null;
 }
 
-/** Corrige FK errada: inscricoes_campeonato.trofeu_id -> time_conquistas (deve ser trofeus) */
-async function corrigirFkTrofeuInscricoesCampeonato(conexao) {
-    try {
-        const [fks] = await conexao.execute(`
-            SELECT CONSTRAINT_NAME, REFERENCED_TABLE_NAME
-            FROM information_schema.KEY_COLUMN_USAGE
-            WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = 'inscricoes_campeonato'
-              AND COLUMN_NAME = 'trofeu_id'
-              AND REFERENCED_TABLE_NAME IS NOT NULL
-        `);
-
-        for (const fk of fks) {
-            if (fk.REFERENCED_TABLE_NAME === 'time_conquistas') {
-                await conexao.execute(
-                    `ALTER TABLE inscricoes_campeonato DROP FOREIGN KEY \`${fk.CONSTRAINT_NAME}\``
-                );
-                await conexao.execute(`
-                    ALTER TABLE inscricoes_campeonato
-                    ADD CONSTRAINT fk_inscricoes_trofeu
-                    FOREIGN KEY (trofeu_id) REFERENCES trofeus(id)
-                    ON DELETE SET NULL
-                `);
-                console.log('[migrate] FK trofeu_id corrigida: time_conquistas -> trofeus');
-            }
-        }
-    } catch (err) {
-        console.warn('[migrate] Não foi possível corrigir FK trofeu_id:', err.message);
-    }
-}
-
-async function setupDatabase() {
-    const conexao = await conectar()
-
-    console.log("🔄 Iniciando configuração do banco...")
-
-    await conexao.execute(`SET FOREIGN_KEY_CHECKS = 0;`)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS notificacoes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        texto TEXT NOT NULL,
-        lida BOOLEAN DEFAULT FALSE,
-        criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-        FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS promocao_pendente_pagamento (
-    external_reference VARCHAR(191) PRIMARY KEY,
-    body_json TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    1️⃣ TABELAS BASE (SEM DEPENDÊNCIA)
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        senha VARCHAR(255) NOT NULL,
-        steamid VARCHAR(255) DEFAULT NULL,
-        faceitid VARCHAR(255) DEFAULT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        avatar_url VARCHAR(255) DEFAULT 'https://i.ibb.co/qMT9NVK5/user-2.webp',
-        banner_url VARCHAR(255) DEFAULT 'https://i.ibb.co/GfpXkKWk/banner3-1.webp',
-        sobre TEXT,
-        time_id INT NULL,
-        posicoes ENUM('capitao','awp','entry','support','igl','sub','coach') NOT NULL DEFAULT '',
-        gerencia ENUM('admin','moderador','streamer','apoiador','user') DEFAULT 'user',
-        organizador ENUM('premium','intermediario','basico') DEFAULT NULL,
-        cores_perfil VARCHAR(50) DEFAULT '#ffffff80',
-        cfg_cs VARCHAR(255)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    // Garantir que a coluna posicoes existe (para tabelas criadas antes desta atualização)
-    try {
-        // Verificar se a coluna existe
-        const [columns] = await conexao.execute(`
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = 'usuarios' 
-            AND COLUMN_NAME = 'posicoes'
-        `);
-
-        if (columns.length === 0) {
-            // Coluna não existe, adicionar
-            await conexao.execute(`
-                ALTER TABLE usuarios 
-                ADD COLUMN posicoes VARCHAR(255) DEFAULT NULL;
-            `);
-            console.log('✅ Coluna posicoes adicionada à tabela usuarios');
-        } else {
-            // Coluna existe, garantir que está com o tipo correto (VARCHAR para múltiplas posições)
-            await conexao.execute(`
-                ALTER TABLE usuarios 
-                MODIFY COLUMN posicoes VARCHAR(255) DEFAULT NULL;
-            `).catch(() => { });
-        }
-    } catch (error) {
-        // Ignora erros (coluna pode já existir com estrutura diferente)
-        console.log('⚠️ Aviso ao verificar coluna posicoes:', error.message);
-    }
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS times (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nome VARCHAR(100) NOT NULL UNIQUE,
-        tag VARCHAR(10) NOT NULL UNIQUE,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        lider_id INT NOT NULL,
-        avatar_time_url VARCHAR(255) DEFAULT 'https://i.ibb.co/99tvNKGP/Chat-GPT-Image-24-de-nov-de-2025-12-19-41.png',
-        banner_time_url VARCHAR(255) DEFAULT 'https://i.ibb.co/tPkZHy8R/banner-time.png',
-        sobre_time TEXT,
-        cores_perfil VARCHAR(50) DEFAULT '#ffffff80'
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS trofeus (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nome VARCHAR(100) NOT NULL,
-        descricao TEXT,
-        imagem_url VARCHAR(255) NOT NULL,
-        iframe_url VARCHAR(255),
-        edicao_campeonato VARCHAR(50),
-        categoria VARCHAR(100),
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS medalhas (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nome VARCHAR(100) NOT NULL UNIQUE,
-        descricao TEXT,
-        imagem_url_campeao VARCHAR(255) NOT NULL,
-        imagem_url_segundo VARCHAR(255) NOT NULL,
-        iframe_url_campeao VARCHAR(255),
-        iframe_url_segundo VARCHAR(255),
-        edicao_campeonato VARCHAR(50),
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS posicoes_img (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        capitao VARCHAR(255),
-        awp VARCHAR(255),
-        entry VARCHAR(255),
-        support VARCHAR(255),
-        igl VARCHAR(255),
-        sub VARCHAR(255),
-        coach VARCHAR(255),
-        rifle VARCHAR(255),
-        lurker VARCHAR(255)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS img_map (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        Mirage VARCHAR(255) NOT NULL,
-        Train VARCHAR(255) NOT NULL,
-        Vertigo VARCHAR(255) NOT NULL,
-        Nuke VARCHAR(255) NOT NULL,
-        Ancient VARCHAR(255) NOT NULL,
-        Inferno VARCHAR(255) NOT NULL,
-        Overpass VARCHAR(255) NOT NULL,
-        Dust2 VARCHAR(255) NOT NULL,
-        Cache VARCHAR(255) NOT NULL,
-        Anubis VARCHAR(255) NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    2️⃣ TABELAS RELACIONAIS - USUÁRIOS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS redes_sociais (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        discord_url VARCHAR(255),
-        youtube_url VARCHAR(255),
-        instagram_url VARCHAR(255),
-        twitter_url VARCHAR(255),
-        twitch_url VARCHAR(255),
-        faceit_url VARCHAR(255),
-        gamesclub_url VARCHAR(255),
-        steam_url VARCHAR(255),
-        tiktok_url VARCHAR(255),
-        kick_url VARCHAR(255),
-        allstar_url VARCHAR(255)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS destaques (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        video_url VARCHAR(255) NOT NULL,
-        ordem INT
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS usuario_medalhas (
-        usuario_id INT NOT NULL,
-        medalha_id INT NOT NULL,
-        position_medalha ENUM('campeao','segundo','terceiro'),
-        data_conquista TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (usuario_id, medalha_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    3️⃣ TABELAS RELACIONAIS - TIMES
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS membros_time (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        time_id INT NOT NULL,
-        funcao ENUM('lider','titular','reserva','coach') NOT NULL,
-        posicao ENUM('awp','entry','support','igl','lurker','rifle') NOT NULL,
-        data_entrada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY uk_usuario_time (usuario_id, time_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS redes_sociais_time (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
-        discord_url VARCHAR(255),
-        youtube_url VARCHAR(255),
-        instagram_url VARCHAR(255),
-        twitter_url VARCHAR(255),
-        twitch_url VARCHAR(255),
-        faceit_url VARCHAR(255),
-        gamesclub_url VARCHAR(255),
-        steam_url VARCHAR(255),
-        tiktok_url VARCHAR(255),
-        UNIQUE KEY uk_redes_time (time_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS destaques_time (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
-        video_url VARCHAR(255) NOT NULL,
-        ordem INT
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS noticias_time (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
-        titulo VARCHAR(200) NOT NULL,
-        conteudo TEXT NOT NULL,
-        data_publicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS games_time (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
-        game_name TEXT NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS time_conquistas (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
-        trofeu_id INT NOT NULL,
-        data_conquista TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    4️⃣ SOLICITAÇÕES E TRANSFERÊNCIAS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS solicitacoes_time (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        time_id INT NOT NULL,
-        posicao ENUM('awp','entry','support','igl','rifle','lurker') NOT NULL DEFAULT 'rifle',
-        status ENUM('pendente','aceita','recusada') DEFAULT 'pendente',
-        data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS transferencias (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        usuario_id INT NOT NULL,
-        time_id INT NOT NULL,
-        posicao ENUM('awp','entry','support','igl','rifle','lurker') NOT NULL DEFAULT 'rifle',
-        tipo ENUM('entrada','saida') NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    5️⃣ NOTÍCIAS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS noticias_destaques (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        tipo VARCHAR(100) NOT NULL DEFAULT 'destaque',
-        destaque ENUM('sim','nao') NOT NULL,
-        titulo VARCHAR(255) NOT NULL,
-        subtitulo VARCHAR(255) NOT NULL,
-        texto TEXT NOT NULL,
-        autor VARCHAR(150) NOT NULL,
-        imagem_url VARCHAR(1000) DEFAULT NULL,
-        data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS noticias_site (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        tipo VARCHAR(100) NOT NULL DEFAULT 'site',
-        categoria ENUM('mobile','segurança','interface','sistema','regras','noticias','eventos','outros') NOT NULL DEFAULT 'outros',
-        titulo VARCHAR(255) NOT NULL,
-        subtitulo VARCHAR(255) NOT NULL,
-        conteudo TEXT NOT NULL,
-        autor VARCHAR(150) NOT NULL,
-        versao VARCHAR(100) NOT NULL,
-        imagem_url VARCHAR(1000) DEFAULT NULL,
-        data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS noticias_campeonato (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        tipo VARCHAR(100) NOT NULL DEFAULT 'campeonato',
-        destaque ENUM('vencedor','destaque','estatisticas','proximo','novidade') NOT NULL,
-        titulo VARCHAR(255) NOT NULL,
-        texto TEXT NOT NULL,
-        autor VARCHAR(150) NOT NULL,
-        imagem_url VARCHAR(1000) DEFAULT NULL,
-        data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    6️⃣ INSCRIÇÕES DE CAMPEONATOS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS inscricoes_campeonato (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        tipo ENUM('oficial','comum') NOT NULL DEFAULT 'comum',
-        mixcamp VARCHAR(100) NOT NULL DEFAULT 'desconhecido',
-        titulo VARCHAR(100) NOT NULL,
-        descricao TEXT NOT NULL,
-        transmissao ENUM('sim','nao') NOT NULL DEFAULT 'nao',
-        preco_inscricao DECIMAL(10, 2) NOT NULL,
-        premiacao DECIMAL(10, 2) NOT NULL,
-        imagem_url VARCHAR(1000) DEFAULT NULL,
-        trofeu_id INT,
-        medalha_id INT,
-        chave VARCHAR(100) NOT NULL,
-        edicao_campeonato VARCHAR(50),
-        plataforma VARCHAR(100) DEFAULT 'FACEIT',
-        game VARCHAR(100) DEFAULT 'CS2',
-        nivel VARCHAR(100) DEFAULT '1-10',
-        formato VARCHAR(100) DEFAULT '5v5',
-        qnt_times ENUM('6','8','10','12','14','16','18','20','24','28','32') NOT NULL,
-        regras TEXT NOT NULL,
-        id_organizador INT UNSIGNED NOT NULL,
-        link_hub VARCHAR(200) NOT NULL,
-        link_convite VARCHAR(200) NOT NULL,
-        link_whatsapp VARCHAR(255) DEFAULT NULL,
-        status ENUM('em breve','disponivel','andamento','encerrado','cancelado') NOT NULL DEFAULT 'disponivel',
-        previsao_data_inicio DATETIME NOT NULL,
-        data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS inscricoes_times (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        inscricao_id INT UNSIGNED NOT NULL,
-        time_id INT UNSIGNED NOT NULL,
-        payment_id VARCHAR(100) DEFAULT NULL,
-        status_pagamento ENUM('approved','pending','rejected','cancelled','refunded') DEFAULT NULL,
-        valor_pago DECIMAL(10, 2) DEFAULT NULL,
-        data_inscricao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_pagamento TIMESTAMP NULL DEFAULT NULL,
-        UNIQUE KEY unique_inscricao_time (inscricao_id, time_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS membros_campeonato (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        campeonato_id INT NOT NULL,
-        usuario_id INT NOT NULL,
-        time_id INT NOT NULL,
-        posicao ENUM('awp','entry','support','igl','lurker','rifle') NOT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    7️⃣ CUPONS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS cupons (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        codigo VARCHAR(20) UNIQUE NOT NULL,
-        tipo VARCHAR(100) NOT NULL,
-        descricao TEXT NULL,
-        desconto_percentual DECIMAL(5, 2) NULL,
-        id_item INT NULL,
-        id_trofeu INT NULL,
-        id_medalha INT NULL,
-        usos_maximos INT DEFAULT 1,
-        usos_restantes INT DEFAULT 1,
-        data_expiracao DATETIME NULL,
-        ativo BOOLEAN DEFAULT TRUE,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (id_trofeu) REFERENCES trofeus(id) ON DELETE SET NULL,
-        FOREIGN KEY (id_medalha) REFERENCES medalhas(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS cupons_resgatados (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        cupom_id INT NOT NULL,
-        data_resgate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-        FOREIGN KEY (cupom_id) REFERENCES cupons(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-
-    await conexao.execute(`
-        CREATE TABLE IF NOT EXISTS promover_eventos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        evento_id INT NOT NULL,
-        titulo VARCHAR(255) NOT NULL,
-        data_inicio DATETIME NOT NULL,
-        premiacao DECIMAL(10, 2) NOT NULL,
-        valor_inscricao DECIMAL(10, 2) NOT NULL,
-        qnt_times INT NOT NULL,
-        chave VARCHAR(100) NOT NULL,
-        game VARCHAR(100) NOT NULL,
-        plataforma VARCHAR(100) NOT NULL,
-        banner_img VARCHAR(255) NOT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_encerramento DATETIME NOT NULL,
-        banner_local ENUM('home','campeonato','ambos') NOT NULL,
-        plano_assinado ENUM('basico','premium','maximo') NOT NULL,
-        status_promover_evento ENUM('disponivel','encerrado') NOT NULL DEFAULT 'disponivel'
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    8️⃣ CHAVEAMENTO
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS chaveamentos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        campeonato_id INT NOT NULL,
-        formato_chave ENUM('single_b01','single_bo3_all','major_playoffs_bo3','double_elimination') NOT NULL,
-        quantidade_times INT NOT NULL,
-        status ENUM('nao_iniciado','em_andamento','finalizado') DEFAULT 'nao_iniciado',
-        campeao_time_id INT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_campeonato (campeonato_id),
-        INDEX idx_status (status),
-        INDEX idx_campeonato (campeonato_id),
-        INDEX idx_campeao (campeao_time_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS partidas (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        chaveamento_id INT NOT NULL,
-        match_id VARCHAR(100) NOT NULL,
-        round_num INT NOT NULL,
-        bracket_type ENUM('upper','lower','grand_final') NOT NULL,
-        formato_partida ENUM('B01','B03','B05') NOT NULL,
-        time1_id INT NULL,
-        time2_id INT NULL,
-        time_vencedor_id INT NULL,
-        score_time1 INT DEFAULT 0,
-        score_time2 INT DEFAULT 0,
-        status ENUM('agendada','em_andamento','finalizada','cancelada') DEFAULT 'agendada',
-        data_partida DATETIME NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_chaveamento (chaveamento_id),
-        INDEX idx_match_id (match_id),
-        INDEX idx_status (status),
-        INDEX idx_round (round_num, bracket_type),
-        UNIQUE KEY unique_match (chaveamento_id, match_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS resultados_partidas (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        partida_id INT NOT NULL,
-        mapa_num INT NOT NULL,
-        score_time1 INT NOT NULL DEFAULT 0,
-        score_time2 INT NOT NULL DEFAULT 0,
-        time_vencedor_mapa INT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_partida (partida_id),
-        INDEX idx_mapa (partida_id, mapa_num),
-        UNIQUE KEY unique_partida_mapa (partida_id, mapa_num)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS posicoes_times (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        chaveamento_id INT NOT NULL,
-        time_id INT NOT NULL,
-        bracket_type ENUM('upper','lower','eliminado','campeao') NOT NULL,
-        round_atual INT NULL,
-        match_id_atual VARCHAR(100) NULL,
-        status ENUM('ativo','eliminado','campeao') DEFAULT 'ativo',
-        data_eliminacao TIMESTAMP NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_chaveamento (chaveamento_id),
-        INDEX idx_time (time_id),
-        INDEX idx_status (status),
-        INDEX idx_bracket (bracket_type, round_atual),
-        UNIQUE KEY unique_time_chaveamento (chaveamento_id, time_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS historico_movimentacoes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        chaveamento_id INT NOT NULL,
-        time_id INT NOT NULL,
-        tipo_movimentacao ENUM('avancou_upper','caiu_lower','avancou_lower','eliminado','campeao') NOT NULL,
-        round_origem INT NULL,
-        round_destino INT NULL,
-        match_id_origem VARCHAR(100) NULL,
-        match_id_destino VARCHAR(100) NULL,
-        partida_id INT NULL,
-        observacao TEXT NULL,
-        data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_chaveamento (chaveamento_id),
-        INDEX idx_time (time_id),
-        INDEX idx_tipo (tipo_movimentacao),
-        INDEX idx_data (data_movimentacao)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    9️⃣ VETOS DE MAPAS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS vetos_sessoes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        partida_id INT NULL,
-        campeonato_id INT NULL,
-        formato ENUM('bo1','bo3','bo5') NOT NULL,
-        mapas_selecionados JSON NOT NULL,
-        time_a_id INT NULL,
-        time_b_id INT NULL,
-        token_a VARCHAR(255) NOT NULL UNIQUE,
-        token_b VARCHAR(255) NOT NULL UNIQUE,
-        token_spectator VARCHAR(255) NULL,
-        turno_atual ENUM('time_a','time_b') DEFAULT 'time_a',
-        status ENUM('configurado','em_andamento','finalizado') DEFAULT 'configurado',
-        time_a_pronto BOOLEAN DEFAULT FALSE,
-        time_b_pronto BOOLEAN DEFAULT FALSE,
-        sorteio_realizado BOOLEAN DEFAULT FALSE,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_token_a (token_a),
-        INDEX idx_token_b (token_b),
-        INDEX idx_status (status)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS vetos_acoes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        sessao_id INT NOT NULL,
-        mapa VARCHAR(50) NOT NULL,
-        acao ENUM('pick','ban') NOT NULL,
-        time_id INT NULL,
-        ordem INT NOT NULL,
-        lado_inicial ENUM('CT','TR') NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_sessao (sessao_id),
-        INDEX idx_ordem (ordem)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    🔟 RANKING
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS ranking_players_atual (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        usuario_id INT NOT NULL,
-        ranking_atual INT NOT NULL DEFAULT 0,
-        total_partidas INT NOT NULL DEFAULT 0,
-        vitorias INT NOT NULL DEFAULT 0,
-        derrotas INT NOT NULL DEFAULT 0,
-        wo INT NOT NULL DEFAULT 0,
-
-        campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
-        campeonatos_mx_league INT NOT NULL DEFAULT 0,
-        campeonatos_oficiais INT NOT NULL DEFAULT 0,
-        campeonatos_comuns INT NOT NULL DEFAULT 0,
-
-        medalhas INT NOT NULL DEFAULT 0,
-        pontos INT NOT NULL DEFAULT 0,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-
-
-    await conexao.execute(`
-        CREATE TABLE IF NOT EXISTS ranking_times_atual (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        time_id INT NOT NULL,
-        ranking_atual INT NOT NULL DEFAULT 0,
-        trofeus INT NOT NULL DEFAULT 0,
-        total_partidas INT NOT NULL DEFAULT 0,
-        vitorias INT NOT NULL DEFAULT 0,
-        derrotas INT NOT NULL DEFAULT 0,
-        wo INT NOT NULL DEFAULT 0,
-        campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
-        campeonatos_mx_league INT NOT NULL DEFAULT 0,
-        campeonatos_oficiais INT NOT NULL DEFAULT 0,
-        campeonatos_comuns INT NOT NULL DEFAULT 0,
-        pontos INT NOT NULL DEFAULT 0,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (time_id) REFERENCES times(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS historico_matchs_players(
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo',
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS historico_matchs_times(
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id INT NOT NULL,
-        resultado ENUM('win','lose','wo') NOT NULL DEFAULT 'wo',
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (time_id) REFERENCES times(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    1️⃣1️⃣ SISTEMA DE EMAIL
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS email_verificacao (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        email VARCHAR(255) NOT NULL,
-        codigo VARCHAR(6) NOT NULL,
-        expira_em DATETIME NOT NULL,
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    await conexao.execute(`
-        CREATE INDEX idx_email ON email_verificacao(email);
-    `).catch(() => { })
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS email_verificado (
-        email VARCHAR(255) NOT NULL PRIMARY KEY,
-        verificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expira_em DATETIME NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-
-    /*
-    =====================================================
-    1️⃣1️⃣ SISTEMA DE divulgar links picksbans
-    =====================================================
-    */
-
-    await conexao.execute(`
-        CREATE TABLE IF NOT EXISTS divulgar_links_picksbans (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        time_id_a INT NOT NULL,
-        time_id_b INT NOT NULL,
-        link_espectador VARCHAR(255) NOT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (time_id_a) REFERENCES times(id) ON DELETE CASCADE,
-        FOREIGN KEY (time_id_b) REFERENCES times(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    1️⃣1️⃣ MARCAÇÕES DE JOGOS
-    =====================================================
-    */
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS marcacoes_jogos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario_id INT NOT NULL,
-        primeiro_time_nome VARCHAR(255) NOT NULL,
-        segundo_time_nome VARCHAR(255) NOT NULL,
-        horario_inicio TIME NOT NULL,
-        data_do_jogo DATE NOT NULL,
-        campeonatos ENUM('mx_extreme', 'mx_league') NOT NULL,
-        season INT NOT NULL,
-        data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `)
-
-    /*
-    =====================================================
-    1️⃣2️⃣ FOREIGN KEYS (APÓS TODAS AS TABELAS EXISTIREM)
-    =====================================================
-    */
-
-    const foreignKeys = [
-        `ALTER TABLE usuarios ADD CONSTRAINT fk_usuario_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE SET NULL;`,
-
-        `ALTER TABLE times ADD CONSTRAINT fk_time_lider
-         FOREIGN KEY (lider_id) REFERENCES usuarios(id)
-         ON DELETE SET NULL;`,
-
-        `ALTER TABLE redes_sociais ADD CONSTRAINT fk_redes_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE destaques ADD CONSTRAINT fk_destaques_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE usuario_medalhas ADD CONSTRAINT fk_um_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE usuario_medalhas ADD CONSTRAINT fk_um_medalha
-         FOREIGN KEY (medalha_id) REFERENCES medalhas(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE membros_time ADD CONSTRAINT fk_membros_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE membros_time ADD CONSTRAINT fk_membros_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE redes_sociais_time ADD CONSTRAINT fk_redes_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE destaques_time ADD CONSTRAINT fk_destaques_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE noticias_time ADD CONSTRAINT fk_noticias_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE games_time ADD CONSTRAINT fk_games_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE time_conquistas ADD CONSTRAINT fk_tc_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE time_conquistas ADD CONSTRAINT fk_tc_trofeu
-         FOREIGN KEY (trofeu_id) REFERENCES trofeus(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE solicitacoes_time ADD CONSTRAINT fk_solicitacoes_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE solicitacoes_time ADD CONSTRAINT fk_solicitacoes_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE transferencias ADD CONSTRAINT fk_transferencias_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id);`,
-
-        `ALTER TABLE transferencias ADD CONSTRAINT fk_transferencias_time
-         FOREIGN KEY (time_id) REFERENCES times(id);`,
-
-        `ALTER TABLE inscricoes_campeonato ADD CONSTRAINT fk_inscricoes_organizador
-         FOREIGN KEY (id_organizador) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE inscricoes_campeonato ADD CONSTRAINT fk_inscricoes_trofeu
-         FOREIGN KEY (trofeu_id) REFERENCES trofeus(id)
-         ON DELETE SET NULL;`,
-
-        `ALTER TABLE inscricoes_campeonato ADD CONSTRAINT fk_inscricoes_medalha
-         FOREIGN KEY (medalha_id) REFERENCES medalhas(id)
-         ON DELETE SET NULL;`,
-
-        `ALTER TABLE inscricoes_times ADD CONSTRAINT fk_inscricoes_times_inscricao
-         FOREIGN KEY (inscricao_id) REFERENCES inscricoes_campeonato(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE inscricoes_times ADD CONSTRAINT fk_inscricoes_times_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE membros_campeonato ADD CONSTRAINT fk_membros_campeonato_campeonato
-         FOREIGN KEY (campeonato_id) REFERENCES inscricoes_campeonato(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE membros_campeonato ADD CONSTRAINT fk_membros_campeonato_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE membros_campeonato ADD CONSTRAINT fk_membros_campeonato_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE cupons_resgatados ADD CONSTRAINT fk_cupons_resgatados_usuario
-         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE cupons_resgatados ADD CONSTRAINT fk_cupons_resgatados_cupom
-         FOREIGN KEY (cupom_id) REFERENCES cupons(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE chaveamentos ADD CONSTRAINT fk_chave_campeonato
-         FOREIGN KEY (campeonato_id) REFERENCES inscricoes_campeonato(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE chaveamentos ADD CONSTRAINT fk_chave_campeao
-         FOREIGN KEY (campeao_time_id) REFERENCES times(id)
-         ON DELETE SET NULL;`,
-
-        `ALTER TABLE partidas ADD CONSTRAINT fk_partida_chave
-         FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE promover_eventos ADD CONSTRAINT fk_promover_eventos_campeonato
-         FOREIGN KEY (evento_id) REFERENCES inscricoes_campeonato(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE resultados_partidas ADD CONSTRAINT fk_resultados_partida
-         FOREIGN KEY (partida_id) REFERENCES partidas(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE posicoes_times ADD CONSTRAINT fk_posicoes_chaveamento
-         FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE posicoes_times ADD CONSTRAINT fk_posicoes_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE historico_movimentacoes ADD CONSTRAINT fk_historico_chaveamento
-         FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE historico_movimentacoes ADD CONSTRAINT fk_historico_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE vetos_acoes ADD CONSTRAINT fk_vetos_acoes_sessao
-         FOREIGN KEY (sessao_id) REFERENCES vetos_sessoes(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE ranking_times_atual ADD CONSTRAINT fk_ranking_atual_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE ranking_times_historico ADD CONSTRAINT fk_ranking_historico_atual
-         FOREIGN KEY (ranking_atual_id) REFERENCES ranking_times_atual(id)
-         ON DELETE CASCADE;`,
-
-        `ALTER TABLE ranking_times_historico ADD CONSTRAINT fk_ranking_historico_time
-         FOREIGN KEY (time_id) REFERENCES times(id)
-         ON DELETE CASCADE;`
-    ]
-
-    for (const fk of foreignKeys) {
-        await conexao.execute(fk).catch(() => { })
-    }
-
-    await corrigirFkTrofeuInscricoesCampeonato(conexao);
-
-    await conexao.execute(`SET FOREIGN_KEY_CHECKS = 1;`)
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS sessions (
-        session_id VARCHAR(128) NOT NULL PRIMARY KEY,
-        expires INT UNSIGNED NOT NULL,
-        data MEDIUMTEXT,
-        INDEX IDX_sessions_expires (expires)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `);
-
-    await conexao.execute(`
-    CREATE TABLE IF NOT EXISTS security_audit_log (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NULL,
-        ip VARCHAR(45) NULL,
-        method VARCHAR(10) NOT NULL,
-        path VARCHAR(500) NOT NULL,
-        status_code SMALLINT NOT NULL,
-        user_agent VARCHAR(300) NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX IDX_audit_created (created_at),
-        INDEX IDX_audit_status (status_code),
-        INDEX IDX_audit_user (user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    `);
-
-    try {
-        await conexao.execute(`UPDATE membros_time SET posicao = 'rifle' WHERE posicao = 'sub'`);
-    } catch (e) {
-        // Tabela/coluna pode não existir em instalações antigas
-    }
-
-    console.log("✅ BANCO TOTALMENTE CONFIGURADO COM SUCESSO!")
-}
-
 
 // ===============================================================================================
 // ==================================== [API KEY] ================================================
@@ -1503,6 +491,8 @@ async function registrarInscricaoAposPagamento(cardId, timeId, paymentId) {
 
         // Registrar histórico de membros deste time para este campeonato
         await registrarHistoricoMembrosCampeonato(conexao, cardId, timeId);
+
+        await atualizarStatusCampeonatoSeLotado(conexao, cardId);
     } catch (error) {
         console.error('Erro ao registrar inscrição após pagamento:', error);
     } finally {
@@ -2405,6 +1395,12 @@ async function updateImgMap(req, res) {
 
 const EMAIL_VERIFICADO_VALIDADE_MS = 30 * 60 * 1000;
 
+function isSkipEmailVerificationEnabled() {
+    if (process.env.NODE_ENV === 'production') return false;
+    const flag = String(process.env.SKIP_EMAIL_VERIFICATION || '').trim().toLowerCase();
+    return flag === 'true' || flag === '1';
+}
+
 function normalizarEmail(email) {
     return String(email || '').trim().toLowerCase();
 }
@@ -3214,6 +2210,12 @@ async function autenticar(req, res, next) {
 // ----- PERFIL POST
 
 
+function getPublicConfig(req, res) {
+    res.json({
+        skip_email_verification: isSkipEmailVerificationEnabled()
+    });
+}
+
 async function register(req, res) {
     let conexao;
 
@@ -3221,9 +2223,18 @@ async function register(req, res) {
         const username = String(req.body?.username || '').trim();
         const email = normalizarEmail(req.body?.email);
         const password = req.body?.password;
+        const aceiteTermos = req.body?.aceite_termos === true
+            || req.body?.aceite_termos === 'true'
+            || req.body?.aceite_termos === 1;
 
         if (!username || !email || !password) {
             return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+        }
+
+        if (!aceiteTermos) {
+            return res.status(400).json({
+                message: 'É necessário aceitar os Termos de Uso e a Política de Privacidade.'
+            });
         }
 
         if (!validarEmail(email)) {
@@ -3238,12 +2249,16 @@ async function register(req, res) {
 
         conexao = await conectar();
 
-        const emailVerificado = await consumirEmailVerificado(conexao, email);
-        if (!emailVerificado) {
-            return res.status(403).json({
-                message: 'E-mail não verificado ou prazo expirado. Solicite um novo código e valide antes de registrar.',
-                error: 'EMAIL_NOT_VERIFIED'
-            });
+        if (!isSkipEmailVerificationEnabled()) {
+            const emailVerificado = await consumirEmailVerificado(conexao, email);
+            if (!emailVerificado) {
+                return res.status(403).json({
+                    message: 'E-mail não verificado ou prazo expirado. Solicite um novo código e valide antes de registrar.',
+                    error: 'EMAIL_NOT_VERIFIED'
+                });
+            }
+        } else {
+            console.warn('[register] SKIP_EMAIL_VERIFICATION ativo — e-mail não exigido (apenas dev/teste)');
         }
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -5177,6 +4192,7 @@ async function getMedalhas(req, res) {
                 imagem_url_segundo,
                 iframe_url_campeao,
                 iframe_url_segundo,
+                iframe_url_terceiro,
                 edicao_campeonato,
                 data_criacao
             FROM medalhas
@@ -5214,6 +4230,7 @@ async function listarTodasMedalhas(req, res) {
                 imagem_url_segundo,
                 iframe_url_campeao,
                 iframe_url_segundo,
+                iframe_url_terceiro,
                 edicao_campeonato,
                 data_criacao
             FROM medalhas
@@ -5290,6 +4307,23 @@ async function criarMedalhas(req, res) {
     }
 }
 
+function normalizarPositionMedalhaPayload(valor) {
+    if (valor == null || valor === '') return null;
+    const v = String(valor).trim().toLowerCase().replace(/\s+/g, '_').replace(/_lugar$/, '');
+    const map = {
+        campeao: 'campeao',
+        campeão: 'campeao',
+        champion: 'campeao',
+        '1': 'campeao',
+        segundo: 'segundo',
+        '2': 'segundo',
+        terceiro: 'terceiro',
+        '3': 'terceiro'
+    };
+    if (map[v]) return map[v];
+    return ['campeao', 'segundo', 'terceiro'].includes(v) ? v : null;
+}
+
 async function addMedalhasuser(req, res) {
     let conexao;
 
@@ -5300,6 +4334,13 @@ async function addMedalhasuser(req, res) {
             return res.status(400).json({ message: 'ID do usuário e ID da medalha são obrigatórios' });
         }
 
+        const positionNorm = normalizarPositionMedalhaPayload(position_medalha);
+        if (position_medalha != null && position_medalha !== '' && !positionNorm) {
+            return res.status(400).json({
+                message: 'position_medalha inválida. Use: campeao, segundo ou terceiro.'
+            });
+        }
+
         conexao = await conectar();
 
         // Verifica se a medalha já foi atribuída ao usuário
@@ -5307,13 +4348,18 @@ async function addMedalhasuser(req, res) {
         const [existing] = await conexao.execute(checkQuery, [usuario_id, medalha_id]);
 
         if (existing.length > 0) {
+            if (positionNorm && !existing[0].position_medalha) {
+                await conexao.execute(
+                    'UPDATE usuario_medalhas SET position_medalha = ? WHERE usuario_id = ? AND medalha_id = ?',
+                    [positionNorm, usuario_id, medalha_id]
+                );
+                return res.status(200).json({ message: 'Posição da medalha atualizada com sucesso!' });
+            }
             return res.status(409).json({ message: 'Este usuário já possui esta medalha.' });
         }
 
-        // Insere a medalha apenas se não existir
-        // Se position_medalha não for fornecido, usa NULL
         const query = 'INSERT INTO usuario_medalhas (usuario_id, medalha_id, position_medalha) VALUES (?, ?, ?)';
-        await conexao.execute(query, [usuario_id, medalha_id, position_medalha || null]);
+        await conexao.execute(query, [usuario_id, medalha_id, positionNorm]);
         res.status(201).json({ message: 'Medalha adicionada ao usuário com sucesso!' });
     } catch (error) {
         console.error('Erro ao adicionar medalha ao usuário:', error);
@@ -5775,19 +4821,163 @@ async function deletarNoticiaCampeonato(req, res) {
 // ===============================================================================================
 // ==================================== [API Inscricoes] ================================================
 
+const POSICOES_PREMIACAO = ['primeiro', 'segundo', 'terceiro'];
+
+function normalizarPremiacoesPayload(premiacoes, premiacaoFallback) {
+    if (Array.isArray(premiacoes) && premiacoes.length > 0) {
+        const out = [];
+        for (const item of premiacoes) {
+            if (!item || !POSICOES_PREMIACAO.includes(item.posicao)) continue;
+            const valor = parseFloat(item.valor);
+            if (Number.isNaN(valor) || valor < 0) continue;
+            if (out.some(p => p.posicao === item.posicao)) continue;
+            out.push({ posicao: item.posicao, valor });
+        }
+        out.sort((a, b) => POSICOES_PREMIACAO.indexOf(a.posicao) - POSICOES_PREMIACAO.indexOf(b.posicao));
+        if (out.length > 0) return out;
+    }
+
+    const total = parseFloat(premiacaoFallback);
+    if (!Number.isNaN(total) && total >= 0) {
+        return [{ posicao: 'primeiro', valor: total }];
+    }
+    return [];
+}
+
+function calcularTotalPremiacao(premiacoes) {
+    if (!Array.isArray(premiacoes)) return 0;
+    return premiacoes.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
+}
+
+async function salvarPremiacoesCampeonato(conexao, campeonatoId, premiacoes) {
+    const cid = Number(campeonatoId);
+    if (!Number.isFinite(cid) || cid <= 0) {
+        throw new Error('ID do campeonato inválido ao salvar premiações.');
+    }
+
+    await conexao.execute(
+        'DELETE FROM premiacoes_campeonato WHERE campeonato_id = ?',
+        [cid]
+    );
+    for (const p of premiacoes) {
+        await conexao.execute(
+            'INSERT INTO premiacoes_campeonato (campeonato_id, posicao, valor) VALUES (?, ?, ?)',
+            [cid, p.posicao, p.valor]
+        );
+    }
+}
+
+async function obterIdCampeonatoInserido(conexao, insertResult) {
+    let id = Number(insertResult?.insertId ?? 0);
+    if (!Number.isFinite(id) || id <= 0) {
+        const [rows] = await conexao.execute('SELECT LAST_INSERT_ID() AS id');
+        id = Number(rows[0]?.id ?? 0);
+    }
+    if (!Number.isFinite(id) || id <= 0) {
+        throw new Error('Não foi possível obter o ID do campeonato criado.');
+    }
+    const [existe] = await conexao.execute(
+        'SELECT id FROM inscricoes_campeonato WHERE id = ? LIMIT 1',
+        [id]
+    );
+    if (!existe.length) {
+        throw new Error(`Campeonato #${id} não encontrado após o INSERT.`);
+    }
+    return id;
+}
+
+async function buscarPremiacoesMap(conexao, campeonatoIds) {
+    const map = {};
+    if (!Array.isArray(campeonatoIds) || campeonatoIds.length === 0) return map;
+
+    const placeholders = campeonatoIds.map(() => '?').join(',');
+    const [rows] = await conexao.execute(
+        `SELECT campeonato_id, posicao, valor
+         FROM premiacoes_campeonato
+         WHERE campeonato_id IN (${placeholders})
+         ORDER BY FIELD(posicao, 'primeiro', 'segundo', 'terceiro')`,
+        campeonatoIds
+    );
+
+    for (const row of rows) {
+        if (!map[row.campeonato_id]) map[row.campeonato_id] = [];
+        map[row.campeonato_id].push({
+            posicao: row.posicao,
+            valor: row.valor != null ? Number(row.valor) : 0
+        });
+    }
+    return map;
+}
+
+/** Persiste status `andamento` em inscricoes_campeonato quando vagas esgotam */
+async function atualizarStatusCampeonatoSeLotado(conexao, campeonatoId = null) {
+    const sqlBase = `
+        UPDATE inscricoes_campeonato ic
+        SET ic.status = 'andamento'
+        WHERE ic.status = 'disponivel'
+          AND ic.qnt_times > 0
+          AND (SELECT COUNT(*) FROM inscricoes_times it WHERE it.inscricao_id = ic.id) >= ic.qnt_times
+    `;
+
+    if (campeonatoId != null) {
+        const [result] = await conexao.execute(
+            `${sqlBase} AND ic.id = ?`,
+            [campeonatoId]
+        );
+        if (result.affectedRows > 0) {
+            console.log(`[inscricao] Campeonato ${campeonatoId}: disponivel → andamento (vagas esgotadas)`);
+        }
+        return result.affectedRows > 0;
+    }
+
+    const [result] = await conexao.execute(sqlBase);
+    if (result.affectedRows > 0) {
+        console.log(`[inscricao] ${result.affectedRows} campeonato(s): disponivel → andamento`);
+    }
+    return result.affectedRows;
+}
+
 // ----- INSCRICAO GET
 async function getInscricoesCampeonato(req, res) {
     let conexao;
     try {
         conexao = await conectar();
+
+        await atualizarStatusCampeonatoSeLotado(conexao);
+
         const [inscricoes] = await conexao.execute(`
             SELECT 
                 ic.*,
-                u.username as organizador_nome,
-                u.avatar_url as organizador_avatar
+                u.username AS organizador_nome,
+                u.avatar_url AS organizador_avatar,
+                t.iframe_url AS trofeu_iframe_url,
+                t.nome AS nome_trofeu,
+                m.iframe_url_campeao AS medalha_iframe_url,
+                m.iframe_url_segundo AS medalha_iframe_url_segundo,
+                m.iframe_url_terceiro AS medalha_iframe_url_terceiro,
+                m.nome AS nome_medalha
             FROM inscricoes_campeonato ic
             LEFT JOIN usuarios u ON u.id = ic.id_organizador
+            LEFT JOIN trofeus t ON t.id = ic.trofeu_id
+            LEFT JOIN medalhas m ON m.id = ic.medalha_id
         `);
+
+        const ids = inscricoes.map(i => i.id);
+        const premMap = await buscarPremiacoesMap(conexao, ids);
+
+        for (const inscricao of inscricoes) {
+            const prem = premMap[inscricao.id];
+            if (prem && prem.length > 0) {
+                inscricao.premiacoes = prem;
+            } else if (inscricao.premiacao != null) {
+                inscricao.premiacoes = [{
+                    posicao: 'primeiro',
+                    valor: Number(inscricao.premiacao)
+                }];
+            } else {
+                inscricao.premiacoes = [];
+            }
+        }
 
         res.status(200).json({ inscricoes });
     }
@@ -5857,11 +5047,17 @@ async function getHistoricoMembros(req, res) {
 }
 // ----- INSCRICAO POST
 async function criarInscricaoCampeonato(req, res) {
-    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp } = req.body;
+    const { tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, premiacoes, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp } = req.body;
     const id_organizador = req.session.user.id;
     let conexao;
     try {
         conexao = await conectar();
+
+        const premiacoesNorm = normalizarPremiacoesPayload(premiacoes, premiacao);
+        if (premiacoesNorm.length === 0) {
+            return res.status(400).json({ message: 'Informe ao menos uma premiação por colocação.' });
+        }
+        const premiacaoTotal = calcularTotalPremiacao(premiacoesNorm);
 
         // Converter undefined para null nos campos opcionais (mysql2 não aceita undefined)
         let trofeuIdValue = trofeu_id !== undefined ? trofeu_id : null;
@@ -5900,7 +5096,7 @@ async function criarInscricaoCampeonato(req, res) {
             titulo ?? null,
             descricao ?? null,
             preco_inscricao ?? null,
-            premiacao ?? null,
+            premiacaoTotal,
             imagemUrlValue,
             trofeuIdValue,
             medalhaIdValue,
@@ -5920,19 +5116,30 @@ async function criarInscricaoCampeonato(req, res) {
             linkWhatsappValue
         ];
 
-        await conexao.execute(
+        await conexao.beginTransaction();
+
+        const [insertResult] = await conexao.execute(
             'INSERT INTO inscricoes_campeonato (tipo, mixcamp, titulo, descricao, preco_inscricao, premiacao, imagem_url, trofeu_id, medalha_id, chave, edicao_campeonato, plataforma, game, nivel, formato, qnt_times, regras, id_organizador, status, previsao_data_inicio, link_hub, link_convite, link_whatsapp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             valores
         );
-        res.status(201).json({ message: 'Inscrição de campeonato criada com sucesso!' });
+
+        const campeonatoId = await obterIdCampeonatoInserido(conexao, insertResult);
+        await salvarPremiacoesCampeonato(conexao, campeonatoId, premiacoesNorm);
+
+        await conexao.commit();
+
+        res.status(201).json({ message: 'Inscrição de campeonato criada com sucesso!', id: campeonatoId });
     }
     catch (error) {
+        if (conexao) {
+            try { await conexao.rollback(); } catch (_) { /* conexão já fechada */ }
+        }
         console.error('Erro ao criar inscrição de campeonato:', error);
 
         // Tratamento específico para erro de foreign key
         if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.errno === 1452) {
             return res.status(400).json({
-                message: 'Erro de referência: O trofeu_id ou medalha_id fornecido não existe no banco de dados. Verifique os IDs e tente novamente.',
+                message: 'Erro de referência ao salvar o campeonato. Verifique troféu, medalha e premiações.',
                 error: error.message
             });
         }
@@ -6063,6 +5270,8 @@ async function criarInscricaoTimes(req, res) {
         // Registrar histórico de membros deste time para este campeonato
         await registrarHistoricoMembrosCampeonato(conexao, cardId, timeId);
 
+        await atualizarStatusCampeonatoSeLotado(conexao, cardId);
+
         res.status(201).json({
             message: 'Inscrição realizada com sucesso!',
             vagasRestantes: qntTimesMax - totalInscritos - 1
@@ -6170,6 +5379,8 @@ async function atualizarInscricaoCampeonato(req, res) {
     let conexao;
     try {
         const { id, ...dados } = req.body;
+        const listaPremiacoes = req.body.premiacoes;
+        delete dados.premiacoes;
 
         if (!id) {
             return res.status(400).json({ message: 'id do campeonato é obrigatório' });
@@ -6180,6 +5391,15 @@ async function atualizarInscricaoCampeonato(req, res) {
         }
 
         conexao = await conectar();
+
+        if (listaPremiacoes !== undefined) {
+            const premiacoesNorm = normalizarPremiacoesPayload(listaPremiacoes, dados.premiacao);
+            if (premiacoesNorm.length === 0) {
+                return res.status(400).json({ message: 'Informe ao menos uma premiação por colocação.' });
+            }
+            dados.premiacao = calcularTotalPremiacao(premiacoesNorm);
+            await salvarPremiacoesCampeonato(conexao, id, premiacoesNorm);
+        }
 
         // Validar e tratar trofeu_id
         if (dados.trofeu_id !== undefined) {
@@ -6693,6 +5913,156 @@ async function criarChaveamento(req, res) {
 }
 
 // =====================================================
+// Reparo: perdedores das quartas (16T) no slot correto do Lower R3
+// =====================================================
+async function garantirPartidaLower(conexao, chaveamentoId, lowerMatchId) {
+    const [rows] = await conexao.execute(
+        'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
+        [chaveamentoId, lowerMatchId]
+    );
+    if (rows.length > 0) return rows[0];
+
+    const roundNum = parseInt(String(lowerMatchId).split('_')[1], 10) || 1;
+    await conexao.execute(
+        `INSERT IGNORE INTO partidas (chaveamento_id, match_id, round_num, bracket_type, formato_partida, status)
+         VALUES (?, ?, ?, 'lower', 'B01', 'agendada')`,
+        [chaveamentoId, lowerMatchId, roundNum]
+    );
+    const [created] = await conexao.execute(
+        'SELECT * FROM partidas WHERE chaveamento_id = ? AND match_id = ?',
+        [chaveamentoId, lowerMatchId]
+    );
+    return created[0];
+}
+
+async function removerTimeDePartida(conexao, partidaId, timeId) {
+    const tid = Number(timeId);
+    const [rows] = await conexao.execute(
+        'SELECT time1_id, time2_id FROM partidas WHERE id = ?',
+        [partidaId]
+    );
+    if (!rows[0]) return;
+    const p = rows[0];
+    if (Number(p.time1_id) === tid) {
+        await conexao.execute('UPDATE partidas SET time1_id = NULL WHERE id = ?', [partidaId]);
+    }
+    if (Number(p.time2_id) === tid) {
+        await conexao.execute('UPDATE partidas SET time2_id = NULL WHERE id = ?', [partidaId]);
+    }
+}
+
+async function repararPerdedoresQuartas16Times(conexao, chaveamentoId) {
+    // Ambos perdedores das quartas → lower_3_3 (3º card): slot1 = upper_3_1, slot2 = upper_3_2
+    const rotas = [
+        { upperMatch: 'upper_3_1', slot: 'time1_id' },
+        { upperMatch: 'upper_3_2', slot: 'time2_id' }
+    ];
+    const lowerMatch = 'lower_3_3';
+    const partidaDestino = await garantirPartidaLower(conexao, chaveamentoId, lowerMatch);
+    if (!partidaDestino) return;
+
+    for (const rota of rotas) {
+        const [upperRows] = await conexao.execute(
+            `SELECT * FROM partidas
+             WHERE chaveamento_id = ? AND match_id = ? AND time_vencedor_id IS NOT NULL`,
+            [chaveamentoId, rota.upperMatch]
+        );
+        const upper = upperRows[0];
+        if (!upper?.time1_id || !upper?.time2_id) continue;
+
+        const perdedorId = Number(upper.time_vencedor_id) === Number(upper.time1_id)
+            ? Number(upper.time2_id)
+            : Number(upper.time1_id);
+        if (!perdedorId) continue;
+
+        const [destRows] = await conexao.execute('SELECT * FROM partidas WHERE id = ?', [partidaDestino.id]);
+        const dest = destRows[0];
+        const jaNoSlotCorreto = Number(dest[rota.slot]) === perdedorId;
+
+        const [wrongRows] = await conexao.execute(
+            `SELECT id, match_id FROM partidas
+             WHERE chaveamento_id = ? AND bracket_type = 'lower'
+               AND id != ? AND (time1_id = ? OR time2_id = ?)`,
+            [chaveamentoId, partidaDestino.id, perdedorId, perdedorId]
+        );
+        for (const wrong of wrongRows) {
+            await removerTimeDePartida(conexao, wrong.id, perdedorId);
+            console.log(`[reparo 16T] Time ${perdedorId} removido de ${wrong.match_id}`);
+        }
+
+        if (!jaNoSlotCorreto) {
+            const outroSlot = rota.slot === 'time1_id' ? 'time2_id' : 'time1_id';
+            if (!dest[rota.slot]) {
+                await conexao.execute(`UPDATE partidas SET ${rota.slot} = ? WHERE id = ?`, [perdedorId, dest.id]);
+            } else if (!dest[outroSlot] && Number(dest[rota.slot]) !== perdedorId) {
+                await conexao.execute(`UPDATE partidas SET ${outroSlot} = ? WHERE id = ?`, [perdedorId, dest.id]);
+            }
+        }
+
+        const lowerRound = 3;
+        await conexao.execute(
+            `UPDATE posicoes_times
+             SET bracket_type = 'lower', round_atual = ?, match_id_atual = ?, status = 'ativo'
+             WHERE chaveamento_id = ? AND time_id = ?`,
+            [lowerRound, lowerMatch, chaveamentoId, perdedorId]
+        );
+        console.log(`[reparo 16T] Time ${perdedorId}: ${rota.upperMatch} → ${lowerMatch} (${rota.slot})`);
+    }
+
+    await garantirPartidaLower(conexao, chaveamentoId, 'lower_3_5');
+}
+
+async function repararProgressaoLower3Card3_16Times(conexao, chaveamentoId) {
+    // Vencedor do 3º card da Lower Round 3 (lower_3_3) → Lower Round 5 (lower_5_1, slot time1)
+    const [rows] = await conexao.execute(
+        `SELECT * FROM partidas
+         WHERE chaveamento_id = ? AND match_id = 'lower_3_3' AND time_vencedor_id IS NOT NULL`,
+        [chaveamentoId]
+    );
+    const origem = rows[0];
+    if (!origem) return;
+
+    const vencedorId = Number(origem.time_vencedor_id);
+    if (!vencedorId) return;
+
+    const destMatchId = 'lower_5_1';
+    const partidaDestino = await garantirPartidaLower(conexao, chaveamentoId, destMatchId);
+
+    const [wrongRows] = await conexao.execute(
+        `SELECT id, match_id FROM partidas
+         WHERE chaveamento_id = ? AND bracket_type = 'lower'
+           AND id != ? AND match_id NOT IN ('lower_3_3', ?)
+           AND (time1_id = ? OR time2_id = ?)`,
+        [chaveamentoId, partidaDestino.id, destMatchId, vencedorId, vencedorId]
+    );
+    for (const wrong of wrongRows) {
+        await removerTimeDePartida(conexao, wrong.id, vencedorId);
+    }
+
+    const [destRows] = await conexao.execute('SELECT * FROM partidas WHERE id = ?', [partidaDestino.id]);
+    const dest = destRows[0];
+    const slotPreferido = 'time1_id';
+    const slotAlternativo = 'time2_id';
+    const jaNoDestino = Number(dest[slotPreferido]) === vencedorId || Number(dest[slotAlternativo]) === vencedorId;
+
+    if (!jaNoDestino) {
+        if (!dest[slotPreferido]) {
+            await conexao.execute(`UPDATE partidas SET ${slotPreferido} = ? WHERE id = ?`, [vencedorId, dest.id]);
+        } else if (!dest[slotAlternativo] && Number(dest[slotPreferido]) !== vencedorId) {
+            await conexao.execute(`UPDATE partidas SET ${slotAlternativo} = ? WHERE id = ?`, [vencedorId, dest.id]);
+        }
+    }
+
+    await conexao.execute(
+        `UPDATE posicoes_times
+         SET bracket_type = 'lower', round_atual = 5, match_id_atual = ?, status = 'ativo'
+         WHERE chaveamento_id = ? AND time_id = ?`,
+        [destMatchId, chaveamentoId, vencedorId]
+    );
+    console.log(`[reparo 16T] Vencedor ${vencedorId}: lower_3_3 → ${destMatchId}`);
+}
+
+// =====================================================
 // Obter estado completo do chaveamento
 // =====================================================
 async function getChaveamento(req, res) {
@@ -6717,6 +6087,11 @@ async function getChaveamento(req, res) {
         }
 
         const chaveamento = chaveamentos[0];
+
+        if (chaveamento.quantidade_times === 16 && chaveamento.formato_chave === 'double_elimination') {
+            await repararPerdedoresQuartas16Times(conexao, chaveamento.id);
+            await repararProgressaoLower3Card3_16Times(conexao, chaveamento.id);
+        }
 
         // Buscar todas as partidas
         let [partidas] = await conexao.execute(
@@ -7416,13 +6791,18 @@ async function salvarResultadoPartida(req, res) {
                         // Match 3 (terceiro card) → Lower Round 5 (pula Round 4)
                         // Outros matches → Lower Round 4
                         if (matchIndex === 3) {
-                            proximoMatchId = `lower_5_1`; // Vencedor do Match 3 vai direto para Round 5
+                            proximoRound = 5;
+                            proximoMatchId = `lower_5_1`;
+                            forceDestinoSlot = 'time1';
                         } else {
-                            proximoMatchId = `lower_4_1`; // Outros vencedores do Round 3 vão para Round 4
+                            proximoRound = 4;
+                            proximoMatchId = `lower_4_1`;
                         }
                     } else if (quantidadeTimesLower === 16 && partida.round_num === 4) {
                         // Para 16 times: Lower Round 4 → Lower Round 5
-                        proximoMatchId = `lower_5_1`; // Vencedor do Round 4 vai para Round 5
+                        proximoRound = 5;
+                        proximoMatchId = `lower_5_1`;
+                        forceDestinoSlot = 'time2';
                     } else if (quantidadeTimesLower === 16 && partida.round_num === 5) {
                         // Para 16 times: Lower Round 5 → Lower Round 6 (Final)
                         proximoMatchId = `lower_6_1`; // Vencedor do Round 5 vai para Final (Round 6)
@@ -8653,30 +8033,17 @@ async function salvarResultadoPartida(req, res) {
                         lowerRound = 4;
                         lowerMatchIndex = 2;
                     } else if (quantidadeTimes === 16) {
-                        // Para 16 times: Round 3 são as Quartas (2 partidas)
-                        // Perdedor do primeiro card (Match 1) → Lower Round 4, Match 3 (terceiro card)
-                        // Perdedor do segundo card (Match 2) → Lower Round 3, Match 3 (terceiro card)
-                        if (matchIndex === 1) {
-                            lowerRound = 4;
-                            lowerMatchIndex = 3; // Match 1 → Lower Round 4, Match 3
-                            console.log('[DEBUG QUARTAS 16 TIMES] Perdedor Match 1 → Lower Round 4, Match 3:', {
-                                match_id_origem: match_id,
-                                matchIndex,
-                                lowerRound,
-                                lowerMatchIndex,
-                                time_perdedor_id
-                            });
-                        } else {
-                            lowerRound = 3;
-                            lowerMatchIndex = 3; // Match 2 → Lower Round 3, Match 3
-                            console.log('[DEBUG QUARTAS 16 TIMES] Perdedor Match 2 → Lower Round 3, Match 3:', {
-                                match_id_origem: match_id,
-                                matchIndex,
-                                lowerRound,
-                                lowerMatchIndex,
-                                time_perdedor_id
-                            });
-                        }
+                        // Para 16 times: ambos perdedores das Quartas → lower_3_3 (3º card)
+                        // Match 1 → time1 | Match 2 → time2
+                        lowerRound = 3;
+                        lowerMatchIndex = 3;
+                        console.log('[DEBUG QUARTAS 16 TIMES] Perdedor Match', matchIndex, '→ Lower Round 3, Match 3:', {
+                            match_id_origem: match_id,
+                            matchIndex,
+                            lowerRound,
+                            lowerMatchIndex,
+                            time_perdedor_id
+                        });
                     } else if (quantidadeTimes === 18) {
                         // Para 18 times: Round 3 são as Oitavas (3 partidas)
                         // Perdedores das Oitavas vão para Lower Round 3
@@ -9766,82 +9133,27 @@ async function salvarResultadoPartida(req, res) {
                                     }
                                 }
                             } else if (quantidadeTimes === 16) {
-                                // Para 16 times: Round 3 são as Quartas (2 partidas)
-                                // Perdedor do primeiro card (Match 1) → Lower Round 4, Match 3 (terceiro card)
-                                // Perdedor do segundo card (Match 2) → Lower Round 3, Match 3 (terceiro card)
-                                // O lowerMatchId já foi calculado corretamente
-                                console.log('[DEBUG QUARTAS 16 TIMES] Tentando inserir time na partida Lower:', {
-                                    lowerRound,
-                                    lowerMatchIndex,
-                                    lowerMatchId,
-                                    partidaLower_id: partidaLower.id,
-                                    time1_id_atual: partidaLower.time1_id,
-                                    time2_id_atual: partidaLower.time2_id,
-                                    time_perdedor_id,
-                                    condicao_atendida: (lowerRound === 4 && lowerMatchIndex === 3) || (lowerRound === 3 && lowerMatchIndex === 3)
-                                });
-                                if ((lowerRound === 4 && lowerMatchIndex === 3) || (lowerRound === 3 && lowerMatchIndex === 3)) {
-                                    // Preencher o primeiro slot disponível
-                                    if (!partidaLower.time1_id && partidaLower.time2_id !== time_perdedor_id) {
+                                // Ambos perdedores das Quartas → lower_3_3 (Match 1 = time1, Match 2 = time2)
+                                if (lowerRound === 3 && lowerMatchIndex === 3) {
+                                    const slotPreferido = matchIndex === 1 ? 'time1_id' : 'time2_id';
+                                    const slotAlternativo = slotPreferido === 'time1_id' ? 'time2_id' : 'time1_id';
+
+                                    if (!partidaLower[slotPreferido] && partidaLower[slotAlternativo] !== time_perdedor_id) {
                                         await conexao.execute(
-                                            'UPDATE partidas SET time1_id = ? WHERE id = ?',
+                                            `UPDATE partidas SET ${slotPreferido} = ? WHERE id = ?`,
                                             [time_perdedor_id, partidaLower.id]
                                         );
-                                        console.log('[DEBUG QUARTAS 16 TIMES] ✅ Time inserido no time1_id:', {
-                                            partidaLower_id: partidaLower.id,
-                                            lowerMatchId,
-                                            time_perdedor_id
-                                        });
-                                        // Verificar se foi realmente inserido
-                                        const [verificacao] = await conexao.execute(
-                                            'SELECT time1_id, time2_id FROM partidas WHERE id = ?',
-                                            [partidaLower.id]
-                                        );
-                                        console.log('[DEBUG QUARTAS 16 TIMES] Verificação após inserção time1:', {
-                                            partidaLower_id: partidaLower.id,
-                                            time1_id: verificacao[0]?.time1_id,
-                                            time2_id: verificacao[0]?.time2_id,
-                                            time_perdedor_id,
-                                            inserido_corretamente: verificacao[0]?.time1_id === time_perdedor_id
-                                        });
-                                    } else if (!partidaLower.time2_id && partidaLower.time1_id !== time_perdedor_id) {
+                                    } else if (!partidaLower[slotAlternativo] && partidaLower[slotPreferido] !== time_perdedor_id) {
                                         await conexao.execute(
-                                            'UPDATE partidas SET time2_id = ? WHERE id = ?',
+                                            `UPDATE partidas SET ${slotAlternativo} = ? WHERE id = ?`,
                                             [time_perdedor_id, partidaLower.id]
                                         );
-                                        console.log('[DEBUG QUARTAS 16 TIMES] ✅ Time inserido no time2_id:', {
-                                            partidaLower_id: partidaLower.id,
-                                            lowerMatchId,
-                                            time_perdedor_id
-                                        });
-                                        // Verificar se foi realmente inserido
-                                        const [verificacao] = await conexao.execute(
-                                            'SELECT time1_id, time2_id FROM partidas WHERE id = ?',
-                                            [partidaLower.id]
-                                        );
-                                        console.log('[DEBUG QUARTAS 16 TIMES] Verificação após inserção time2:', {
-                                            partidaLower_id: partidaLower.id,
-                                            time1_id: verificacao[0]?.time1_id,
-                                            time2_id: verificacao[0]?.time2_id,
-                                            time_perdedor_id,
-                                            inserido_corretamente: verificacao[0]?.time2_id === time_perdedor_id
-                                        });
-                                    } else {
-                                        console.log('[DEBUG QUARTAS 16 TIMES] ⚠️ Não foi possível inserir - slots ocupados:', {
-                                            partidaLower_id: partidaLower.id,
-                                            time1_id: partidaLower.time1_id,
-                                            time2_id: partidaLower.time2_id,
-                                            time_perdedor_id,
-                                            time1_disponivel: !partidaLower.time1_id,
-                                            time2_disponivel: !partidaLower.time2_id,
-                                            time_ja_esta_na_partida: partidaLower.time1_id === time_perdedor_id || partidaLower.time2_id === time_perdedor_id
-                                        });
                                     }
                                 } else {
                                     console.log('[DEBUG QUARTAS 16 TIMES] ⚠️ Condição não atendida:', {
                                         lowerRound,
                                         lowerMatchIndex,
-                                        esperado: 'lowerRound === 4 && lowerMatchIndex === 3 OU lowerRound === 3 && lowerMatchIndex === 3'
+                                        esperado: 'lowerRound === 3 && lowerMatchIndex === 3'
                                     });
                                 }
                             } else if (quantidadeTimes === 18) {
@@ -10216,6 +9528,18 @@ async function salvarResultadoPartida(req, res) {
                 `UPDATE chaveamentos SET status = 'em_andamento' WHERE id = ?`,
                 [chaveamento_id]
             );
+
+            // Garantir perdedores das quartas (16T DE) no card correto lower_3_3
+            if (isDoubleElimination && chaveamento.quantidade_times === 16 &&
+                partida.bracket_type === 'upper' && partida.round_num === 3) {
+                await repararPerdedoresQuartas16Times(conexao, chaveamento_id);
+            }
+
+            // Garantir vencedor do 3º card LR3 (16T DE) em lower_5_1
+            if (isDoubleElimination && chaveamento.quantidade_times === 16 &&
+                partida.bracket_type === 'lower' && partida.match_id === 'lower_3_3') {
+                await repararProgressaoLower3Card3_16Times(conexao, chaveamento_id);
+            }
 
             // Commit da transação
             await conexao.commit();
@@ -12720,6 +12044,914 @@ async function deletarMarcacaoJogo(req,res){
     }
 }
 
+// ===============================================================================================
+// ==================================== [SETUP DATABASE] ========================================
+// ===============================================================================================
+
+// Referência visual: backend/sql/db_compat.sql
+// Ao alterar o schema, atualize o .sql e replique CREATE / INSERT / FK abaixo.
+
+async function setupDatabase(conexaoExterna = null) {
+    const conexao = conexaoExterna || await conectar();
+    const gerenciaConexao = !conexaoExterna;
+
+    try {
+        console.log('🔄 Iniciando configuração do banco...');
+
+        await conexao.execute(`SET FOREIGN_KEY_CHECKS = 0;`);
+
+        /*
+        =====================================================
+        1️⃣ TABELAS BASE
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL,
+                email VARCHAR(100) NOT NULL,
+                senha VARCHAR(255) NOT NULL,
+                steamid VARCHAR(255) DEFAULT NULL,
+                faceitid VARCHAR(255) DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                avatar_url VARCHAR(255) DEFAULT 'https://i.ibb.co/qMT9NVK5/user-2.webp',
+                banner_url VARCHAR(255) DEFAULT 'https://i.ibb.co/JR0tpGDZ/banneruser.webp',
+                sobre TEXT,
+                time_id INT DEFAULT NULL,
+                posicoes VARCHAR(255) DEFAULT NULL,
+                gerencia ENUM('admin', 'moderador', 'streamer', 'apoiador', 'user') DEFAULT 'user',
+                organizador ENUM('premium', 'intermediario', 'basico') DEFAULT NULL,
+                cores_perfil VARCHAR(50) DEFAULT '#ffffff80',
+                cfg_cs VARCHAR(255) DEFAULT NULL,
+                UNIQUE KEY uk_usuarios_username (username),
+                UNIQUE KEY uk_usuarios_email (email),
+                INDEX idx_usuarios_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS times (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL,
+                tag VARCHAR(10) NOT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                lider_id INT NOT NULL,
+                avatar_time_url VARCHAR(255) DEFAULT 'https://i.ibb.co/99tvNKGP/Chat-GPT-Image-24-de-nov-de-2025-12-19-41.png',
+                banner_time_url VARCHAR(255) DEFAULT 'https://i.ibb.co/tPkZHy8R/banner-time.png',
+                sobre_time TEXT,
+                cores_perfil VARCHAR(50) DEFAULT '#ffffff80',
+                UNIQUE KEY uk_times_nome (nome),
+                UNIQUE KEY uk_times_tag (tag),
+                INDEX idx_times_lider (lider_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS trofeus (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL,
+                descricao TEXT,
+                imagem_url VARCHAR(255) NOT NULL,
+                iframe_url VARCHAR(255) DEFAULT NULL,
+                edicao_campeonato VARCHAR(50) DEFAULT NULL,
+                categoria VARCHAR(100) DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS medalhas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL,
+                descricao TEXT,
+                imagem_url_campeao VARCHAR(255) NOT NULL,
+                imagem_url_segundo VARCHAR(255) NOT NULL,
+                iframe_url_campeao VARCHAR(255) DEFAULT NULL,
+                iframe_url_segundo VARCHAR(255) DEFAULT NULL,
+                iframe_url_terceiro VARCHAR(255) DEFAULT NULL,
+                imagem_url_terceiro VARCHAR(255) DEFAULT NULL,
+                edicao_campeonato VARCHAR(50) DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_medalhas_nome (nome)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS posicoes_img (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                capitao VARCHAR(255) DEFAULT NULL,
+                awp VARCHAR(255) DEFAULT NULL,
+                entry VARCHAR(255) DEFAULT NULL,
+                support VARCHAR(255) DEFAULT NULL,
+                igl VARCHAR(255) DEFAULT NULL,
+                sub VARCHAR(255) DEFAULT NULL,
+                coach VARCHAR(255) DEFAULT NULL,
+                rifle VARCHAR(255) DEFAULT NULL,
+                lurker VARCHAR(255) DEFAULT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            INSERT IGNORE INTO posicoes_img VALUES(
+                1,
+                "https://i.ibb.co/SDkzRZYj/crow2.gif",
+                "https://i.ibb.co/zThFWqL5/cross.gif",
+                "https://i.ibb.co/p8FvQnH/entry2.gif",
+                "https://i.ibb.co/VYNj3dtY/suport.gif",
+                "https://i.ibb.co/kZjRj8k/brainstorm-unscreen.gif",
+                "https://i.ibb.co/wNC09nxN/rotate-1-unscreen.gif",
+                "https://i.ibb.co/C5R10FPD/helpdesk-unscreen.gif",
+                "https://i.ibb.co/twg7JXq7/rifle.gif",
+                "https://i.ibb.co/MrHV8TT/spy-1-unscreen.gif"
+            )
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS img_map (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                Mirage VARCHAR(255) NOT NULL,
+                Train VARCHAR(255) NOT NULL,
+                Vertigo VARCHAR(255) NOT NULL,
+                Nuke VARCHAR(255) NOT NULL,
+                Ancient VARCHAR(255) NOT NULL,
+                Inferno VARCHAR(255) NOT NULL,
+                Overpass VARCHAR(255) NOT NULL,
+                Dust2 VARCHAR(255) NOT NULL,
+                Cache VARCHAR(255) NOT NULL,
+                Anubis VARCHAR(255) NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            INSERT IGNORE INTO img_map VALUES (
+                1,
+                'https://i.ibb.co/Q7334WPX/mirage.jpg',
+                'https://media.dotesports.com/wp-content/uploads/2024/11/Train-CS2.jpg',
+                'https://i.ibb.co/ymvKhzTG/vertigo.jpg',
+                'https://daddyskins.com/blog/wp-content/uploads/2024/09/nuke-cs2-map.jpg',
+                'https://i.ibb.co/SXmnj6pn/ancient.jpg',
+                'https://i.ibb.co/p6WjF4mc/inferno.jpg',
+                'https://i.ibb.co/PvLRjck8/overpass.jpg',
+                'https://i.ibb.co/YT1nkD1H/dust2.jpg',
+                'https://i.ibb.co/4nb1hRwK/cache.webp',
+                'https://i.ibb.co/mVbFCDqJ/anubis.jpg'
+            )
+            `)
+
+        /*
+        =====================================================
+        2️⃣ USUÁRIOS — RELACIONAMENTOS
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS redes_sociais (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                discord_url VARCHAR(255) DEFAULT NULL,
+                youtube_url VARCHAR(255) DEFAULT NULL,
+                instagram_url VARCHAR(255) DEFAULT NULL,
+                twitter_url VARCHAR(255) DEFAULT NULL,
+                twitch_url VARCHAR(255) DEFAULT NULL,
+                faceit_url VARCHAR(255) DEFAULT NULL,
+                gamesclub_url VARCHAR(255) DEFAULT NULL,
+                steam_url VARCHAR(255) DEFAULT NULL,
+                tiktok_url VARCHAR(255) DEFAULT NULL,
+                kick_url VARCHAR(255) DEFAULT NULL,
+                allstar_url VARCHAR(255) DEFAULT NULL,
+                INDEX idx_redes_usuario (usuario_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS destaques (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                video_url VARCHAR(255) NOT NULL,
+                ordem INT DEFAULT NULL,
+                INDEX idx_destaques_usuario (usuario_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS usuario_medalhas (
+                usuario_id INT NOT NULL,
+                medalha_id INT NOT NULL,
+                position_medalha ENUM('campeao', 'segundo', 'terceiro') DEFAULT NULL,
+                data_conquista TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (usuario_id, medalha_id),
+                INDEX idx_um_medalha (medalha_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        3️⃣ TIMES — RELACIONAMENTOS
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS membros_time (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                time_id INT NOT NULL,
+                funcao ENUM('lider', 'titular', 'reserva', 'coach') NOT NULL,
+                posicao ENUM('awp', 'entry', 'support', 'igl', 'lurker', 'rifle') NOT NULL,
+                data_entrada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_usuario_time (usuario_id, time_id),
+                INDEX idx_membros_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS redes_sociais_time (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                discord_url VARCHAR(255) DEFAULT NULL,
+                youtube_url VARCHAR(255) DEFAULT NULL,
+                instagram_url VARCHAR(255) DEFAULT NULL,
+                twitter_url VARCHAR(255) DEFAULT NULL,
+                twitch_url VARCHAR(255) DEFAULT NULL,
+                faceit_url VARCHAR(255) DEFAULT NULL,
+                gamesclub_url VARCHAR(255) DEFAULT NULL,
+                steam_url VARCHAR(255) DEFAULT NULL,
+                tiktok_url VARCHAR(255) DEFAULT NULL,
+                UNIQUE KEY uk_redes_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS destaques_time (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                video_url VARCHAR(255) NOT NULL,
+                ordem INT DEFAULT NULL,
+                INDEX idx_destaques_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS noticias_time (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                titulo VARCHAR(200) NOT NULL,
+                conteudo TEXT NOT NULL,
+                data_publicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_noticias_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS games_time (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                game_name TEXT NOT NULL,
+                INDEX idx_games_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS time_conquistas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                trofeu_id INT NOT NULL,
+                data_conquista TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_tc_time (time_id),
+                INDEX idx_tc_trofeu (trofeu_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        4️⃣ SOLICITAÇÕES E TRANSFERÊNCIAS
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS solicitacoes_time (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                time_id INT NOT NULL,
+                posicao ENUM('awp', 'entry', 'support', 'igl', 'coach', 'rifle', 'lurker') NOT NULL DEFAULT 'rifle',
+                status ENUM('pendente', 'aceita', 'recusada') DEFAULT 'pendente',
+                data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_solicitacoes_usuario (usuario_id),
+                INDEX idx_solicitacoes_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS transferencias (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                time_id INT NOT NULL,
+                posicao ENUM('awp', 'entry', 'support', 'igl', 'coach', 'rifle', 'lurker') NOT NULL DEFAULT 'rifle',
+                tipo ENUM('entrada', 'saida') NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_transferencias_usuario (usuario_id),
+                INDEX idx_transferencias_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        5️⃣ NOTÍCIAS
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS noticias_destaques (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                tipo VARCHAR(100) NOT NULL DEFAULT 'destaque',
+                destaque ENUM('sim', 'nao') NOT NULL,
+                titulo VARCHAR(255) NOT NULL,
+                subtitulo VARCHAR(255) NOT NULL,
+                texto TEXT NOT NULL,
+                autor VARCHAR(150) NOT NULL,
+                imagem_url VARCHAR(1000) DEFAULT NULL,
+                data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS noticias_site (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                tipo VARCHAR(100) NOT NULL DEFAULT 'site',
+                categoria ENUM('mobile', 'segurança', 'interface', 'sistema', 'regras', 'noticias', 'eventos', 'outros') NOT NULL DEFAULT 'outros',
+                titulo VARCHAR(255) NOT NULL,
+                subtitulo VARCHAR(255) NOT NULL,
+                conteudo TEXT NOT NULL,
+                autor VARCHAR(150) NOT NULL,
+                versao VARCHAR(100) NOT NULL,
+                imagem_url VARCHAR(1000) DEFAULT NULL,
+                data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS noticias_campeonato (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                tipo VARCHAR(100) NOT NULL DEFAULT 'campeonato',
+                destaque ENUM('vencedor', 'destaque', 'estatisticas', 'proximo', 'novidade') NOT NULL,
+                titulo VARCHAR(255) NOT NULL,
+                texto TEXT NOT NULL,
+                autor VARCHAR(150) NOT NULL,
+                imagem_url VARCHAR(1000) DEFAULT NULL,
+                data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        6️⃣ CAMPEONATOS E INSCRIÇÕES
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS inscricoes_campeonato (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                tipo ENUM('oficial', 'comum') NOT NULL DEFAULT 'comum',
+                mixcamp VARCHAR(100) NOT NULL DEFAULT 'desconhecido',
+                titulo VARCHAR(100) NOT NULL,
+                descricao TEXT NOT NULL,
+                transmissao ENUM('sim', 'nao') NOT NULL DEFAULT 'nao',
+                preco_inscricao DECIMAL(10, 2) NOT NULL,
+                premiacao DECIMAL(10, 2) NOT NULL COMMENT 'Total; detalhe em premiacoes_campeonato',
+                imagem_url VARCHAR(1000) DEFAULT NULL,
+                trofeu_id INT DEFAULT NULL,
+                medalha_id INT DEFAULT NULL,
+                chave VARCHAR(100) NOT NULL,
+                edicao_campeonato VARCHAR(50) DEFAULT NULL,
+                plataforma VARCHAR(100) DEFAULT 'FACEIT',
+                game VARCHAR(100) DEFAULT 'CS2',
+                nivel VARCHAR(100) DEFAULT '1-10',
+                formato VARCHAR(100) DEFAULT '5v5',
+                qnt_times ENUM('6', '8', '10', '12', '14', '16', '18', '20', '24', '28', '32') NOT NULL,
+                regras TEXT NOT NULL,
+                id_organizador INT NOT NULL,
+                link_hub VARCHAR(200) NOT NULL,
+                link_convite VARCHAR(200) NOT NULL,
+                link_whatsapp VARCHAR(255) DEFAULT NULL,
+                status ENUM('em breve', 'disponivel', 'andamento', 'encerrado', 'cancelado') NOT NULL DEFAULT 'disponivel',
+                previsao_data_inicio DATETIME NOT NULL,
+                data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_inscricoes_organizador (id_organizador),
+                INDEX idx_inscricoes_trofeu (trofeu_id),
+                INDEX idx_inscricoes_medalha (medalha_id),
+                INDEX idx_inscricoes_status (status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS premiacoes_campeonato (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                campeonato_id INT UNSIGNED NOT NULL,
+                posicao ENUM('primeiro', 'segundo', 'terceiro') NOT NULL,
+                valor DECIMAL(10, 2) NOT NULL,
+                UNIQUE KEY uk_premiacao_campeonato_posicao (campeonato_id, posicao),
+                INDEX idx_premiacoes_campeonato (campeonato_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS inscricoes_times (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                inscricao_id INT UNSIGNED NOT NULL,
+                time_id INT NOT NULL,
+                payment_id VARCHAR(100) DEFAULT NULL,
+                status_pagamento ENUM('approved', 'pending', 'rejected', 'cancelled', 'refunded') DEFAULT NULL,
+                valor_pago DECIMAL(10, 2) DEFAULT NULL,
+                data_inscricao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_pagamento TIMESTAMP NULL DEFAULT NULL,
+                UNIQUE KEY unique_inscricao_time (inscricao_id, time_id),
+                INDEX idx_inscricoes_times_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS membros_campeonato (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                campeonato_id INT UNSIGNED NOT NULL,
+                usuario_id INT NOT NULL,
+                time_id INT NOT NULL,
+                posicao ENUM('awp', 'entry', 'support', 'igl', 'lurker', 'rifle') NOT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_membros_camp_campeonato (campeonato_id),
+                INDEX idx_membros_camp_usuario (usuario_id),
+                INDEX idx_membros_camp_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        7️⃣ CUPONS E PROMOÇÃO
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS cupons (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                codigo VARCHAR(20) NOT NULL,
+                tipo VARCHAR(100) NOT NULL,
+                descricao TEXT DEFAULT NULL,
+                desconto_percentual DECIMAL(5, 2) DEFAULT NULL,
+                id_item INT DEFAULT NULL,
+                id_trofeu INT DEFAULT NULL,
+                id_medalha INT DEFAULT NULL,
+                usos_maximos INT DEFAULT 1,
+                usos_restantes INT DEFAULT 1,
+                data_expiracao DATETIME DEFAULT NULL,
+                ativo BOOLEAN DEFAULT TRUE,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_cupons_codigo (codigo),
+                INDEX idx_cupons_trofeu (id_trofeu),
+                INDEX idx_cupons_medalha (id_medalha)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS cupons_resgatados (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                cupom_id INT NOT NULL,
+                data_resgate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_cupons_resgatados_usuario (usuario_id),
+                INDEX idx_cupons_resgatados_cupom (cupom_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS promover_eventos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                evento_id INT UNSIGNED NOT NULL,
+                titulo VARCHAR(255) NOT NULL,
+                data_inicio DATETIME NOT NULL,
+                premiacao DECIMAL(10, 2) NOT NULL,
+                valor_inscricao DECIMAL(10, 2) NOT NULL,
+                qnt_times INT NOT NULL,
+                chave VARCHAR(100) NOT NULL,
+                game VARCHAR(100) NOT NULL,
+                plataforma VARCHAR(100) NOT NULL,
+                banner_img VARCHAR(255) NOT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_encerramento DATETIME NOT NULL,
+                banner_local ENUM('home', 'campeonato', 'ambos') NOT NULL,
+                plano_assinado ENUM('basico', 'premium', 'maximo') NOT NULL,
+                status_promover_evento ENUM('disponivel', 'encerrado') NOT NULL DEFAULT 'disponivel',
+                INDEX idx_promover_evento (evento_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS promocao_pendente_pagamento (
+                external_reference VARCHAR(191) PRIMARY KEY,
+                body_json TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        8️⃣ CHAVEAMENTO
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS chaveamentos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                campeonato_id INT UNSIGNED NOT NULL,
+                formato_chave ENUM('single_b01', 'single_bo3_all', 'major_playoffs_bo3', 'double_elimination') NOT NULL,
+                quantidade_times INT NOT NULL,
+                status ENUM('nao_iniciado', 'em_andamento', 'finalizado') DEFAULT 'nao_iniciado',
+                campeao_time_id INT DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_campeonato (campeonato_id),
+                INDEX idx_chave_status (status),
+                INDEX idx_chave_campeonato (campeonato_id),
+                INDEX idx_chave_campeao (campeao_time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS partidas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                chaveamento_id INT NOT NULL,
+                match_id VARCHAR(100) NOT NULL,
+                round_num INT NOT NULL,
+                bracket_type ENUM('upper', 'lower', 'grand_final') NOT NULL,
+                formato_partida ENUM('B01', 'B03', 'B05') NOT NULL,
+                time1_id INT DEFAULT NULL,
+                time2_id INT DEFAULT NULL,
+                time_vencedor_id INT DEFAULT NULL,
+                score_time1 INT DEFAULT 0,
+                score_time2 INT DEFAULT 0,
+                status ENUM('agendada', 'em_andamento', 'finalizada', 'cancelada') DEFAULT 'agendada',
+                data_partida DATETIME DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_match (chaveamento_id, match_id),
+                INDEX idx_partidas_chaveamento (chaveamento_id),
+                INDEX idx_partidas_match_id (match_id),
+                INDEX idx_partidas_status (status),
+                INDEX idx_partidas_round (round_num, bracket_type)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS resultados_partidas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                partida_id INT NOT NULL,
+                mapa_num INT NOT NULL,
+                score_time1 INT NOT NULL DEFAULT 0,
+                score_time2 INT NOT NULL DEFAULT 0,
+                time_vencedor_mapa INT DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_partida_mapa (partida_id, mapa_num),
+                INDEX idx_resultados_partida (partida_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS posicoes_times (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                chaveamento_id INT NOT NULL,
+                time_id INT NOT NULL,
+                bracket_type ENUM('upper', 'lower', 'eliminado', 'campeao') NOT NULL,
+                round_atual INT DEFAULT NULL,
+                match_id_atual VARCHAR(100) DEFAULT NULL,
+                status ENUM('ativo', 'eliminado', 'campeao') DEFAULT 'ativo',
+                data_eliminacao TIMESTAMP NULL DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_time_chaveamento (chaveamento_id, time_id),
+                INDEX idx_posicoes_chaveamento (chaveamento_id),
+                INDEX idx_posicoes_time (time_id),
+                INDEX idx_posicoes_status (status),
+                INDEX idx_posicoes_bracket (bracket_type, round_atual)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS historico_movimentacoes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                chaveamento_id INT NOT NULL,
+                time_id INT NOT NULL,
+                tipo_movimentacao ENUM('avancou_upper', 'caiu_lower', 'avancou_lower', 'eliminado', 'campeao') NOT NULL,
+                round_origem INT DEFAULT NULL,
+                round_destino INT DEFAULT NULL,
+                match_id_origem VARCHAR(100) DEFAULT NULL,
+                match_id_destino VARCHAR(100) DEFAULT NULL,
+                partida_id INT DEFAULT NULL,
+                observacao TEXT DEFAULT NULL,
+                data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_historico_chaveamento (chaveamento_id),
+                INDEX idx_historico_time (time_id),
+                INDEX idx_historico_tipo (tipo_movimentacao),
+                INDEX idx_historico_partida (partida_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        9️⃣ VETOS
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS vetos_sessoes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                partida_id INT DEFAULT NULL,
+                campeonato_id INT UNSIGNED DEFAULT NULL,
+                formato ENUM('bo1', 'bo3', 'bo5') NOT NULL,
+                mapas_selecionados JSON NOT NULL,
+                time_a_id INT DEFAULT NULL,
+                time_b_id INT DEFAULT NULL,
+                token_a VARCHAR(255) NOT NULL,
+                token_b VARCHAR(255) NOT NULL,
+                token_spectator VARCHAR(255) DEFAULT NULL,
+                turno_atual ENUM('time_a', 'time_b') DEFAULT 'time_a',
+                status ENUM('configurado', 'em_andamento', 'finalizado') DEFAULT 'configurado',
+                time_a_pronto BOOLEAN DEFAULT FALSE,
+                time_b_pronto BOOLEAN DEFAULT FALSE,
+                sorteio_realizado BOOLEAN DEFAULT FALSE,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_vetos_token_a (token_a),
+                UNIQUE KEY uk_vetos_token_b (token_b),
+                INDEX idx_vetos_partida (partida_id),
+                INDEX idx_vetos_campeonato (campeonato_id),
+                INDEX idx_vetos_status (status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS vetos_acoes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sessao_id INT NOT NULL,
+                mapa VARCHAR(50) NOT NULL,
+                acao ENUM('pick', 'ban') NOT NULL,
+                time_id INT DEFAULT NULL,
+                ordem INT NOT NULL,
+                lado_inicial ENUM('CT', 'TR') DEFAULT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_vetos_acoes_sessao (sessao_id),
+                INDEX idx_vetos_acoes_ordem (ordem)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        🔟 RANKING
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS ranking_players_atual (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                ranking_atual INT NOT NULL DEFAULT 0,
+                total_partidas INT NOT NULL DEFAULT 0,
+                vitorias INT NOT NULL DEFAULT 0,
+                derrotas INT NOT NULL DEFAULT 0,
+                wo INT NOT NULL DEFAULT 0,
+                campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
+                campeonatos_mx_league INT NOT NULL DEFAULT 0,
+                campeonatos_oficiais INT NOT NULL DEFAULT 0,
+                campeonatos_comuns INT NOT NULL DEFAULT 0,
+                medalhas INT NOT NULL DEFAULT 0,
+                pontos INT NOT NULL DEFAULT 0,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_ranking_player_usuario (usuario_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS ranking_times_atual (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                ranking_atual INT NOT NULL DEFAULT 0,
+                trofeus INT NOT NULL DEFAULT 0,
+                total_partidas INT NOT NULL DEFAULT 0,
+                vitorias INT NOT NULL DEFAULT 0,
+                derrotas INT NOT NULL DEFAULT 0,
+                wo INT NOT NULL DEFAULT 0,
+                campeonatos_mx_extreme INT NOT NULL DEFAULT 0,
+                campeonatos_mx_league INT NOT NULL DEFAULT 0,
+                campeonatos_oficiais INT NOT NULL DEFAULT 0,
+                campeonatos_comuns INT NOT NULL DEFAULT 0,
+                pontos INT NOT NULL DEFAULT 0,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_ranking_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS ranking_times_historico (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ranking_atual_id INT NOT NULL,
+                time_id INT NOT NULL,
+                temporada INT NOT NULL,
+                pontos INT NOT NULL DEFAULT 0,
+                trofeus INT NOT NULL DEFAULT 0,
+                total_partidas INT NOT NULL DEFAULT 0,
+                vitorias INT NOT NULL DEFAULT 0,
+                derrotas INT NOT NULL DEFAULT 0,
+                wo INT NOT NULL DEFAULT 0,
+                campeonatos_premier_cup INT NOT NULL DEFAULT 0,
+                campeonatos_liga_prime INT NOT NULL DEFAULT 0,
+                campeonatos_oficiais INT NOT NULL DEFAULT 0,
+                campeonatos_comuns INT NOT NULL DEFAULT 0,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_ranking_hist_atual (ranking_atual_id),
+                INDEX idx_ranking_hist_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS historico_matchs_players (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                resultado ENUM('win', 'lose', 'wo') NOT NULL DEFAULT 'wo',
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_hmp_usuario (usuario_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS historico_matchs_times (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id INT NOT NULL,
+                resultado ENUM('win', 'lose', 'wo') NOT NULL DEFAULT 'wo',
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_hmt_time (time_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        1️⃣1️⃣ EMAIL, NOTIFICAÇÕES, DIVULGAÇÃO, DISCORD
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS email_verificacao (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                codigo VARCHAR(6) NOT NULL,
+                expira_em DATETIME NOT NULL,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_email_verificacao_email (email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS email_verificado (
+                email VARCHAR(255) NOT NULL PRIMARY KEY,
+                verificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expira_em DATETIME NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS notificacoes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                texto TEXT NOT NULL,
+                lida BOOLEAN DEFAULT FALSE,
+                criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_notificacoes_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS divulgar_links_picksbans (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                time_id_a INT NOT NULL,
+                time_id_b INT NOT NULL,
+                link_espectador VARCHAR(255) NOT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_divulgar_a (time_id_a),
+                INDEX idx_divulgar_b (time_id_b)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS marcacoes_jogos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                primeiro_time_nome VARCHAR(255) NOT NULL,
+                segundo_time_nome VARCHAR(255) NOT NULL,
+                horario_inicio TIME NOT NULL,
+                data_do_jogo DATE NOT NULL,
+                campeonatos ENUM('mx_extreme', 'mx_league') NOT NULL,
+                season INT NOT NULL,
+                data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_marcacoes_usuario (usuario_id),
+                INDEX idx_marcacoes_data (data_do_jogo)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        1️⃣2️⃣ SEGURANÇA E SESSÕES
+        =====================================================
+        */
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id VARCHAR(128) NOT NULL PRIMARY KEY,
+                expires INT UNSIGNED NOT NULL,
+                data MEDIUMTEXT,
+                INDEX IDX_sessions_expires (expires)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        await conexao.execute(`
+            CREATE TABLE IF NOT EXISTS security_audit_log (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                user_id INT DEFAULT NULL,
+                ip VARCHAR(45) DEFAULT NULL,
+                method VARCHAR(10) NOT NULL,
+                path VARCHAR(500) NOT NULL,
+                status_code SMALLINT NOT NULL,
+                user_agent VARCHAR(300) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX IDX_audit_created (created_at),
+                INDEX IDX_audit_status (status_code),
+                INDEX IDX_audit_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `)
+
+        /*
+        =====================================================
+        1️⃣3️⃣ FOREIGN KEYS (APÓS TODAS AS TABELAS EXISTIREM)
+        =====================================================
+        */
+
+        const foreignKeys = [
+            `ALTER TABLE usuarios ADD CONSTRAINT fk_usuario_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE SET NULL`,
+            `ALTER TABLE times ADD CONSTRAINT fk_time_lider FOREIGN KEY (lider_id) REFERENCES usuarios (id) ON DELETE RESTRICT`,
+            `ALTER TABLE redes_sociais ADD CONSTRAINT fk_redes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE`,
+            `ALTER TABLE destaques ADD CONSTRAINT fk_destaques_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE`,
+            `ALTER TABLE usuario_medalhas ADD CONSTRAINT fk_um_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_um_medalha FOREIGN KEY (medalha_id) REFERENCES medalhas (id) ON DELETE CASCADE`,
+            `ALTER TABLE membros_time ADD CONSTRAINT fk_membros_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_membros_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE redes_sociais_time ADD CONSTRAINT fk_redes_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE destaques_time ADD CONSTRAINT fk_destaques_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE noticias_time ADD CONSTRAINT fk_noticias_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE games_time ADD CONSTRAINT fk_games_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE time_conquistas ADD CONSTRAINT fk_tc_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE, ADD CONSTRAINT fk_tc_trofeu FOREIGN KEY (trofeu_id) REFERENCES trofeus (id) ON DELETE CASCADE`,
+            `ALTER TABLE solicitacoes_time ADD CONSTRAINT fk_solicitacoes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_solicitacoes_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE transferencias ADD CONSTRAINT fk_transferencias_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_transferencias_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE inscricoes_campeonato ADD CONSTRAINT fk_inscricoes_organizador FOREIGN KEY (id_organizador) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_inscricoes_trofeu FOREIGN KEY (trofeu_id) REFERENCES trofeus (id) ON DELETE SET NULL, ADD CONSTRAINT fk_inscricoes_medalha FOREIGN KEY (medalha_id) REFERENCES medalhas (id) ON DELETE SET NULL`,
+            `ALTER TABLE premiacoes_campeonato ADD CONSTRAINT fk_premiacoes_campeonato FOREIGN KEY (campeonato_id) REFERENCES inscricoes_campeonato (id) ON DELETE CASCADE`,
+            `ALTER TABLE inscricoes_times ADD CONSTRAINT fk_inscricoes_times_inscricao FOREIGN KEY (inscricao_id) REFERENCES inscricoes_campeonato (id) ON DELETE CASCADE, ADD CONSTRAINT fk_inscricoes_times_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE membros_campeonato ADD CONSTRAINT fk_membros_campeonato_campeonato FOREIGN KEY (campeonato_id) REFERENCES inscricoes_campeonato (id) ON DELETE CASCADE, ADD CONSTRAINT fk_membros_campeonato_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_membros_campeonato_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE cupons ADD CONSTRAINT fk_cupons_trofeu FOREIGN KEY (id_trofeu) REFERENCES trofeus (id) ON DELETE SET NULL, ADD CONSTRAINT fk_cupons_medalha FOREIGN KEY (id_medalha) REFERENCES medalhas (id) ON DELETE SET NULL`,
+            `ALTER TABLE cupons_resgatados ADD CONSTRAINT fk_cupons_resgatados_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE, ADD CONSTRAINT fk_cupons_resgatados_cupom FOREIGN KEY (cupom_id) REFERENCES cupons (id) ON DELETE CASCADE`,
+            `ALTER TABLE promover_eventos ADD CONSTRAINT fk_promover_eventos_campeonato FOREIGN KEY (evento_id) REFERENCES inscricoes_campeonato (id) ON DELETE CASCADE`,
+            `ALTER TABLE chaveamentos ADD CONSTRAINT fk_chave_campeonato FOREIGN KEY (campeonato_id) REFERENCES inscricoes_campeonato (id) ON DELETE CASCADE, ADD CONSTRAINT fk_chave_campeao FOREIGN KEY (campeao_time_id) REFERENCES times (id) ON DELETE SET NULL`,
+            `ALTER TABLE partidas ADD CONSTRAINT fk_partida_chave FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos (id) ON DELETE CASCADE, ADD CONSTRAINT fk_partida_time1 FOREIGN KEY (time1_id) REFERENCES times (id) ON DELETE SET NULL, ADD CONSTRAINT fk_partida_time2 FOREIGN KEY (time2_id) REFERENCES times (id) ON DELETE SET NULL, ADD CONSTRAINT fk_partida_vencedor FOREIGN KEY (time_vencedor_id) REFERENCES times (id) ON DELETE SET NULL`,
+            `ALTER TABLE resultados_partidas ADD CONSTRAINT fk_resultados_partida FOREIGN KEY (partida_id) REFERENCES partidas (id) ON DELETE CASCADE, ADD CONSTRAINT fk_resultados_vencedor_mapa FOREIGN KEY (time_vencedor_mapa) REFERENCES times (id) ON DELETE SET NULL`,
+            `ALTER TABLE posicoes_times ADD CONSTRAINT fk_posicoes_chaveamento FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos (id) ON DELETE CASCADE, ADD CONSTRAINT fk_posicoes_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE historico_movimentacoes ADD CONSTRAINT fk_historico_chaveamento FOREIGN KEY (chaveamento_id) REFERENCES chaveamentos (id) ON DELETE CASCADE, ADD CONSTRAINT fk_historico_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE, ADD CONSTRAINT fk_historico_partida FOREIGN KEY (partida_id) REFERENCES partidas (id) ON DELETE SET NULL`,
+            `ALTER TABLE vetos_sessoes ADD CONSTRAINT fk_vetos_sessoes_partida FOREIGN KEY (partida_id) REFERENCES partidas (id) ON DELETE SET NULL, ADD CONSTRAINT fk_vetos_sessoes_campeonato FOREIGN KEY (campeonato_id) REFERENCES inscricoes_campeonato (id) ON DELETE SET NULL, ADD CONSTRAINT fk_vetos_sessoes_time_a FOREIGN KEY (time_a_id) REFERENCES times (id) ON DELETE SET NULL, ADD CONSTRAINT fk_vetos_sessoes_time_b FOREIGN KEY (time_b_id) REFERENCES times (id) ON DELETE SET NULL`,
+            `ALTER TABLE vetos_acoes ADD CONSTRAINT fk_vetos_acoes_sessao FOREIGN KEY (sessao_id) REFERENCES vetos_sessoes (id) ON DELETE CASCADE, ADD CONSTRAINT fk_vetos_acoes_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE SET NULL`,
+            `ALTER TABLE ranking_players_atual ADD CONSTRAINT fk_ranking_players_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE`,
+            `ALTER TABLE ranking_times_atual ADD CONSTRAINT fk_ranking_times_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE ranking_times_historico ADD CONSTRAINT fk_ranking_historico_atual FOREIGN KEY (ranking_atual_id) REFERENCES ranking_times_atual (id) ON DELETE CASCADE, ADD CONSTRAINT fk_ranking_historico_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE historico_matchs_players ADD CONSTRAINT fk_hmp_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE`,
+            `ALTER TABLE historico_matchs_times ADD CONSTRAINT fk_hmt_time FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE notificacoes ADD CONSTRAINT fk_notificacoes_user FOREIGN KEY (user_id) REFERENCES usuarios (id) ON DELETE CASCADE`,
+            `ALTER TABLE divulgar_links_picksbans ADD CONSTRAINT fk_divulgar_time_a FOREIGN KEY (time_id_a) REFERENCES times (id) ON DELETE CASCADE, ADD CONSTRAINT fk_divulgar_time_b FOREIGN KEY (time_id_b) REFERENCES times (id) ON DELETE CASCADE`,
+            `ALTER TABLE marcacoes_jogos ADD CONSTRAINT fk_marcacoes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE`
+        ];
+
+        for (const fk of foreignKeys) {
+            await conexao.execute(fk).catch(() => { });
+        }
+
+        await conexao.execute('CREATE INDEX idx_email ON email_verificacao(email)').catch(() => { });
+
+        await conexao.execute(`SET FOREIGN_KEY_CHECKS = 1;`);
+
+        console.log('✅ BANCO TOTALMENTE CONFIGURADO COM SUCESSO!');
+    } finally {
+        if (gerenciaConexao) {
+            await desconectar(conexao);
+        }
+    }
+}
+
+
 cron.schedule('0 1 * * *', () => {
     console.log("Executando função verificar atividade do evento diária:", new Date());
     verficarAtividadeDoEvento();
@@ -12742,7 +12974,7 @@ cron.schedule('0 1 * * *', () => {
 
 
 module.exports = wrapRouteHandlers({
-    getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar,
+    getPerfil, updateConfig, getPublicConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar,
     getTimeById, getTimeByUser, deletarTime, transferirLideranca, listarMembrosParaLideranca, criarTime, atualizarTime, atualizarPosicaoMembro, removerMembro,
     solicitarEntradaTime, aceitarSolicitacao, rejeitarSolicitacao, verificarStatusSolicitacao, getTransferencias, criarTransferencia, deletarTransferencia,
     getSolicitacaoById, listarTodasSolicitacoes, buscarTimes, buscarUsuarios, listarSolicitacoesPorTime, aceitarSolicitacaoPorId, rejeitarSolicitacaoPorId, MembroSair, deletarSolicitacao,

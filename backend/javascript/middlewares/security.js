@@ -86,6 +86,37 @@ function requireOrganizador(req, res, next) {
     });
 }
 
+/** Organizador (plano) ou staff admin/moderador — ex.: conceder medalhas/troféus no chaveamento */
+function requireOrganizadorOuStaff(req, res, next) {
+    (async () => {
+        if (!req.session?.user?.id) {
+            return res.status(401).json({ error: 'Não autorizado' });
+        }
+
+        const usuario = await carregarUsuarioSessao(req);
+        if (!usuario) {
+            return res.status(401).json({ error: 'Sessão inválida' });
+        }
+
+        req.authUser = usuario;
+
+        const ehStaff = GERENCIAS_STAFF.includes(usuario.gerencia);
+        const ehOrganizador = ORGANIZADOR_VALORES.includes(usuario.organizador);
+
+        if (!ehStaff && !ehOrganizador) {
+            return res.status(403).json({
+                error: 'Sem permissão',
+                message: 'Apenas organizadores ou staff podem realizar esta ação'
+            });
+        }
+
+        next();
+    })().catch((err) => {
+        console.error('requireOrganizadorOuStaff:', err);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    });
+}
+
 function validarApiKeyDiscord(req, res, next) {
     const apiKey = req.headers['x-api-key'];
     if (!apiKey || apiKey !== process.env.DISCORD_BOT_API_KEY) {
@@ -204,6 +235,7 @@ module.exports = {
     requireAuth,
     requireGerencia,
     requireOrganizador,
+    requireOrganizadorOuStaff,
     validarApiKeyDiscord,
     verificarPermissaoCampeonato,
     verificarPermissaoPorInscricaoTime,

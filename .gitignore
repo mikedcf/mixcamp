@@ -3,7 +3,8 @@ backend/node_modules
 backend/.env
 .vscode/
 anotacao.txt
+db_corrected.sql
+db_compat.sql
 
 
 
-git 

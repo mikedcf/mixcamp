@@ -8,19 +8,20 @@ const crypto = require('crypto');
 const multer = require('multer');
 const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 const { 
-    getPerfil, updateConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar, 
+    getPerfil, updateConfig, getPublicConfig, register, login, getMedalhas, criarMedalhas, addMedalhasuser, getMedalhasUsuario, deletarMedalhas, atualizarMedalhas, listarTodasMedalhas, autenticar, 
     getTimeById, getTimeByUser, deletarTime, transferirLideranca, listarMembrosParaLideranca, criarTime, atualizarTime, atualizarPosicaoMembro, removerMembro,
     solicitarEntradaTime, aceitarSolicitacao, rejeitarSolicitacao, verificarStatusSolicitacao,getTransferencias,criarTransferencia,deletarTransferencia,
     getSolicitacaoById, listarTodasSolicitacoes,buscarTimes,buscarUsuarios, listarSolicitacoesPorTime, aceitarSolicitacaoPorId, rejeitarSolicitacaoPorId,MembroSair,deletarSolicitacao,atualizarTransferencia, listarTimes, getplayers, buscarDadosFaceitPlayer, locationMatchesIds, infoMatchId, buscarInfoMatchId, uploadImagemCloudinary, criarTrofeus, createImgPosition, updateImgPosition, buscarImgPosition,
     listarTodosUsuarios, getEstatisticasUsuarios, atualizarGerenciaUsuario, getNoticiasDestaques, criarNoticiaDestaque, atualizarNoticiaDestaque, deletarNoticiaDestaque, getNoticiasSite, criarNoticiaSite, atualizarNoticiaSite, deletarNoticiaSite, getNoticiasCampeonato, criarNoticiaCampeonato, atualizarNoticiaCampeonato, deletarNoticiaCampeonato,     getInscricoesCampeonato, getInscricoesTimes, criarInscricaoCampeonato, criarInscricaoTimes, atualizarInscricaoCampeonato, atualizarInscricaoTimes, deletarInscricaoCampeonato, deletarInscricaoTimes, CreatePreference,
     webhookMercadoPago, verificarStatusPagamento, retornoPagamentoSuccess, retornoPagamentoFailure, retornoPagamentoPending, addTrofeuTime, getTrofeus, getTrofeusTime, deletarTrofeus, atualizarTrofeus,
     criarChaveamento, getChaveamento, salvarResultadoPartida, inicializarPartidasChaveamento, resetarChaveamento, buscarImgMap, createImgMap, updateImgMap,
-    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros,steamIdFromUrl,buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,recuperarSenha,setupDatabase, autenticacao, logout,getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner,CreatePreferencePromocao, getcupom, criarcupom, atualizarcupom, deletarcupom, getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans,     getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingPlayers, OrdenarArrayRankingTimes,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,criarMarcacaoJogo, atualizarMarcacaoJogo, deletarMarcacaoJogo, getMarcacoesJogos, getSeasonDoscampeonatos, criarMsgNotificacaoDiscord,getCampeoantosBySeasonTimes
+    criarSessaoVetos, buscarSessaoVetosPorToken, salvarAcaoVeto, salvarEscolhaLado, iniciarSessaoVetos, registrarCliqueRoleta, getHistoricoMembros, criarHistoricoMembros, atualizarHistoricoMembros,steamIdFromUrl,buscarInfoMatchIdStatus, buscarInfoMatchIdStats,buscarTimeGame, statuscs,buscarStatusplayer,enviarCodigoEmail,verificarCodigoEmail,    recuperarSenha, setupDatabase, autenticacao, logout,getNotificacoes, criarMsgNotificacao, enviarNotificacaoTodos, atualizarNotificacao, deletarNotificacao,getpromoverbanner, criarPromoverBanner, atualizarPromoverBanner, deletarPromoverBanner,CreatePreferencePromocao, getcupom, criarcupom, atualizarcupom, deletarcupom, getcupomresgatado, criarcupomresgatado, atualizarcupomresgatado, deletarcupomresgatado, getDivulgarLinksPicksbans, criarDivulgarLinksPicksbans, atualizarDivulgarLinksPicksbans, deletarDivulgarLinksPicksbans,     getRankingPlayers, criarRankingPlayers, atualizarRankingPlayers, deletarRankingPlayers, getHistoricoMatchsPlayers, criarHistoricoMatchsPlayers, atualizarHistoricoMatchsPlayers, deletarHistoricoMatchsPlayers, getRankingTimes, criarRankingTimes, atualizarRankingTimes, deletarRankingTimes, getHistoricoMatchsTimes, criarHistoricoMatchsTimes, atualizarHistoricoMatchsTimes, deletarHistoricoMatchsTimes, OrdenarArrayRankingPlayers, OrdenarArrayRankingTimes,getDiscordUserId,getDiscordTimesAll,DadosGeraisUser,validarApiKey,criarMarcacaoJogo, atualizarMarcacaoJogo, deletarMarcacaoJogo, getMarcacoesJogos, getSeasonDoscampeonatos, criarMsgNotificacaoDiscord,getCampeoantosBySeasonTimes
 } = require('./controller');
 const {
     requireAuth,
     requireGerencia,
     requireOrganizador,
+    requireOrganizadorOuStaff,
     validarApiKeyDiscord
 } = require('./middlewares/security');
 const {
@@ -49,6 +50,7 @@ const adminOnly = [requireAuth, requireGerencia('admin')];
 const staffOnly = [requireAuth, requireGerencia('admin', 'moderador')];
 const authRequired = [requireAuth];
 const organizadorOnly = [requireAuth, requireOrganizador];
+const organizadorOuStaffOnly = [requireAuth, requireOrganizadorOuStaff];
 
  
 const app = express();
@@ -125,11 +127,13 @@ const upload = multer({
 // ===============================================================================================
 // ==================================== [API PERFIL] =============================================
 
-ensureSecurityTables()
-    .then(() => console.log('✅ Tabelas Fase 3 (sessions, security_audit_log) prontas'))
-    .catch((err) => console.error('❌ Tabelas Fase 3:', err.message));
+async function inicializarBancoDados() {
+    await setupDatabase();
+    await ensureSecurityTables();
+    console.log('✅ Banco de dados pronto (CREATE IF NOT EXISTS + tabelas de segurança)');
+}
 
-setupDatabase();
+inicializarBancoDados().catch((err) => console.error('❌ Banco de dados:', err.message));
 
 // ===============================================================================================
 // ==================================== [API MERCADOPAGO] =============================================
@@ -244,6 +248,8 @@ app.get(process.env.ROUTE_USERS_PERFILS,getplayers);
 
 app.get(process.env.ROUTE_DASHBOARD, autenticacao);
 
+app.get(process.env.ROUTE_PUBLIC_CONFIG || '/api/v1/config/public', getPublicConfig);
+
 app.get(process.env.ROUTE_CSRF || '/api/v1/csrf', ...authRequired, getCsrfTokenHandler);
 
 app.get(process.env.ROUTE_LOGOUT, ...authRequired, logout);
@@ -332,7 +338,7 @@ if (process.env.ROUTE_MEDALHAS_CRIAR) {
 }
 
 if (process.env.ROUTE_MEDALHAS_ADICIONAR) {
-    app.post(process.env.ROUTE_MEDALHAS_ADICIONAR, ...organizadorOnly, addMedalhasuser);
+    app.post(process.env.ROUTE_MEDALHAS_ADICIONAR, ...organizadorOuStaffOnly, addMedalhasuser);
 }
 
 // ----- MEDALHAS DELETE
@@ -357,7 +363,7 @@ app.get(process.env.ROUTE_TROFEUS_TIME_ID, getTrofeusTime)
 // ----- TROFEUS POST
 app.post(process.env.ROUTE_TROFEUS_CRIAR, ...staffOnly, criarTrofeus)
 
-app.post(process.env.ROUTE_TROFEUS_TIME, ...organizadorOnly, addTrofeuTime)
+app.post(process.env.ROUTE_TROFEUS_TIME, ...organizadorOuStaffOnly, addTrofeuTime)
 
 // ----- TROFEUS DELETE
 app.delete(process.env.ROUTE_TROFEUS_DELETAR_ID, ...staffOnly, deletarTrofeus)

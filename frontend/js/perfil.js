@@ -10,6 +10,32 @@ let isFollowing = false;
 let currentProfileIndex = 0;
 let weaponsData = {}; // Armazenar dados de armas
 
+async function atualizarTagTimePerfil(userId, perfilData) {
+    const container = document.getElementById('teamTagContainer');
+    const tagEl = document.getElementById('teamTagName');
+    if (!container || !tagEl) return;
+
+    let time = perfilData?.time ?? null;
+
+    if (!time?.tag && userId) {
+        try {
+            const resp = await fetch(`${API_URL}/times/by-user/${userId}`, { credentials: 'include' });
+            if (resp.ok) {
+                const data = await resp.json();
+                time = data.time ?? null;
+            }
+        } catch (error) {}
+    }
+
+    if (!time?.tag) {
+        container.style.display = 'none';
+        return;
+    }
+
+    tagEl.textContent = time.tag;
+    container.style.display = 'flex';
+}
+
 
 
 
@@ -46,7 +72,6 @@ async function verificar_auth() {
     if (auth_dados.logado) {
         const userId = auth_dados.usuario.id;
         const perfil_data = await buscarDadosPerfil(userId);
-        const timeId = perfil_data.perfilData.usuario.time_id;
 
         const menuPerfilLink = document.getElementById('menuPerfilLink');
         const menuTimeLink = document.getElementById('menuTimeLink');
@@ -55,20 +80,6 @@ async function verificar_auth() {
         // Atualiza a UI para o usuário logado
         params = new URLSearchParams(window.location.search);
         const userId_params = params.get('id');
-
-        if (timeId == null || timeId == '') {
-            document.getElementById("teamTagContainer").style.display = "none";
-        }
-        else {
-            document.getElementById("teamTagContainer").style.display = "flex";
-            document.getElementById("teamTagName").textContent = perfil_data.perfilData.time.tag;
-        }
-
-        
-
-        
-
-        
 
         document.getElementById("buconfig").style.display = "none";
         if(userId == userId_params){
@@ -524,25 +535,19 @@ async function faceitStatusCs() {
 async function atualizarDadosPerfil() {
     params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
-   
 
-    const {perfilData}  = await buscarDadosPerfil(userId);
+    const { perfilData } = await buscarDadosPerfil(userId);
+
+    if (!perfilData?.usuario) {
+        return;
+    }
 
     // atualizar o card e banner do perfil
     document.getElementById('cardAvatarImg').src = perfilData.usuario.avatar_url
     document.getElementById('heroBanner').style.backgroundImage = `url(${perfilData.usuario.banner_url})`
     document.getElementById('profileUsername').textContent = perfilData.usuario.username.toUpperCase()
 
-    // atualizar tag team
-    
-
-    if (perfilData.time == null) {
-        document.getElementById('teamTagContainer').style.display = 'block'
-    }
-    else {
-        document.getElementById('teamTagName').textContent = perfilData.time.tag
-        document.getElementById('teamTagContainer').style.display = 'flex'
-    }
+    await atualizarTagTimePerfil(userId, perfilData);
 
 
 
@@ -4230,7 +4235,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // await loadPositionImagesCache();
 
     // Depois executar outras funções
-    atualizarDadosPerfil();
+    await atualizarDadosPerfil();
     verificar_auth();
     arrayCardEventos();
     

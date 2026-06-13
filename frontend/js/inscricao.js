@@ -187,8 +187,6 @@ async function btnPagamento(){
                     idsMembros.push(membro.usuario_id)
                 }
                 const linksVerify = await verificarLinksAuth(idsMembros);
-                await PagamentoFree() // TODO: REMOVER em breve para testes
-                return;
                 if (linksVerify.res == true){
                     for(const card of cards.inscricoes){
                         if(card.id == cardId){
@@ -552,6 +550,8 @@ async function PagamentoFree(){
             EnviarNotificacao(membro, msg);
         }
 
+        const totalTimes = parseInt(document.getElementById('inscricaoQntTimes')?.textContent, 10) || 0;
+        await atualizarTimesInscritos(cardId, totalTimes);
         
         return true;
     }
@@ -768,26 +768,12 @@ async function atualizarTimesInscritos(cardId, totalTimes) {
         resumoTimesInscritos.textContent = `${quantidade}/${totalTimes}`;
     }
 
-    if (quantidade == totalTimes) {
+    if (quantidade >= totalTimes && totalTimes > 0) {
         document.getElementById('btnPagamento').style.display = "none";
-
-        try {
-            const response = await fetch(`${API_URL}/inscricoes/campeonato/atualizar`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ id: cardId, status: "andamento" })
-            });
-
-            
-            document.getElementById('inscricaoStatus').style.background = 'linear-gradient(135deg,rgb(255, 93, 53),rgb(255, 66, 66))';
-            if (notify == true) {
-                showNotification('success', 'Inscrição já foi encerrada!');
-                notify = false;
-            }
-        }
-        catch (error) {
-            console.error('Erro ao encerrar inscrição:', error);
+        await atualizarDadosCard();
+        if (notify == true) {
+            showNotification('success', 'Inscrições encerradas — campeonato em andamento!');
+            notify = false;
         }
     }
     return quantidade;
@@ -1048,19 +1034,8 @@ async function atualizarPagina(){
             document.getElementById('inscricaoQntTimes').textContent = card.qnt_times;
             document.getElementById('inscricaoRegras').textContent = card.regras;
 
-            // TROFEU E MEDALHA
-
-            if (card.trofeu_iframe_url){
-                
-                document.getElementById('inscricaoTrofeu').src = card.trofeu_iframe_url;
-                document.getElementById('inscricaoNomeTrofeu').textContent = card.nome_trofeu
-    
-                document.getElementById('inscricaoMedalha').src = card.medalha_iframe_url;
-                document.getElementById('inscricaoNomeMedalha').textContent = card.nome_medalha;
-            }
-            else{
-                document.getElementById('midiasCard').style.display = 'none';
-            }
+            // TROFEU E MEDALHA (3D via iframe)
+            await carregarMidiasCampeonato(card);
 
 
 
@@ -1098,6 +1073,9 @@ async function DadosUpdateCard(card){
     const authDados = await autenticacao();
 
     const quantidade = await verificarQuantidadeEquipesInscritas(card.id);
+    const qntMax = parseInt(card.qnt_times, 10) || 0;
+    const lotado = qntMax > 0 && quantidade >= qntMax;
+    const statusAtual = lotado && card.status === 'disponivel' ? 'andamento' : card.status;
 
     const resumoTimesInscritos = document.getElementById('resumoTimesInscritos');
     if (resumoTimesInscritos) {
@@ -1110,40 +1088,37 @@ async function DadosUpdateCard(card){
     const btnChaveamento = document.getElementById('btnChaveamento')
     
 
-    if(quantidade == card.qnt_times){
-        atualizarStatusCard(card.id, 'encerrado');
-    }
-
     if(authDados.logado){
         
-        if(card.status == 'em breve'){
+        if(statusAtual == 'em breve'){
             status.textContent = 'Em Breve';
             status.style.backgroundColor = '#0373fc';
             boxStatus.style.backgroundColor = 'rgba(3, 115, 252, 0.42)';
             btnPgamento.style.display = 'none';
             btnChaveamento.style.display = 'none';
         }
-        else if(card.status == 'disponivel'){
+        else if(statusAtual == 'disponivel'){
             status.textContent = 'Disponível';
             status.style.backgroundColor = '#28a745';
             boxStatus.style.backgroundColor = 'rgba(40, 167, 69, 0.42)';
             btnPgamento.style.display = 'block';
             btnChaveamento.style.display = 'none';
         }
-        else if(card.status == 'andamento'){
+        else if(statusAtual == 'andamento'){
             status.textContent = 'Em Andamento';
             status.style.backgroundColor = 'rgb(146, 64, 9)';
             boxStatus.style.backgroundColor = 'rgba(252, 103, 3, 0.42)';
+            btnPgamento.style.display = 'none';
             btnChaveamento.style.display = 'flex';
         }
-        else if(card.status == 'encerrado'){
+        else if(statusAtual == 'encerrado'){
             status.textContent = 'Encerrado';
             status.style.backgroundColor = '#fc0345';
             boxStatus.style.backgroundColor = 'rgba(252, 3, 69, 0.42)';
             btnPgamento.style.display = 'none';
             btnChaveamento.style.display = 'flex';
         }
-        else if(card.status == 'cancelado'){
+        else if(statusAtual == 'cancelado'){
             status.textContent = 'Cancelado';
             status.style.backgroundColor = '#6b7280';
             boxStatus.style.backgroundColor = 'rgba(136, 136, 136, 0.42)';
@@ -1153,32 +1128,32 @@ async function DadosUpdateCard(card){
     }
     else{
         btnPgamento.style.display = 'none';
-        if(card.status == 'em breve'){
+        if(statusAtual == 'em breve'){
             status.textContent = 'Em Breve';
             status.style.backgroundColor = '#0373fc';
             boxStatus.style.backgroundColor = 'rgba(3, 115, 252, 0.42)';
             btnChaveamento.style.display = 'none';
         }
-        else if(card.status == 'disponivel'){
+        else if(statusAtual == 'disponivel'){
             status.textContent = 'Disponível';
             status.style.backgroundColor = '#28a745';
             boxStatus.style.backgroundColor = 'rgba(40, 167, 69, 0.42)';
             btnChaveamento.style.display = 'none';
         }
-        else if(card.status == 'andamento'){
+        else if(statusAtual == 'andamento'){
             status.textContent = 'Em Andamento';
             status.style.backgroundColor = 'rgb(146, 64, 9)';
             boxStatus.style.backgroundColor = 'rgba(252, 103, 3, 0.42)';
             btnChaveamento.style.display = 'flex';
         }
         
-        else if(card.status == 'encerrado'){
+        else if(statusAtual == 'encerrado'){
             status.textContent = 'Encerrado';
             status.style.backgroundColor = '#fc0345';
             boxStatus.style.backgroundColor = 'rgba(252, 3, 69, 0.42)';
             btnChaveamento.style.display = 'flex';
         }
-        else if(card.status == 'cancelado'){
+        else if(statusAtual == 'cancelado'){
             status.textContent = 'Cancelado';
             status.style.backgroundColor = '#6b7280';
             boxStatus.style.backgroundColor = 'rgba(136, 136, 136, 0.42)';
@@ -1187,7 +1162,7 @@ async function DadosUpdateCard(card){
         }
     }
 
-    document.getElementById('resumoStatus').textContent = card.status;
+    document.getElementById('resumoStatus').textContent = statusAtual;
 }
 
 
@@ -1247,74 +1222,107 @@ async function atualizarDadosCard() {
 }
 
 
-// Função para criar slide automático de medalhas
-function iniciarSlideMedalhas(medalhaData) {
-    const iframeWrapper = document.querySelector('#inscricaoMedalha').parentElement;
-    const iframeOriginal = document.getElementById('inscricaoMedalha');
-    
-    if (!medalhaData || !medalhaData[0]) {
+async function buscarDadosTrofeuPorId(trofeuId) {
+    if (!trofeuId) return null;
+    try {
+        const response = await fetch(`${API_URL}/trofeus`, { credentials: 'include' });
+        if (!response.ok) return null;
+        const data = await response.json();
+        return (data.trofeus || []).find((t) => String(t.id) === String(trofeuId)) || null;
+    } catch {
+        return null;
+    }
+}
+
+async function buscarDadosMedalhaPorId(medalhaId) {
+    if (!medalhaId) return null;
+    try {
+        const response = await fetch(`${API_URL}/medalhas/${medalhaId}`, { credentials: 'include' });
+        if (!response.ok) return null;
+        const data = await response.json();
+        return Array.isArray(data) ? data[0] : data;
+    } catch {
+        return null;
+    }
+}
+
+function posicoesPremiacaoAtivas(card) {
+    const posicoes = new Set();
+    if (Array.isArray(card.premiacoes) && card.premiacoes.length > 0) {
+        card.premiacoes.forEach((p) => {
+            if (p?.posicao) posicoes.add(p.posicao);
+        });
+    } else {
+        posicoes.add('primeiro');
+    }
+    return posicoes;
+}
+
+function definirItemMidia(itemId, visivel, iframeUrl, nome) {
+    const item = document.getElementById(itemId);
+    if (!item) return;
+
+    item.hidden = !visivel;
+    if (!visivel) {
+        const iframe = item.querySelector('.midia-iframe');
+        if (iframe) iframe.removeAttribute('src');
         return;
     }
-    
-    const medalha = medalhaData[0];
-    const iframeUrls = [];
-    
-    // Adiciona URLs disponíveis
-    if (medalha.iframe_url_campeao) {
-        iframeUrls.push({ url: medalha.iframe_url_campeao, tipo: 'Campeão' });
-    }
-    if (medalha.iframe_url_segundo) {
-        iframeUrls.push({ url: medalha.iframe_url_segundo, tipo: 'Segundo' });
-    }
-    
-    // Se não houver URLs, não faz nada
-    if (iframeUrls.length === 0) {
-        return;
-    }
-    
-    // Se houver apenas uma URL, mostra ela diretamente
-    if (iframeUrls.length === 1) {
-        iframeOriginal.src = iframeUrls[0].url;
-        return;
-    }
-    
-    // Se houver duas ou mais URLs, cria o slide
-    let currentIndex = 0;
-    let slideInterval = null;
-    
-    // Função para alternar iframe
-    function alternarIframe() {
-        iframeOriginal.src = iframeUrls[currentIndex].url;
-        currentIndex = (currentIndex + 1) % iframeUrls.length;
-    }
-    
-    // Função para iniciar o slide
-    function iniciarSlide() {
-        if (slideInterval) {
-            clearInterval(slideInterval);
+
+    const iframe = item.querySelector('.midia-iframe');
+    const nomeEl = item.querySelector('.midia-nome');
+    if (iframe && iframeUrl) iframe.src = iframeUrl;
+    if (nomeEl) nomeEl.textContent = nome || '';
+}
+
+async function carregarMidiasCampeonato(card) {
+    const midiasCard = document.getElementById('midiasCard');
+    if (!midiasCard) return;
+
+    let trofeuUrl = card.trofeu_iframe_url || null;
+    let nomeTrofeu = card.nome_trofeu || '';
+    let medalhaUrlPrimeiro = card.medalha_iframe_url || null;
+    let medalhaUrlSegundo = card.medalha_iframe_url_segundo || null;
+    let medalhaUrlTerceiro = card.medalha_iframe_url_terceiro || null;
+    let nomeMedalha = card.nome_medalha || '';
+
+    if ((!trofeuUrl && card.trofeu_id) || (!medalhaUrlPrimeiro && !medalhaUrlSegundo && !medalhaUrlTerceiro && card.medalha_id)) {
+        if (!trofeuUrl && card.trofeu_id) {
+            const trofeu = await buscarDadosTrofeuPorId(card.trofeu_id);
+            if (trofeu) {
+                trofeuUrl = trofeu.iframe_url || null;
+                nomeTrofeu = trofeu.nome || nomeTrofeu;
+            }
         }
-        slideInterval = setInterval(alternarIframe, 5000);
-    }
-    
-    // Função para pausar o slide
-    function pausarSlide() {
-        if (slideInterval) {
-            clearInterval(slideInterval);
-            slideInterval = null;
+
+        if (card.medalha_id) {
+            const medalha = await buscarDadosMedalhaPorId(card.medalha_id);
+            if (medalha) {
+                medalhaUrlPrimeiro = medalhaUrlPrimeiro || medalha.iframe_url_campeao || null;
+                medalhaUrlSegundo = medalhaUrlSegundo || medalha.iframe_url_segundo || null;
+                medalhaUrlTerceiro = medalhaUrlTerceiro || medalha.iframe_url_terceiro || null;
+                nomeMedalha = medalha.nome || nomeMedalha;
+            }
         }
     }
-    
-    // Inicia com o primeiro iframe
-    alternarIframe();
-    
-    // Inicia o slide automático
-    iniciarSlide();
-    
-    // Pausa o slide quando o mouse está sobre o iframe
-    iframeWrapper.addEventListener('mouseenter', pausarSlide);
-    
-    // Retoma o slide quando o mouse sai
-    iframeWrapper.addEventListener('mouseleave', iniciarSlide);
+
+    const posicoes = posicoesPremiacaoAtivas(card);
+    const mostrarPrimeiro = posicoes.has('primeiro');
+    const mostrarSegundo = posicoes.has('segundo');
+    const mostrarTerceiro = posicoes.has('terceiro');
+
+    const visivelTrofeu = mostrarPrimeiro && Boolean(trofeuUrl);
+    const visivelMedalhaPrimeiro = mostrarPrimeiro && Boolean(medalhaUrlPrimeiro);
+    const visivelMedalhaSegundo = mostrarSegundo && Boolean(medalhaUrlSegundo);
+    const visivelMedalhaTerceiro = mostrarTerceiro && Boolean(medalhaUrlTerceiro);
+
+    definirItemMidia('midiaTrofeuPrimeiro', visivelTrofeu, trofeuUrl, nomeTrofeu);
+    definirItemMidia('midiaMedalhaPrimeiro', visivelMedalhaPrimeiro, medalhaUrlPrimeiro, nomeMedalha);
+    definirItemMidia('midiaMedalhaSegundo', visivelMedalhaSegundo, medalhaUrlSegundo, nomeMedalha);
+    definirItemMidia('midiaMedalhaTerceiro', visivelMedalhaTerceiro, medalhaUrlTerceiro, nomeMedalha);
+
+    const algumVisivel = visivelTrofeu || visivelMedalhaPrimeiro || visivelMedalhaSegundo || visivelMedalhaTerceiro;
+    midiasCard.hidden = !algumVisivel;
 }
 // =================================
 // ========= SISTEMA DE BUSCA =========

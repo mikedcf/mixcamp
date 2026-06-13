@@ -50,6 +50,41 @@ async function verificar_auth() {
 
 let listdados = [];
 const REGISTRO_PENDENTE_KEY = 'mixcamp_registro_pendente';
+let configPublicaCache = null;
+
+const SKIP_EMAIL_VERIFICACAO_DEV = false;
+
+async function obterConfigPublica() {
+    if (configPublicaCache) return configPublicaCache;
+    try {
+        const response = await fetch(`${API_URL}/config/public`);
+        if (response.ok) {
+            configPublicaCache = await response.json();
+            return configPublicaCache;
+        }
+        console.warn('[registro] /config/public respondeu', response.status);
+    } catch (error) {
+        console.warn('Não foi possível carregar config pública:', error);
+    }
+    const isLocal = /localhost|127\.0\.0\.1/.test(API_URL);
+    configPublicaCache = {
+        skip_email_verification: isLocal && SKIP_EMAIL_VERIFICACAO_DEV
+    };
+    return configPublicaCache;
+}
+
+function emailValidoParaRegistro(email, skipVerificacao) {
+    if (skipVerificacao) {
+        return email.includes('@') && email.includes('.');
+    }
+    const padroes = ['gmail', 'hotmail', 'outlook', 'yahoo', 'icloud'];
+    for (const padrao of padroes) {
+        if (email.includes('@') && email.includes('.com') && email.includes(padrao)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function salvarRegistroPendente(dados) {
     listdados = [dados];
@@ -78,8 +113,46 @@ function limparRegistroPendente() {
     } catch (e) { /* ignore */ }
 }
 
+function termosAceitos() {
+    return Boolean(document.getElementById('terms')?.checked);
+}
+
+function marcarErroTermos(mostrar) {
+    const bloco = document.querySelector('.form-options');
+    const erroHint = document.getElementById('termsErrorHint');
+    const infoHint = document.getElementById('termsHint');
+    if (bloco) bloco.classList.toggle('terms-error', mostrar);
+    if (erroHint) erroHint.hidden = !mostrar;
+    if (infoHint) infoHint.hidden = mostrar;
+}
+
+function avisarAceiteTermos() {
+    marcarErroTermos(true);
+    showNotification(
+        'alert',
+        'Para criar sua conta, marque a caixa aceitando os Termos de Uso e a Política de Privacidade.',
+        6000
+    );
+    const bloco = document.querySelector('.form-options');
+    bloco?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('terms')?.focus();
+}
+
 async function Registro(event) {
     event.preventDefault();
+
+    if (!termosAceitos()) {
+        avisarAceiteTermos();
+        return;
+    }
+
+    marcarErroTermos(false);
+
+    const form = document.getElementById('registerForm');
+    if (form && !form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
 
     const username = document.getElementById('name').value;
     const email = document.getElementById('email').value;
@@ -90,12 +163,21 @@ async function Registro(event) {
         username: username,
         email: email,
         password: password,
-        confirmPassword: confirmPassword
-    }
+        confirmPassword: confirmPassword,
+        aceite_termos: true
+    };
     verificarDadosRegistro(dados);
 }
 
 async function verificarDadosRegistro(dados){
+    if (!dados.aceite_termos) {
+        avisarAceiteTermos();
+        return;
+    }
+
+    const config = await obterConfigPublica();
+    const skipEmail = config.skip_email_verification === true;
+
     const username = String(dados.username || '').trim();
     const email = String(dados.email || '').trim().toLowerCase();
     const password = dados.password;
@@ -107,15 +189,7 @@ async function verificarDadosRegistro(dados){
         return {'status': false, 'message': 'As senhas não coincidem verifique novamente'};
     }
 
-    let verifyemail = false;
-    const padroes = ['gmail','hotmail','outlook','yahoo','icloud']
-
-    for(const padrao of padroes){
-
-        if (email.includes("@") && email.includes(".com") && email.includes(padrao)) {
-            verifyemail = true; 
-        }
-    }
+    const verifyemail = emailValidoParaRegistro(email, skipEmail);
     
     
     const verifypassword = senhaAtendeTodosRequisitos(password);
@@ -131,7 +205,11 @@ async function verificarDadosRegistro(dados){
     if (verifyemail){
         if(verifypassword){
             if(verifyusername){
-                salvarRegistroPendente({ username, email, password, confirmPassword });
+                salvarRegistroPendente({ username, email, password, confirmPassword, aceite_termos: true });
+                if (skipEmail) {
+                    await RegistrarUsuario();
+                    return;
+                }
                 enviarCodigoEmail(email);
                 
                 return;
@@ -145,7 +223,7 @@ async function verificarDadosRegistro(dados){
         }
     }
     else{
-        showNotification("error", `Email inválido`);
+        showNotification("error", 'Email inválido');
     }
 }
 
@@ -336,6 +414,12 @@ async function RegistrarUsuario(){
     const username = pendente.username;
     const email = pendente.email;
     const password = pendente.password;
+
+    if (!pendente.aceite_termos) {
+        showNotification('error', 'É necessário aceitar os Termos de Uso e a Política de Privacidade.');
+        fecharModalCodigoEmail();
+        return;
+    }
     
     try {
         const response = await fetch(`${API_URL}/register`, {
@@ -343,7 +427,7 @@ async function RegistrarUsuario(){
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, email, password }),
+            body: JSON.stringify({ username, email, password, aceite_termos: true }),
         });
 
         const data = await response.json();
@@ -541,15 +625,27 @@ function hideLoading() {
 document.addEventListener('DOMContentLoaded', function () {
     initRegistroPasswordUx();
 
-    const form = document.querySelector('.register-form');
+    const form = document.getElementById('registerForm');
     if (form) {
-        form.style.opacity = '0';
-        form.style.transform = 'translateY(20px)';
+        form.addEventListener('submit', Registro);
+    }
+
+    const termsCheckbox = document.getElementById('terms');
+    if (termsCheckbox) {
+        termsCheckbox.addEventListener('change', () => {
+            if (termsCheckbox.checked) marcarErroTermos(false);
+        });
+    }
+
+    const registerFormEl = document.querySelector('.register-form');
+    if (registerFormEl) {
+        registerFormEl.style.opacity = '0';
+        registerFormEl.style.transform = 'translateY(20px)';
 
         setTimeout(() => {
-            form.style.transition = 'all 0.6s ease';
-            form.style.opacity = '1';
-            form.style.transform = 'translateY(0)';
+            registerFormEl.style.transition = 'all 0.6s ease';
+            registerFormEl.style.opacity = '1';
+            registerFormEl.style.transform = 'translateY(0)';
         }, 300);
     }
 
@@ -600,9 +696,13 @@ function addIconHoverEffects() {
 }
 
 // Initialize effects
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     addParticleEffects();
     addIconHoverEffects();
+    const config = await obterConfigPublica();
+    if (config.skip_email_verification) {
+        console.info('[registro] Modo teste: verificação de e-mail desativada (SKIP_EMAIL_VERIFICATION)');
+    }
 });
 
 // =================================

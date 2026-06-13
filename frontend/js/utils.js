@@ -856,6 +856,11 @@ async function criarTime() {
 
 function abrirModalCriarTime() {
     const modal = document.getElementById('modalCriarTime');
+    if (!modal) {
+        console.error('Modal #modalCriarTime não encontrado nesta página.');
+        showNotification('error', 'Não foi possível abrir o formulário de criar time. Recarregue a página.');
+        return;
+    }
     modal.style.display = 'block';
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
@@ -864,6 +869,7 @@ function abrirModalCriarTime() {
 
 function fecharModalCriarTime() {
     const modal = document.getElementById('modalCriarTime');
+    if (!modal) return;
     modal.style.display = 'none';
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';

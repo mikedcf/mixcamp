@@ -665,6 +665,7 @@ function initOrganizadorBannerSlider() {
 
 document.addEventListener('DOMContentLoaded', function () {
     verificar_auth();
+    verificarTimeUsuario();
 
     if (document.body.classList.contains('index-page')) {
         initHomeDestaqueCarousel();

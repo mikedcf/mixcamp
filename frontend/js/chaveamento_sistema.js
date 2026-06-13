@@ -3105,6 +3105,9 @@ async function atualizarChampionBox(partidas) {
                         if (response.ok && typeof showNotification === 'function') {
                             showNotification('success', 'Campeonato encerrado com sucesso!');
                         }
+                        if (dadosCampeonatoAtual) dadosCampeonatoAtual.status = 'encerrado';
+                        if (window.campeonatoAtualDados) window.campeonatoAtualDados.status = 'encerrado';
+                        aplicarUiCampeonatoEncerrado(dadosCampeonatoAtual || window.campeonatoAtualDados);
                     } catch (err) {
                         console.error('Erro ao atualizar status do campeonato para encerrado:', err);
                     }
@@ -3436,8 +3439,9 @@ async function inicializarChaveamentoDoCampeonato() {
         }
         
         // Atualizar disponibilidade do botão de embaralhar após inicialização
-    setTimeout(() => {
+        setTimeout(() => {
             atualizarDisponibilidadeBotaoEmbaralhar();
+            aplicarUiCampeonatoEncerrado(campeonato);
         }, 1500);
     } catch (error) {
         console.error('Erro ao carregar dados do campeonato:', error);
@@ -3839,6 +3843,19 @@ async function exibirNomeCampeonato() {
 }
 
 // Função para esconder botões de edição e desabilitar cliques nos match boxes
+function campeonatoEstaEncerrado(campeonato) {
+    const status = String(campeonato?.status || '').toLowerCase().trim().replace(/\s/g, '');
+    return status === 'encerrado';
+}
+
+function aplicarUiCampeonatoEncerrado(campeonato) {
+    const encerrado = campeonatoEstaEncerrado(campeonato);
+    const btnResetar = document.getElementById('resetChaveamento');
+    if (btnResetar) {
+        btnResetar.style.display = encerrado ? 'none' : '';
+    }
+}
+
 function esconderBotoesEdicao() {
     const btnEmbaralhar = document.getElementById('addExampleTeams');
     const btnResetar = document.getElementById('resetChaveamento');
@@ -3931,6 +3948,8 @@ function mostrarBotoesEdicao() {
         btnResetar.style.display = 'inline-block';
         btnResetar.style.visibility = 'visible';
     }
+
+    aplicarUiCampeonatoEncerrado(dadosCampeonatoAtual || window.campeonatoAtualDados);
 
     // Restaurar cursor pointer dos match boxes
     const matchBoxes = document.querySelectorAll('.match-box');
@@ -4046,16 +4065,43 @@ async function buscarMembrosDoTime(timeId) {
     }
 }
 
+async function buscarMembrosParaPremiacao(timeId) {
+    const historico = await buscarMembrosDoTime(timeId);
+    if (historico.length > 0) return historico;
+
+    const ids = await buscarIdsMembrosDoTime(timeId);
+    return ids.map(usuario_id => ({ usuario_id }));
+}
+
+function normalizarPositionMedalha(valor) {
+    if (valor == null || valor === '') return null;
+    const v = String(valor).trim().toLowerCase().replace(/\s+/g, '_').replace(/_lugar$/, '');
+    const map = {
+        campeao: 'campeao',
+        campeão: 'campeao',
+        champion: 'campeao',
+        '1': 'campeao',
+        segundo: 'segundo',
+        '2': 'segundo',
+        terceiro: 'terceiro',
+        '3': 'terceiro'
+    };
+    if (map[v]) return map[v];
+    return ['campeao', 'segundo', 'terceiro'].includes(v) ? v : null;
+}
+
 async function concederMedalhaParaMembro(usuarioId, medalhaId, positionCamp) {
     if (!usuarioId || !medalhaId) {
-        return;
+        return { ok: false, motivo: 'dados_incompletos' };
     }
+
+    const position_medalha = normalizarPositionMedalha(positionCamp) || 'campeao';
     
     try {
         const body = { 
             usuario_id: usuarioId, 
             medalha_id: medalhaId,
-            position_camp: positionCamp || 'campeao'
+            position_medalha
         };
         
         const response = await fetch(`${API_URL}/medalhas/adicionar`, {
@@ -4065,19 +4111,22 @@ async function concederMedalhaParaMembro(usuarioId, medalhaId, positionCamp) {
             body: JSON.stringify(body)
         });
 
-        if (!response.ok && response.status !== 409) {
-            const errorText = await response.text();
-            console.error(`Erro ao adicionar medalha para usuário ${usuarioId} (status ${response.status}):`, errorText);
+        if (response.ok || response.status === 409) {
+            return { ok: true, status: response.status };
         }
+
+        const errorText = await response.text();
+        console.error(`Erro ao adicionar medalha para usuário ${usuarioId} (status ${response.status}):`, errorText);
+        return { ok: false, status: response.status, erro: errorText };
     } catch (error) {
         console.error(`🏆 [MEDALHA] Erro ao adicionar medalha para usuário ${usuarioId}:`, error);
-        console.error('🏆 [MEDALHA] Stack trace:', error.stack);
+        return { ok: false, motivo: error?.message };
     }
 }
 
 async function concederTrofeuParaTime(timeId, trofeuId) {
     if (!timeId || !trofeuId) {
-        return;
+        return { ok: false, motivo: 'dados_incompletos' };
     }
     
     try {
@@ -4089,12 +4138,16 @@ async function concederTrofeuParaTime(timeId, trofeuId) {
             body: JSON.stringify(body)
         });
 
-        if (!response.ok && response.status !== 409) {
-            const errorText = await response.text();
-            console.error(`Erro ao adicionar troféu para o time ${timeId} (status ${response.status}):`, errorText);
+        if (response.ok || response.status === 409) {
+            return { ok: true, status: response.status };
         }
+
+        const errorText = await response.text();
+        console.error(`Erro ao adicionar troféu para o time ${timeId} (status ${response.status}):`, errorText);
+        return { ok: false, status: response.status, erro: errorText };
     } catch (error) {
         console.error(`Erro ao adicionar troféu para o time ${timeId}:`, error);
+        return { ok: false, motivo: error?.message };
     }
 }
 
@@ -4291,14 +4344,13 @@ async function concederPremiacoesOficiais(partidaFinal) {
         trofeuId,
         partidaFinal: partidaFinal.match_id
     });
-    
-    if (tipoCampeonato !== 'oficial') {
-        return true;
-    }
-    
+
     if (!medalhaId && !trofeuId) {
         debugChaveamentoEtapa('premiacao-sem-medalha-trofeu');
-        return false;
+        if (typeof showNotification === 'function') {
+            showNotification('alert', 'Este campeonato não tem medalha ou troféu configurados.');
+        }
+        return tipoCampeonato === 'oficial' ? false : true;
     }
 
     const timeVencedorId = partidaFinal.time_vencedor_id;
@@ -4336,14 +4388,6 @@ async function concederPremiacoesOficiais(partidaFinal) {
             }
         } catch (error) {
             console.error('Erro ao identificar segundo lugar do DOM:', error);
-        }
-    }
-
-    const premiacaoKey = getPremiacaoStorageKey();
-    if (premiacaoKey) {
-        const ultimaPremiacao = localStorage.getItem(premiacaoKey);
-        if (ultimaPremiacao && ultimaPremiacao === String(timeVencedorId)) {
-            return true;
         }
     }
 
@@ -4386,47 +4430,80 @@ async function concederPremiacoesOficiais(partidaFinal) {
             timeVencedorId,
             timeSegundoId
         });
+
+        let medalhasOk = 0;
+        let medalhasErro = 0;
         
         // Conceder medalhas para o campeão
         if (medalhaId) {
-            const membrosCampeao = await buscarMembrosDoTime(timeVencedorId);
+            const membrosCampeao = await buscarMembrosParaPremiacao(timeVencedorId);
             const membrosComId = membrosCampeao.filter(m => m?.usuario_id);
+
+            if (membrosComId.length === 0) {
+                console.warn('[Premiação] Nenhum membro encontrado para o time campeão:', timeVencedorId);
+            }
             
             if (membrosComId.length > 0) {
-                await Promise.allSettled(
-                    membrosComId.map(m => {
-                        return concederMedalhaParaMembro(m.usuario_id, medalhaId, 'campeao');
-                    })
+                const resultados = await Promise.all(
+                    membrosComId.map(m => concederMedalhaParaMembro(m.usuario_id, medalhaId, 'campeao'))
                 );
+                medalhasOk += resultados.filter(r => r?.ok).length;
+                medalhasErro += resultados.filter(r => !r?.ok).length;
             }
         }
 
         // Conceder medalhas para o segundo lugar
         if (medalhaId && timeSegundoId) {
-            const membrosSegundo = await buscarMembrosDoTime(timeSegundoId);
+            const membrosSegundo = await buscarMembrosParaPremiacao(timeSegundoId);
             const membrosComId = membrosSegundo.filter(m => m?.usuario_id);
+
+            if (membrosComId.length === 0) {
+                console.warn('[Premiação] Nenhum membro encontrado para o vice:', timeSegundoId);
+            }
             
             if (membrosComId.length > 0) {
-                await Promise.allSettled(
-                    membrosComId.map(m => {
-                        return concederMedalhaParaMembro(m.usuario_id, medalhaId, 'segundo_lugar');
-                    })
+                const resultados = await Promise.all(
+                    membrosComId.map(m => concederMedalhaParaMembro(m.usuario_id, medalhaId, 'segundo'))
                 );
+                medalhasOk += resultados.filter(r => r?.ok).length;
+                medalhasErro += resultados.filter(r => !r?.ok).length;
             }
         }
 
         // Conceder troféu apenas para o campeão
+        let trofeuOk = false;
         if (trofeuId) {
-            await concederTrofeuParaTime(timeVencedorId, trofeuId);
+            const resTrofeu = await concederTrofeuParaTime(timeVencedorId, trofeuId);
+            trofeuOk = resTrofeu?.ok === true;
         }
 
-        if (premiacaoKey) {
+        const premiacaoKey = getPremiacaoStorageKey();
+        if (premiacaoKey && (medalhasOk > 0 || trofeuOk)) {
             localStorage.setItem(premiacaoKey, String(timeVencedorId));
         }
 
         desabilitarEdicoesAposPremiacao();
+
+        if (medalhasErro > 0 || (trofeuId && !trofeuOk)) {
+            if (typeof showNotification === 'function') {
+                showNotification(
+                    'alert',
+                    `Premiação parcial: ${medalhasOk} medalha(s) OK, ${medalhasErro} falha(s)${trofeuId ? (trofeuOk ? ', troféu OK' : ', troféu falhou') : ''}.`,
+                    6000
+                );
+            }
+            return medalhasOk > 0 || trofeuOk;
+        }
+
+        if (medalhasOk === 0 && !trofeuOk) {
+            if (typeof showNotification === 'function') {
+                showNotification('error', 'Nenhuma medalha ou troféu foi registrado. Verifique membros do time e permissões.', 6000);
+            }
+            return false;
+        }
+
         if (typeof showNotification === 'function') {
-            showNotification('success', 'Premiações concedidas com sucesso! 🏆', 5000);
+            showNotification('success', `Premiações concedidas! ${medalhasOk} medalha(s)${trofeuOk ? ' + troféu' : ''}. 🏆`, 5000);
         }
         return true;
     } catch (error) {
@@ -4551,6 +4628,7 @@ async function verificarPermissoesChaveamento() {
             if (isOwner) {
                 // Se for dono, mostrar botões
                 mostrarBotoesEdicao();
+                aplicarUiCampeonatoEncerrado(campeonato);
             } else {
                 // Se não for dono, esconder botões
                 esconderBotoesEdicao();

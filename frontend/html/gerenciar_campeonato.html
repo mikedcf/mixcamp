@@ -253,15 +253,47 @@
                             *</label>
                         <input type="number" id="preco_inscricao" name="preco_inscricao" step="0.01" min="0" required
                             placeholder="0.00">
+                        <p class="form-field-hint form-field-hint--info preco-inscricao-hint">
+                            <i class="fas fa-info-circle"></i>
+                            Campeonatos com preço de inscrição de até <strong>R$ 0,99</strong> são gratuitos: o time é inscrito na hora, sem cobrança pelo Mercado Pago. Acima desse valor, o pagamento é feito online na inscrição.
+                        </p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="premiacao"><i class="fas fa-trophy"></i> Premiação (R$) *</label>
-                        <input type="number" id="premiacao" name="premiacao" step="0.01" min="0" required
-                            placeholder="0.00" autocomplete="off">
+                    <div class="form-group form-group--premiacao">
+                        <label class="premiacao-colocacao-label"><i class="fas fa-trophy"></i> Premiação por colocação *</label>
+                        <p class="premiacao-colocacao-hint">Escolha quantas colocações terão prêmio em dinheiro.</p>
+                        <div class="premiacao-tier-btns" role="group" aria-label="Colocações premiadas">
+                            <button type="button" class="premiacao-tier-btn active" data-tier="1" aria-pressed="true">
+                                <i class="fas fa-medal"></i> 1º lugar
+                            </button>
+                            <button type="button" class="premiacao-tier-btn" data-tier="2" aria-pressed="false">
+                                <i class="fas fa-medal"></i> Até 2º
+                            </button>
+                            <button type="button" class="premiacao-tier-btn" data-tier="3" aria-pressed="false">
+                                <i class="fas fa-medal"></i> Até 3º
+                            </button>
+                        </div>
+                        <div class="premiacao-tier-fields">
+                            <div class="premiacao-tier-field" data-pos="primeiro">
+                                <label for="premio_primeiro">1º lugar (R$)</label>
+                                <input type="number" id="premio_primeiro" step="0.01" min="0" placeholder="0.00" autocomplete="off">
+                            </div>
+                            <div class="premiacao-tier-field" data-pos="segundo" hidden>
+                                <label for="premio_segundo">2º lugar (R$)</label>
+                                <input type="number" id="premio_segundo" step="0.01" min="0" placeholder="0.00" autocomplete="off">
+                            </div>
+                            <div class="premiacao-tier-field" data-pos="terceiro" hidden>
+                                <label for="premio_terceiro">3º lugar (R$)</label>
+                                <input type="number" id="premio_terceiro" step="0.01" min="0" placeholder="0.00" autocomplete="off">
+                            </div>
+                        </div>
+                        <input type="hidden" id="premiacao" name="premiacao" value="">
+                        <p class="premiacao-total-linha">
+                            Total da premiação: <strong id="premiacaoTotalValor">R$ 0,00</strong>
+                        </p>
                         <div class="premiacao-taxa-hint" id="premiacaoTaxaHint" hidden aria-live="polite">
                             <div class="premiacao-taxa-linha">
-                                <span class="premiacao-taxa-texto">Taxa de 8% sobre o valor da premiação:</span>
+                                <span class="premiacao-taxa-texto">Taxa de 8% sobre o valor total da premiação:</span>
                                 <strong class="premiacao-taxa-taxa" id="premiacaoTaxaValorTaxa">R$ 0,00</strong>
                             </div>
                             <div class="premiacao-taxa-linha premiacao-taxa-linha--liquido">
@@ -274,7 +306,13 @@
 
                 <div class="form-group">
                     <label for="imagem_url"><i class="fas fa-image"></i> URL da Imagem</label>
-                    <input type="url" id="imagem_url" name="imagem_url" placeholder="https://exemplo.com/imagem.jpg">
+                    <input type="url" id="imagem_url" name="imagem_url" placeholder="https://exemplo.com/imagem.jpg"
+                        autocomplete="off">
+                    <p class="form-field-hint" id="imagemUrlHint" hidden>
+                        <i class="fas fa-info-circle"></i>
+                        Banner da página de inscrição — recomendado: <strong>1920×600 px</strong> (proporção ~3,2:1).
+                        Mínimo: 1280×400 px. Formato JPG ou WebP. Evite texto importante no canto esquerdo (título fica sobre a imagem).
+                    </p>
                 </div>
 
                 <div class="form-row">
@@ -318,6 +356,7 @@
                         <option value="CS2 Major (playoffs BO3)">CS2 Major (playoffs BO3)</option>
                         <option value="Double Elimination">Double Elimination</option>
                     </select>
+                    <p class="form-field-hint form-field-hint--info" id="chaveHint" aria-live="polite"></p>
                 </div>
 
                 <div class="form-row">

@@ -476,22 +476,100 @@ function formatCurrencyBRL(valor) {
 
 /** Taxa exibida abaixo do campo Premiação (modal criar/editar campeonato) */
 const TAXA_PREMIACAO_PERCENTUAL = 8;
+const PREMIACAO_POSICOES = ['primeiro', 'segundo', 'terceiro'];
+let premiacaoTierAtual = 1;
+
+function setPremiacaoTier(tier) {
+    const n = Math.min(3, Math.max(1, parseInt(tier, 10) || 1));
+    premiacaoTierAtual = n;
+
+    document.querySelectorAll('.premiacao-tier-btn').forEach(btn => {
+        const ativo = parseInt(btn.dataset.tier, 10) === n;
+        btn.classList.toggle('active', ativo);
+        btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    });
+
+    PREMIACAO_POSICOES.forEach((pos, idx) => {
+        const field = document.querySelector(`.premiacao-tier-field[data-pos="${pos}"]`);
+        if (!field) return;
+        const visivel = idx < n;
+        field.hidden = !visivel;
+        const input = field.querySelector('input');
+        if (input && !visivel) input.value = '';
+    });
+
+    atualizarPremiacaoTaxaHint();
+}
+
+function obterTotalPremiacaoForm() {
+    let total = 0;
+    for (let i = 0; i < premiacaoTierAtual; i++) {
+        const pos = PREMIACAO_POSICOES[i];
+        const input = document.getElementById(`premio_${pos}`);
+        if (!input) continue;
+        const val = parseFloat(String(input.value).trim().replace(',', '.'));
+        if (!Number.isNaN(val) && val >= 0) total += val;
+    }
+    return total;
+}
+
+function coletarPremiacoesForm() {
+    const out = [];
+    for (let i = 0; i < premiacaoTierAtual; i++) {
+        const pos = PREMIACAO_POSICOES[i];
+        const input = document.getElementById(`premio_${pos}`);
+        if (!input) continue;
+        const val = parseFloat(String(input.value).trim().replace(',', '.'));
+        if (Number.isNaN(val) || val < 0) continue;
+        out.push({ posicao: pos, valor: val });
+    }
+    return out;
+}
+
+function preencherPremiacoesForm(premiacoes, totalFallback) {
+    document.getElementById('premio_primeiro').value = '';
+    document.getElementById('premio_segundo').value = '';
+    document.getElementById('premio_terceiro').value = '';
+
+    let lista = Array.isArray(premiacoes) ? premiacoes : [];
+    if (lista.length === 0 && totalFallback != null && totalFallback !== '') {
+        lista = [{ posicao: 'primeiro', valor: parseFloat(totalFallback) || 0 }];
+    }
+
+    const tier = Math.min(3, Math.max(1, lista.length || 1));
+    setPremiacaoTier(tier);
+
+    lista.forEach(p => {
+        const input = document.getElementById(`premio_${p.posicao}`);
+        if (input && p.valor != null) input.value = p.valor;
+    });
+
+    atualizarPremiacaoTaxaHint();
+}
+
+function resetPremiacoesForm() {
+    setPremiacaoTier(1);
+    document.getElementById('premio_primeiro').value = '';
+    document.getElementById('premio_segundo').value = '';
+    document.getElementById('premio_terceiro').value = '';
+    atualizarPremiacaoTaxaHint();
+}
 
 function atualizarPremiacaoTaxaHint() {
-    const input = document.getElementById('premiacao');
+    const hiddenTotal = document.getElementById('premiacao');
     const hint = document.getElementById('premiacaoTaxaHint');
     const elTaxa = document.getElementById('premiacaoTaxaValorTaxa');
     const elLiquido = document.getElementById('premiacaoTaxaValorLiquido');
-    if (!input || !hint || !elTaxa || !elLiquido) return;
+    const elTotal = document.getElementById('premiacaoTotalValor');
 
-    const raw = String(input.value).trim();
-    if (raw === '') {
-        hint.hidden = true;
-        return;
-    }
+    const val = obterTotalPremiacaoForm();
 
-    const val = parseFloat(raw.replace(',', '.'));
-    if (Number.isNaN(val) || val < 0) {
+    if (hiddenTotal) hiddenTotal.value = val > 0 ? String(val) : '';
+    if (elTotal) elTotal.textContent = formatCurrencyBRL(val);
+
+    if (!hint || !elTaxa || !elLiquido) return;
+
+    if (val <= 0) {
         hint.hidden = true;
         return;
     }
@@ -504,10 +582,16 @@ function atualizarPremiacaoTaxaHint() {
 }
 
 function initPremiacaoTaxaHint() {
-    const input = document.getElementById('premiacao');
-    if (!input) return;
-    input.addEventListener('input', atualizarPremiacaoTaxaHint);
-    input.addEventListener('change', atualizarPremiacaoTaxaHint);
+    document.querySelectorAll('.premiacao-tier-btn').forEach(btn => {
+        btn.addEventListener('click', () => setPremiacaoTier(btn.dataset.tier));
+    });
+
+    ['premio_primeiro', 'premio_segundo', 'premio_terceiro'].forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', atualizarPremiacaoTaxaHint);
+        input.addEventListener('change', atualizarPremiacaoTaxaHint);
+    });
 }
 
 function formatarData(dataISO) {
@@ -884,13 +968,17 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
 
     emptyState.style.display = 'none';
     
-    grid.innerHTML = campeonatosFiltrados.map(campeonato => `
+    grid.innerHTML = campeonatosFiltrados.map(campeonato => {
+        const statusNorm = normalizeStatus(campeonato.status || 'disponivel');
+        const encerrado = statusNorm === 'encerrado';
+        const tituloEsc = (campeonato.titulo || 'Sem título').replace(/'/g, "\\'");
+
+        return `
         <div class="campeonato-card">
             <div class="card-header">
                 <div class="card-badges-row">
-                    <span class="card-badge badge-status ${normalizeStatus(campeonato.status || 'disponivel')}">
+                    <span class="card-badge badge-status ${statusNorm}">
                         ${(() => {
-                            const statusNorm = normalizeStatus(campeonato.status || 'disponivel');
                             if (statusNorm === 'disponivel') return '✓ Disponível';
                             if (statusNorm === 'embreve') return '⏱ Em Breve';
                             if (statusNorm === 'andamento') return '▶ Em Andamento';
@@ -929,25 +1017,26 @@ async function renderizarCampeonatos(filtroStatus = 'todos') {
                 <button class="btn-action btn-ver" onclick="verDetalhes(${campeonato.id})">
                     <i class="fas fa-eye"></i> Ver Detalhes
                 </button>
-                <button class="btn-action btn-editar" onclick="editarCampeonato(${campeonato.id})">
+                <button class="btn-action btn-editar" ${encerrado ? 'disabled title="Campeonato encerrado — edição indisponível"' : ''} onclick="editarCampeonato(${campeonato.id})">
                     <i class="fas fa-edit"></i> Editar
                 </button>
-                ${(['embreve', 'disponivel'].includes(normalizeStatus(campeonato.status)) ? `
+                ${(['embreve', 'disponivel'].includes(statusNorm) ? `
                 <button class="btn-action btn-promover" onclick="promoverCampeonato(${campeonato.id})">
                     <i class="fas fa-bullhorn"></i> Promover
                 </button>
                 ` : '')}
-                ${(['andamento', 'encerrado'].includes(normalizeStatus(campeonato.status)) ? `
+                ${(['andamento', 'encerrado'].includes(statusNorm) ? `
                 <button class="btn-action btn-chaveamento" onclick="window.location.href='chaveamento.html?id=${campeonato.id}'" style="background: rgba(138, 43, 226, 0.2); color: #8A2BE2; border: 1px solid rgba(138, 43, 226, 0.3);">
                     <i class="fas fa-sitemap"></i> Chaveamento
                 </button>
                 ` : '')}
-                <button class="btn-action btn-excluir" onclick="excluirCampeonato(${campeonato.id}, '${campeonato.titulo}')">
+                <button class="btn-action btn-excluir" ${encerrado ? 'disabled title="Campeonato encerrado — exclusão indisponível"' : ''} onclick="excluirCampeonato(${campeonato.id}, '${tituloEsc}')">
                     <i class="fas fa-trash"></i> Excluir
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
     atualizarPromocoesAtivasSidebar();
     renderizarDashboardLucro(window.campeonatosCache);
 }
@@ -1267,6 +1356,49 @@ async function iniciarPagamentoPromocao() {
 }
 
 // =================================
+// ========= DICAS DO FORMULÁRIO (imagem / chave) =========
+const DESCRICOES_CHAVE = {
+    'Single Elimination (B01 até final BO3)':
+        'Mata-mata simples: uma derrota elimina o time. Fases iniciais em BO1; semifinal e final em BO3.',
+    'Single Elimination (todos BO3)':
+        'Mata-mata simples: uma derrota elimina o time. Todas as partidas são disputadas em BO3.',
+    'CS2 Major (playoffs BO3)':
+        'Formato estilo Major: fase suíça para classificação e playoffs em BO3. Exige plano premium/intermediário.',
+    'Double Elimination':
+        'Chave dupla (upper e lower): o time precisa perder duas vezes para ser eliminado. Final em BO3.'
+};
+
+function atualizarDicaChave() {
+    const chaveSelect = document.getElementById('chave');
+    const chaveHint = document.getElementById('chaveHint');
+    if (!chaveSelect || !chaveHint) return;
+
+    const texto = DESCRICOES_CHAVE[chaveSelect.value] || '';
+    chaveHint.textContent = texto ? `ℹ️ ${texto}` : '';
+}
+
+function initDicasFormularioCampeonato() {
+    const imagemInput = document.getElementById('imagem_url');
+    const imagemHint = document.getElementById('imagemUrlHint');
+    if (imagemInput && imagemHint && !imagemInput.dataset.hintListener) {
+        imagemInput.dataset.hintListener = '1';
+        imagemInput.addEventListener('focus', () => { imagemHint.hidden = false; });
+        imagemInput.addEventListener('click', () => { imagemHint.hidden = false; });
+        imagemInput.addEventListener('blur', () => {
+            window.setTimeout(() => { imagemHint.hidden = true; }, 120);
+        });
+    }
+
+    const chaveSelect = document.getElementById('chave');
+    if (chaveSelect && !chaveSelect.dataset.hintListener) {
+        chaveSelect.dataset.hintListener = '1';
+        chaveSelect.addEventListener('change', atualizarDicaChave);
+    }
+
+    atualizarDicaChave();
+}
+
+// =================================
 // ========= ATUALIZAR OPÇÕES DE CHAVE =========
 function atualizarOpcoesChave(selectElement, incluirCS2Major, valorPreservar = null) {
     const valorAtual = valorPreservar || selectElement.value;
@@ -1301,6 +1433,8 @@ function atualizarOpcoesChave(selectElement, incluirCS2Major, valorPreservar = n
         // Se o valor não existe mais (ex: CS2 Major para simples), usar padrão
         selectElement.value = 'Single Elimination (todos BO3)';
     }
+
+    atualizarDicaChave();
 }
 
 // =================================
@@ -1382,7 +1516,7 @@ async function abrirModalCriar() {
     document.getElementById('qnt_times').value = '16';
     document.getElementById('chave').value = 'Single Elimination (todos BO3)';
     
-    atualizarPremiacaoTaxaHint();
+    resetPremiacoesForm();
     const modal = document.getElementById('modalCampeonato');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -1394,6 +1528,12 @@ async function editarCampeonato(id) {
     
     if (!campeonato) {
         showNotification('error', 'Campeonato não encontrado.');
+        return;
+    }
+
+    const statusNorm = (campeonato.status || '').toLowerCase().trim().replace(/\s/g, '');
+    if (statusNorm === 'encerrado') {
+        showNotification('alert', 'Campeonato encerrado não pode ser editado.');
         return;
     }
     
@@ -1411,7 +1551,7 @@ async function editarCampeonato(id) {
     document.getElementById('tipo').value = campeonato.tipo || 'comum';
     document.getElementById('descricao').value = campeonato.descricao || '';
     document.getElementById('preco_inscricao').value = campeonato.preco_inscricao || '';
-    document.getElementById('premiacao').value = campeonato.premiacao || '';
+    preencherPremiacoesForm(campeonato.premiacoes, campeonato.premiacao);
     document.getElementById('imagem_url').value = campeonato.imagem_url || '';
     document.getElementById('link_convite').value = campeonato.link_convite || '';
     document.getElementById('url_hub').value = campeonato.link_hub || ''; // Backend retorna link_hub
@@ -1485,7 +1625,6 @@ async function salvarCampeonato(event) {
         titulo: formData.get('titulo'),
         descricao: formData.get('descricao'),
         preco_inscricao: parseFloat(formData.get('preco_inscricao')),
-        premiacao: parseFloat(formData.get('premiacao')),
         imagem_url: formData.get('imagem_url') || null,
         link_convite: formData.get('link_convite'),
         link_hub: formData.get('url_hub'), // Corrigido: url_hub do form vira link_hub no backend
@@ -1518,6 +1657,15 @@ async function salvarCampeonato(event) {
         dados.trofeu_id = null;
         dados.medalha_id = null;
     }
+
+    const listaPremiacoes = coletarPremiacoesForm();
+    const totalPremiacao = listaPremiacoes.reduce((s, p) => s + p.valor, 0);
+    if (listaPremiacoes.length === 0 || totalPremiacao <= 0) {
+        showNotification('alert', 'Informe o valor da premiação para pelo menos uma colocação.');
+        return;
+    }
+    dados.premiacoes = listaPremiacoes;
+    dados.premiacao = totalPremiacao;
     
     // Validações básicas
     if (!dados.titulo || !dados.descricao || !dados.regras) {
@@ -1565,6 +1713,14 @@ async function salvarCampeonato(event) {
 // =================================
 // ========= EXCLUIR CAMPEONATO =========
 async function excluirCampeonato(id, titulo) {
+    const campeonatos = await buscarCampeonatosOrganizador();
+    const campeonato = campeonatos.find(c => c.id == id);
+    const statusNorm = (campeonato?.status || '').toLowerCase().trim().replace(/\s/g, '');
+    if (statusNorm === 'encerrado') {
+        showNotification('alert', 'Campeonato encerrado não pode ser excluído.');
+        return;
+    }
+
     if (!confirm(`Tem certeza que deseja excluir o campeonato "${titulo}"?\n\nEsta ação não pode ser desfeita.`)) {
         return;
     }
@@ -1758,6 +1914,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         tipoSelect.dataset.trofeuListener = '1';
         tipoSelect.addEventListener('change', atualizarVisibilidadeTrofeuMedalha);
     }
+
+    initDicasFormularioCampeonato();
     
     // Scroll header
     window.addEventListener("scroll", function () {

@@ -262,6 +262,16 @@ main {
     font-size: 0.9em;
 }
 
+.secao label .size-recommendation {
+    display: inline;
+    margin-left: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: rgba(255, 255, 255, 0.55);
+}
+
 .secao input:not([type="file"]),
 .secao textarea {
     width: 100%;

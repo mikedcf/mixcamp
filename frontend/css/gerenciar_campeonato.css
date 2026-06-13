@@ -785,6 +785,20 @@ main {
     transform: translateY(-2px);
 }
 
+.btn-action:disabled,
+.btn-action[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+    pointer-events: none;
+}
+
+.btn-editar:disabled:hover,
+.btn-excluir:disabled:hover {
+    background: inherit;
+    transform: none;
+}
+
 /* Botão Promover */
 .btn-promover {
     background: rgba(250, 204, 21, 0.15);
@@ -1240,6 +1254,40 @@ main {
     display: none !important;
 }
 
+.form-field-hint {
+    margin: 0.45rem 0 0;
+    padding: 0.55rem 0.75rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.form-field-hint[hidden] {
+    display: none !important;
+}
+
+.form-field-hint i {
+    color: #ff8c42;
+    margin-right: 0.35rem;
+}
+
+.form-field-hint--info {
+    background: rgba(138, 43, 226, 0.12);
+    border-color: rgba(138, 43, 226, 0.28);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.form-field-hint--info:not(:empty) {
+    display: block;
+}
+
+.preco-inscricao-hint {
+    margin-top: 0.5rem;
+}
+
 .premiacao-taxa-linha {
     display: flex;
     flex-wrap: wrap;
@@ -1260,6 +1308,94 @@ main {
     color: rgba(255, 184, 153, 0.95);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+}
+
+/* Premiação por colocação (modal campeonato) */
+.form-group--premiacao {
+    grid-column: 1 / -1;
+}
+
+.premiacao-colocacao-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.premiacao-colocacao-hint {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+}
+
+.premiacao-tier-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.premiacao-tier-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 107, 53, 0.35);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.premiacao-tier-btn:hover {
+    border-color: rgba(255, 107, 53, 0.6);
+    background: rgba(255, 107, 53, 0.12);
+}
+
+.premiacao-tier-btn.active {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.35), rgba(255, 140, 66, 0.25));
+    border-color: #ff6b35;
+    color: #fff;
+}
+
+.premiacao-tier-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.premiacao-tier-field label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.premiacao-tier-field input {
+    width: 100%;
+}
+
+.premiacao-tier-field[hidden] {
+    display: none !important;
+}
+
+.premiacao-total-linha {
+    margin: 0.75rem 0 0;
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.premiacao-total-linha strong {
+    color: #ff8c42;
+    font-size: 1.05rem;
 }
 
 .premiacao-taxa-valor {

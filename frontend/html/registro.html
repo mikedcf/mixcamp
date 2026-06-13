@@ -245,14 +245,22 @@
 
                     <div class="form-options">
                         <label class="checkbox-container">
-                            <input type="checkbox" id="terms" required>
+                            <input type="checkbox" id="terms">
                             <span class="checkmark"></span>
                             Aceito os <a href="termos.html" class="terms-link" target="_blank" rel="noopener noreferrer">Termos de Uso</a> e <a href="privacidade.html"
                                 class="terms-link" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
                         </label>
+                        <p class="terms-required-hint" id="termsHint">
+                            <i class="fas fa-info-circle"></i>
+                            Marque a caixa acima para finalizar seu cadastro, aceitando os termos e a política de privacidade.
+                        </p>
+                        <p class="terms-error-hint" id="termsErrorHint" hidden aria-live="polite">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Você precisa aceitar os Termos de Uso e a Política de Privacidade para criar a conta.
+                        </p>
                     </div>
 
-                    <button type="submit" class="btn-register" onclick="Registro(event)">
+                    <button type="submit" class="btn-register">
                         <span class="btn-text">CRIAR CONTA</span>
                         <div class="btn-glow"></div>
                     </button>
