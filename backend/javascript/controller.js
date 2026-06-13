@@ -11442,9 +11442,29 @@ async function getcupomresgatado(req, res) {
     }
 }
 // --- POST CUPOM RESGATADOS
+function normalizarGerenciaCupom(tipo) {
+    const valor = String(tipo || '').trim().toLowerCase();
+    const mapa = {
+        admin: 'admin',
+        administrador: 'admin',
+        moderador: 'moderador',
+        mod: 'moderador',
+        streamer: 'streamer',
+        apoiador: 'apoiador',
+        user: 'user',
+        usuario: 'user'
+    };
+    if (mapa[valor]) return mapa[valor];
+    const validas = ['admin', 'moderador', 'streamer', 'apoiador', 'user'];
+    return validas.includes(valor) ? valor : null;
+}
+
 async function criarcupomresgatado(req, res) {
-    const { codigo } = req.body;
-    const usuario_id = req.session.user.id;
+    const { codigo, usuario_id: usuarioIdBody } = req.body;
+    const usuarioAlvo = parseInt(usuarioIdBody, 10);
+    const usuario_id = (!Number.isNaN(usuarioAlvo) && usuarioAlvo > 0)
+        ? usuarioAlvo
+        : req.session.user.id;
 
     if (!codigo) {
         return res.status(400).json({ message: 'Código do cupom é obrigatório' });
@@ -11471,20 +11491,29 @@ async function criarcupomresgatado(req, res) {
                     await conexao.execute('INSERT INTO cupons_resgatados (usuario_id, cupom_id) VALUES (?, ?)', [usuario_id, cupom_id]);
                     await conexao.execute('UPDATE cupons SET usos_restantes = usos_restantes - 1 WHERE id = ?', [cupom_id]);
 
-                    if (selectCupom[0].codigo.includes("MOR")) {
-                        await conexao.execute(`UPDATE usuarios SET organizador = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
+                    if (selectCupom[0].codigo.includes('MOR')) {
+                        await conexao.execute(
+                            'UPDATE usuarios SET organizador = ? WHERE id = ?',
+                            [selectCupom[0].tipo, usuario_id]
+                        );
+                    } else if (selectCupom[0].codigo.includes('MCARG')) {
+                        const gerencia = normalizarGerenciaCupom(selectCupom[0].tipo);
+                        if (!gerencia) {
+                            return res.status(400).json({ message: 'Cupom MCARG com cargo inválido' });
+                        }
+                        await conexao.execute(
+                            'UPDATE usuarios SET gerencia = ? WHERE id = ?',
+                            [gerencia, usuario_id]
+                        );
+                        if (Number(req.session.user.id) === Number(usuario_id)) {
+                            req.session.user.gerencia = gerencia;
+                        }
+                    } else if (selectCupom[0].codigo.includes('MCONQ')) {
+                        await conexao.execute(
+                            'INSERT INTO usuario_medalhas (usuario_id, medalha_id, position_medalha) VALUES (?, ?, ?)',
+                            [usuario_id, selectCupom[0].id_medalha, selectCupom[0].tipo]
+                        );
                     }
-                    else if (selectCupom[0].codigo.includes("MCONQ")) {
-
-                        await conexao.execute(`INSERT INTO usuario_medalhas (usuario_id, medalha_id,position_medalha) VALUES(?,?,?)`, [usuario_id, selectCupom[0].id_medalha, selectCupom[0].tipo]);
-
-                    }
-                    // else if(selectCupom[0].codigo == "MITEM"){
-                    //     await conexao.execute(`UPDATE usuarios SET gerencia = ? WHERE id = ?`, [selectCupom[0].tipo, usuario_id]);
-
-                    // }
-
-
 
                     return res.status(201).json({ message: 'Cupom resgatado com sucesso!' });
                 } else {

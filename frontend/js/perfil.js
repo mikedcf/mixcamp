@@ -1519,6 +1519,9 @@ async function aplicarCupom(userId,codigo) {
         const data = await response.json();
         if(response.ok){
             showNotification('success', data.message);
+            if (typeof atualizarDadosPerfil === 'function') {
+                await atualizarDadosPerfil();
+            }
         }else{
             showNotification('error', data.message);
         }
